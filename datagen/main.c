@@ -64,8 +64,8 @@ int main(int argc, char *argv[])
 
 	process_options(argc, argv);
 
-	if (items != 1000 && items != 10000 && items != 100000 && items != 1000000
-		&& items != 10000000)
+	if (items != 1000 && items != 10000 && items != 100000 &&
+		items != 1000000 && items != 10000000)
 	{
 		printf("%d is an invalid item scale factor:\n", items);
 		printf("\t1000\n");
@@ -79,7 +79,10 @@ int main(int argc, char *argv[])
 	p = popen("pwd", "r");
 	fscanf(p, "%s", pwd);
 	printf("%s\n", pwd);
-	if (strcmp(path, ".")==0 || path[0]=='\0' ) strcpy(path, pwd);
+	if (strcmp(path, ".") == 0 || path[0] == '\0' )
+	{
+		strcpy(path, pwd);
+	}
 
 	printf("item scale factor	%d\n", items);
 	printf("EB scale factor		%d\n", ebs);
@@ -192,8 +195,8 @@ void process_options(int count, char **vector)
 	int set_items;
 	int set_eus;
 
-	set_items=0;
-	set_eus=0;
+	set_items = 0;
+	set_eus = 0;
 
 	while ((option = getopt (count, vector, "i:u:p:T:h")) != -1)
 	{
@@ -201,11 +204,11 @@ void process_options(int count, char **vector)
 		{
 			case 'i':
 				items = atoi(optarg);
-				set_items=1;
+				set_items = 1;
 				break;
 			case 'u':
 				ebs = atoi(optarg);
-				set_eus=1;
+				set_eus = 1;
 				break;
 			case 'p':
 				strcpy(path, optarg);
