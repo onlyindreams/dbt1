@@ -12,9 +12,9 @@ sql_execute drop dbproc getSCDetail
 sql_execute drop dbproc initOrderItems
 sql_execute drop dbproc getOrderItems
 sql_execute drop dbproc home
-sql_execute drop dbproc buyrequest
-sql_execute drop dbproc buyconfirm
-sql_execute drop dbproc shoppingcart
+sql_execute drop dbproc buy_request
+sql_execute drop dbproc buy_confirm
+sql_execute drop dbproc shopping_cart
 sql_execute drop dbproc order_inquiry
 sql_execute drop dbproc order_display
 sql_execute drop dbproc product_detail
