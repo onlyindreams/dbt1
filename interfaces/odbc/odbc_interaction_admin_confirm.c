@@ -71,7 +71,7 @@ int copy_out_admin_confirm(struct eu_context_t *euc, union odbc_data_t *odbcd)
 int execute_admin_confirm(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 {
 	SQLRETURN rc;
-	int i, j;
+	int j;
 
 	/* Perpare statement for Admin Confirm interaction. */
 	rc = SQLPrepare(odbcc->hstmt, STMT_ADMIN_CONFIRM, SQL_NTS);

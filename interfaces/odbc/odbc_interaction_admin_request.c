@@ -51,7 +51,7 @@ int copy_out_admin_request(struct eu_context_t *euc, union odbc_data_t *odbcd)
 int execute_admin_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 {
 	SQLRETURN rc;
-	int i, j;
+	int j;
 
 	/* Perpare statement for Admin Request interaction. */
 	rc = SQLPrepare(odbcc->hstmt, STMT_ADMIN_REQUEST, SQL_NTS);

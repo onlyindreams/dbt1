@@ -67,7 +67,7 @@ int copy_out_product_detail(struct eu_context_t *euc, union odbc_data_t *odbcd)
 int execute_product_detail(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 {
 	SQLRETURN rc;
-	int i, j;
+	int j;
 
 	/* Perpare statement for Product Detail interaction. */
 	rc = SQLPrepare(odbcc->hstmt, STMT_PRODUCT_DETAIL, SQL_NTS);
