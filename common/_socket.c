@@ -16,7 +16,7 @@
 
 int _connect(char *address, unsigned short port)
 {
-	int sockfd;
+	int sockfd = 0;
 	struct sockaddr_in sa;
 	struct hostent *he;
 	in_addr_t addr;
