@@ -44,10 +44,12 @@ int main(int argc, char *argv[])
 	FILE *p;
 	char pwd[256];
 	char cmd[256];
+	/* directory where the datafile will be put */
+	char path[256];
 
-	if (argc != 3)
+	if (argc != 4)
 	{
-		printf("Usage: %s <items> <ebs>\n", argv[0]);
+		printf("Usage: %s <items> <ebs> <path>\n", argv[0]);
 		return 1;
 	}
 
@@ -65,9 +67,16 @@ int main(int argc, char *argv[])
 	}
 
 	ebs = atoi(argv[2]);
+	strcpy(path, argv[3]);
+
+	p = popen("pwd", "r");
+	fscanf(p, "%s", pwd);
+	printf("%s\n", pwd);
+	if (strcmp(path, ".")==0) strcpy(path, pwd);
 
 	printf("item scale factor	%d\n", items);
 	printf("EB scale factor		%d\n", ebs);
+	printf("data file is in	%s\n", path);
 
 	printf("generating sequence creation file: %s\n", SEQUENCE_SQL);
 	sequence_sql = fopen64(SEQUENCE_SQL, "w");
@@ -94,35 +103,32 @@ int main(int argc, char *argv[])
 	init_common();
 	load_dists();
 	printf("generating data files...\n");
-	gen_items(items);
-	gen_customers(ebs);
-	gen_authors(items);
-	gen_addresses(ebs);
-	gen_orders(ebs, items);
+	gen_items(items, path);
+	gen_customers(ebs, path);
+	gen_authors(items, path);
+	gen_addresses(ebs, path);
+	gen_orders(ebs, items, path);
 
 	/*
 	 * In my environment, I don't have enough /tmp space to put the data files
 	 * in /tmp.
 	 */
-	p = popen("pwd", "r");
-	fscanf(p, "%s", pwd);
-	printf("%s\n", pwd);
 	printf("creating links in /tmp to data files...\n");
-	sprintf(cmd, "ln -fs %s/address.data /tmp/address.data", pwd);
+	sprintf(cmd, "ln -fs %s/address.data /tmp/address.data", path);
 	popen(cmd, "r");
-	sprintf(cmd, "ln -fs %s/address.data /tmp/address.data", pwd);
+	sprintf(cmd, "ln -fs %s/address.data /tmp/address.data", path);
 	popen(cmd, "r");
-	sprintf(cmd, "ln -fs %s/author.data /tmp/author.data", pwd);
+	sprintf(cmd, "ln -fs %s/author.data /tmp/author.data", path);
 	popen(cmd, "r");
-	sprintf(cmd, "ln -fs %s/customer.data /tmp/customer.data", pwd);
+	sprintf(cmd, "ln -fs %s/customer.data /tmp/customer.data", path);
 	popen(cmd, "r");
-	sprintf(cmd, "ln -fs %s/item.data /tmp/item.data", pwd);
+	sprintf(cmd, "ln -fs %s/item.data /tmp/item.data", path);
 	popen(cmd, "r");
-	sprintf(cmd, "ln -fs %s/orders.data /tmp/orders.data", pwd);
+	sprintf(cmd, "ln -fs %s/orders.data /tmp/orders.data", path);
 	popen(cmd, "r");
-	sprintf(cmd, "ln -fs %s/order_line.data /tmp/order_line.data", pwd);
+	sprintf(cmd, "ln -fs %s/order_line.data /tmp/order_line.data", path);
 	popen(cmd, "r");
-	sprintf(cmd, "ln -fs %s/cc_xacts.data /tmp/cc_xacts.data", pwd);
+	sprintf(cmd, "ln -fs %s/cc_xacts.data /tmp/cc_xacts.data", path);
 	popen(cmd, "r");
 	sprintf(cmd, "ln -fs %s/country.data /tmp/country.data", pwd);
 	popen(cmd, "r");
