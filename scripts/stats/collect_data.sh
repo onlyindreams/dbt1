@@ -10,28 +10,8 @@ CPUS=$3
 RESULTS_PATH=$4
 RUN_DURATION=$(($INTERVAL * $COUNT))
 
-rm -rf run.sar.data
-
-echo "sapdb cache info before run" > $RESULTS_PATH/mcache_prerun.out.txt
-/opt/sapdb/depend/bin/dbmcli -s -d DBT1 -u dba,dba -uSQL dbt,dbt "sql_execute select * from monitor_caches" >> $RESULTS_PATH/mcache_prerun.out.txt
-
-echo "sapdb load info before run" > $RESULTS_PATH/mload_prerun.out.txt
-/opt/sapdb/depend/bin/dbmcli -s -d DBT1 -u dba,dba -uSQL dbt,dbt "sql_execute select * from monitor_load" >> $RESULTS_PATH/mload_prerun.out.txt
-
-echo "sapdb lock info before run" > $RESULTS_PATH/mlock_prerun.out.txt
-/opt/sapdb/depend/bin/dbmcli -s -d DBT1 -u dba,dba -uSQL dbt,dbt "sql_execute select * from monitor_lock" >> $RESULTS_PATH/mlock_prerun.out.txt
-
-echo "sapdb log info before run" > $RESULTS_PATH/mlog_prerun.out.txt
-/opt/sapdb/depend/bin/dbmcli -s -d DBT1 -u dba,dba -uSQL dbt,dbt "sql_execute select * from monitor_log" >> $RESULTS_PATH/mlog_prerun.out.txt
-
-echo "sapdb pages info before run" > $RESULTS_PATH/mpages_prerun.out.txt
-/opt/sapdb/depend/bin/dbmcli -s -d DBT1 -u dba,dba -uSQL dbt,dbt "sql_execute select * from monitor_pages" >> $RESULTS_PATH/mpages_prerun.out.txt
-
-echo "sapdb row info before run" > $RESULTS_PATH/mrow_prerun.out.txt
-/opt/sapdb/depend/bin/dbmcli -s -d DBT1 -u dba,dba -uSQL dbt,dbt "sql_execute select * from monitor_row" >> $RESULTS_PATH/mrow_prerun.out.txt
-
-echo "sapdb row info before trans" > $RESULTS_PATH/mtrans_prerun.out.txt
-/opt/sapdb/depend/bin/dbmcli -s -d DBT1 -u dba,dba -uSQL dbt,dbt "sql_execute select * from monitor_trans" >> $RESULTS_PATH/mtrans_prerun.out.txt
+#get database statistics
+./db_stats.sh $SID1 $RESULTS_PATH $COUNT $INTERVAL &
 
 if [ -f ./run.sar.data ]; then
 	rm ./run.sar.data
@@ -107,24 +87,3 @@ echo `uname -a` >>$RESULTS_PATH/swap.csv
 sar -W -f ./run.sar.data | tee -a $RESULTS_PATH/swap.txt | awk '{ if (NR>2) { if ($1!="Average:") {print $3","$4;} else { print $2","$3;}}}'>>$RESULTS_PATH/swap.csv
 
 #../../tools/results ../../dbdriver/mix.log > $RESULTS_PATH/BT
-echo "sapdb cache info after run" > $RESULTS_PATH/mcache_postrun.out.txt
-/opt/sapdb/depend/bin/dbmcli -s -d DBT1 -u dba,dba -uSQL dbt,dbt "sql_execute select * from monitor_caches" > $RESULTS_PATH/mcache_postrun.out.txt
-
-echo "sapdb load info after run" > $RESULTS_PATH/mload_postrun.out.txt
-/opt/sapdb/depend/bin/dbmcli -s -d DBT1 -u dba,dba -uSQL dbt,dbt "sql_execute select * from monitor_load" >> $RESULTS_PATH/mload_postrun.out.txt
-
-echo "sapdb lock info after run" > $RESULTS_PATH/mlock_postrun.out.txt
-/opt/sapdb/depend/bin/dbmcli -s -d DBT1 -u dba,dba -uSQL dbt,dbt "sql_execute select * from monitor_lock" >> $RESULTS_PATH/mlock_postrun.out.txt
-
-echo "sapdb log info after run" > $RESULTS_PATH/mlog_postrun.out.txt
-/opt/sapdb/depend/bin/dbmcli -s -d DBT1 -u dba,dba -uSQL dbt,dbt "sql_execute select * from monitor_log" >> $RESULTS_PATH/mlog_postrun.out.txt
-
-echo "sapdb pages info after run" > $RESULTS_PATH/mpages_postrun.out.txt
-/opt/sapdb/depend/bin/dbmcli -s -d DBT1 -u dba,dba -uSQL dbt,dbt "sql_execute select * from monitor_pages" >> $RESULTS_PATH/mpages_postrun.out.txt
-
-echo "sapdb row info after run" > $RESULTS_PATH/mrow_postrun.out.txt
-/opt/sapdb/depend/bin/dbmcli -s -d DBT1 -u dba,dba -uSQL dbt,dbt "sql_execute select * from monitor_row" >> $RESULTS_PATH/mrow_postrun.out.txt
-
-echo "sapdb row info after trans" > $RESULTS_PATH/mtrans_postrun.out.txt
-/opt/sapdb/depend/bin/dbmcli -s -d DBT1 -u dba,dba -uSQL dbt,dbt "sql_execute select * from monitor_trans" >> $RESULTS_PATH/mtrans_postrun.out.txt
-
