@@ -7,11 +7,13 @@
 #
 # Copyright (C) 2002 Open Source Development Lab, Inc.
 #
-# Author NAGAYASU Satoshi, Jenny Zhang
-#
-# Contributer:   Virginie Megy & Thierry Missimilly
+# History:
+# Feb 2001: Original version created by Mark Wong & Jenny Zhang for SAPDB
+# Apr 2003: Rewritten for PostgreSQL by
+#           Virginie Megy & Thierry Missimilly
 #                Bull, Linux Competence Center
-# June 2003
+# May 2003: Jenny Zhang created set_db_env
+# June 2003: Merged NAGAYASU Satoshi's checking error code 
 
 # pgsql does not create db successfully if createdb is moved to set_db_env.sh
 ./set_db_env.sh
