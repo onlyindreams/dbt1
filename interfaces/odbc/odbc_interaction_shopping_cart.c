@@ -277,8 +277,8 @@ int execute_shopping_cart(struct odbc_context_t *odbcc,  union odbc_data_t *odbc
 	rc = SQLExecute(odbcc->hstmt);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
-		if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
-			return W_ERROR;
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+		return W_ERROR;
 	}
 
 	return W_OK;

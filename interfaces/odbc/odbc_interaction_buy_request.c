@@ -423,8 +423,8 @@ int execute_buy_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 #ifdef DEBUG
 		printf("error rc %d\n", rc);
 #endif /* DEBUG */
-		if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
-			 return W_ERROR;
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+		return W_ERROR;
 	}
 #ifdef DEBUG
 	printf("after exec c_fname %s\n", odbcd->buy_request_odbc_data.eb.c_fname);
