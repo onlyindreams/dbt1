@@ -58,7 +58,8 @@ int execute_search_request(struct db_context_t *odbcc,
 	}
 
 	/* Generate random number for Promotional Processing. */
-	data->pp_data.i_id = (UDWORD) get_random((long long) item_count) + 1;
+	data->pp_data.i_id =
+		(UDWORD) get_random_int(item_count) + 1;
 
 	/* Execute stored procedure. */
 	rc = SQLExecute(odbcc->hstmt);

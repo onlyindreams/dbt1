@@ -22,13 +22,16 @@ int execute_search_results(struct db_context_t *odbcc,
 	switch (data->search_type)
 	{
 		case SEARCH_AUTHOR:
-			rc = SQLPrepare(odbcc->hstmt, STMT_SEARCH_RESULTS_AUTHOR, SQL_NTS);
+			rc = SQLPrepare(odbcc->hstmt,
+				STMT_SEARCH_RESULTS_AUTHOR, SQL_NTS);
 			break;
 		case SEARCH_SUBJECT:
-			rc = SQLPrepare(odbcc->hstmt, STMT_SEARCH_RESULTS_SUBJECT, SQL_NTS);
+			rc = SQLPrepare(odbcc->hstmt,
+			STMT_SEARCH_RESULTS_SUBJECT, SQL_NTS);
 			break;
 		case SEARCH_TITLE:
-			rc = SQLPrepare(odbcc->hstmt, STMT_SEARCH_RESULTS_TITLE, SQL_NTS);
+			rc = SQLPrepare(odbcc->hstmt,
+			STMT_SEARCH_RESULTS_TITLE, SQL_NTS);
 			break;
 		default:
 			return W_ERROR;
@@ -130,7 +133,8 @@ int execute_search_results(struct db_context_t *odbcc,
 	}
 
 	/* Generate random number for Promotional Processing. */
-	data->pp_data.i_id = (UDWORD) get_random((long long) item_count) + 1;
+	data->pp_data.i_id =
+		(UDWORD) get_random_int(item_count) + 1;
 
 	/* Execute stored procedure. */
 	rc = SQLExecute(odbcc->hstmt);

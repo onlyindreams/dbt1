@@ -263,7 +263,7 @@ int execute_buy_confirm(struct db_context_t *odbcc,
 	}
 
 	/* Generate random day between 1 to 7 for ship_date. */
-	ship_day = get_random(7) + 1;
+	ship_day = get_random_int(7) + 1;
 	/* get authentication id from PGE */
 	strcpy(cx_auth_id, "012345678912345");
 	/* generate a_string[20..100] as order_line comment */

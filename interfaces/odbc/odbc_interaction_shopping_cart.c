@@ -132,8 +132,8 @@ int execute_shopping_cart(struct db_context_t *odbcc,
 		}
 		rc = SQLBindParameter(odbcc->hstmt,
 			j++, SQL_PARAM_OUTPUT, SQL_C_CHAR, SQL_VARCHAR, 0, 0,
-			data->scl_data[i].i_backing, sizeof(data->scl_data[i].i_backing),
-			NULL);
+			data->scl_data[i].i_backing,
+			sizeof(data->scl_data[i].i_backing), NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
 			LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
@@ -169,13 +169,13 @@ int execute_shopping_cart(struct db_context_t *odbcc,
 		}
 	}
 
-	/* generate random item if add_flag == FALSE and empty (i_id, qty) pair*/
+	/* generate random item if add_flag == FALSE and empty (i_id, qty) pair */
 	if (data->sc_size == 0 && data->add_flag == FALSE)
 	{
-		data->i_id = (UDWORD) get_random((long long)item_count) + 1;
+		data->i_id = (UDWORD) get_random_int(item_count) + 1;
 	}
 	/* Generate random number for Promotional Processing. */
-	data->pp_data.i_id = get_random(item_count) + 1;
+	data->pp_data.i_id = get_random_int(item_count) + 1;
 
 	/* Execute stored procedure. */
 	rc = SQLExecute(odbcc->hstmt);

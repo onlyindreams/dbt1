@@ -913,7 +913,7 @@ int get_next_interaction(int prev_interaction)
 	int threshold;
 	int i;
 
-	threshold = (int) get_random(10000);
+	threshold = get_random_int(10000);
 	for (i = 0; i < INTERACTION_TOTAL; i++)
 	{
 		if (mix_matrix[prev_interaction][i] != 0 &&
@@ -1440,9 +1440,9 @@ int prepare_admin_confirm(struct eu_context_t *euc)
 {
 	euc->admin_confirm_data.i_id = euc->admin_request_data.i_id;
 	euc->admin_confirm_data.i_cost =
-		(1.0 - (double) get_random(6) / 10.0) * euc->admin_request_data.i_srp;
-	euc->admin_confirm_data.i_image = (int) get_random(item_count);
-	euc->admin_confirm_data.i_thumbnail = (int) get_random(item_count);
+		(1.0 - (double) get_random_int(6) / 10.0) * euc->admin_request_data.i_srp;
+	euc->admin_confirm_data.i_image = get_random_int(item_count) + 1;
+	euc->admin_confirm_data.i_thumbnail = get_random_int(item_count) + 1;
 
 	return OK;
 }
@@ -1465,7 +1465,7 @@ int prepare_best_sellers(struct eu_context_t *euc)
 	euc->previous_search_interaction = BEST_SELLERS;
 
 	strcpy(euc->best_sellers_data.i_subject,
-		i_subject[(int) get_random(I_SUBJECT_MAX)]);
+		i_subject[get_random_int(I_SUBJECT_MAX)]);
 
 	return OK;
 }
@@ -1482,7 +1482,7 @@ int prepare_buy_confirm(struct eu_context_t *euc)
 	euc->buy_confirm_data.sc_id = euc->sc_id;
 
 	strcpy(euc->buy_confirm_data.cx_type,
-		cx_type[(int) get_random(CX_TYPE_MAX)]);
+		cx_type[get_random_int(CX_TYPE_MAX)]);
 
 	get_n_string(euc->buy_confirm_data.cx_num, 16, 16);
 
@@ -1490,7 +1490,7 @@ int prepare_buy_confirm(struct eu_context_t *euc)
 		euc->buy_request_data.c_fname, euc->buy_request_data.c_lname);
 
 	time(&t1);
-	t1 += 86400 + (int) get_random(63158400);
+	t1 += 86400 + get_random_int(63158400);
 	tm1 = localtime(&t1);
 	sprintf(euc->buy_confirm_data.cx_expiry, "%04d%02d%02d",
 		tm1->tm_year + 1900, tm1->tm_mon + 1, tm1->tm_mday);
@@ -1519,7 +1519,7 @@ int prepare_buy_confirm(struct eu_context_t *euc)
 			5, ADDR_ZIP_LEN);
 
 		strcpy(euc->buy_confirm_data.shipping.co_name,
-			co_name[(int) get_random(CO_ID_MAX)]);
+			co_name[get_random_int(CO_ID_MAX)]);
 	}
 
 	return OK;
@@ -1598,7 +1598,7 @@ int prepare_buy_request(struct eu_context_t *euc)
 			5, ADDR_ZIP_LEN);
 
 		strcpy(euc->buy_request_data.address.co_name,
-			co_name[(int) get_random(CO_ID_MAX)]);
+			co_name[get_random_int(CO_ID_MAX)]);
 	}
 
 	return OK;
@@ -1638,7 +1638,7 @@ int prepare_new_products(struct eu_context_t *euc)
 	euc->previous_search_interaction = NEW_PRODUCTS;
 
 	strcpy(euc->new_products_data.i_subject,
-		i_subject[(int) get_random(I_SUBJECT_MAX)]);
+		i_subject[get_random_int(I_SUBJECT_MAX)]);
 
 	return OK;
 }
@@ -1699,17 +1699,17 @@ int prepare_product_detail(struct eu_context_t *euc)
 	if (euc->previous_search_interaction == BEST_SELLERS)
 	{
 		euc->product_detail_data.i_id =
-			euc->best_sellers_data.results_data[(int) get_random(euc->best_sellers_data.items)].i_id;
+			euc->best_sellers_data.results_data[get_random_int(euc->best_sellers_data.items)].i_id;
 	}
 	else if (euc->previous_search_interaction == NEW_PRODUCTS)
 	{
 		euc->product_detail_data.i_id =
-			euc->new_products_data.results_data[(int) get_random(euc->new_products_data.items)].i_id;
+			euc->new_products_data.results_data[get_random_int(euc->new_products_data.items)].i_id;
 	}
 	else if (euc->previous_search_interaction == SEARCH_RESULTS)
 	{
 		euc->product_detail_data.i_id =
-			euc->search_results_data.results_data[(int) get_random(euc->search_results_data.items)].i_id;
+			euc->search_results_data.results_data[get_random_int(euc->search_results_data.items)].i_id;
 	}
 	else
 	{
@@ -1734,7 +1734,7 @@ int prepare_search_results(struct eu_context_t *euc)
 {
 	euc->previous_search_interaction = SEARCH_RESULTS;
 
-	euc->search_results_data.search_type = (int) get_random(SEARCH_TYPE_MAX);
+	euc->search_results_data.search_type = get_random_int(SEARCH_TYPE_MAX);
 	switch(euc->search_results_data.search_type)
 	{
 		case SEARCH_AUTHOR:
@@ -1747,7 +1747,7 @@ int prepare_search_results(struct eu_context_t *euc)
 			break;
 		case SEARCH_SUBJECT:
 			strcpy(euc->search_results_data.search_string,
-				i_subject[(int) get_random(I_SUBJECT_MAX)]);
+				i_subject[get_random_int(I_SUBJECT_MAX)]);
 			break;
 		default:
 			LOG_ERROR_MESSAGE("invalid search type %d\n",
@@ -1786,41 +1786,45 @@ int prepare_shopping_cart(struct eu_context_t *euc)
 		int i;
 
 		/*
-		 * If the previous interaction was Shopping Cart then the user must
-		 * be updating the quantity of items in the shopping cart.  Update
-		 * the quantity for each item to update the shopping cart.
+		 * If the previous interaction was Shopping Cart then the user
+		 * must be updating the quantity of items in the shopping cart.
+		 * Update the quantity for each item to update the shopping
+		 * cart.
 		 */
 		euc->shopping_cart_data.add_flag = FALSE;
 
 		/* clause 2.4.5.1 if there is only one (i_id, qty) pair, qty is 
 		   a random number between 1 and 10 */
-		if (euc->shopping_cart_data.sc_size==1)
-			euc->shopping_cart_data.scl_data[0].scl_qty=get_random(10)+1;
+		if (euc->shopping_cart_data.sc_size == 1)
+			euc->shopping_cart_data.scl_data[0].scl_qty =
+				get_random_int(10) + 1;
 		/* else select a random number between 1 and one less than the 
 		   number of pairs.
 		   for each selected pair, the qty is set to a random number 
 		   between 0 and 10 */
 		else 
 		{
-			update_flag = (int *)malloc(sizeof(int)*euc->shopping_cart_data.sc_size);
-			for (i=0;i<euc->shopping_cart_data.sc_size; i++)
-				update_flag[i]=0;
-			update_done=0;
+			update_flag =
+				(int *) malloc(sizeof(int) * euc->shopping_cart_data.sc_size);
+			for (i = 0;i < euc->shopping_cart_data.sc_size; i++)
+				update_flag[i] = 0;
+			update_done = 0;
 
-			random_pairs=get_random(euc->shopping_cart_data.sc_size-1)+1;
-			for (i=0; i<random_pairs; i++)
+			random_pairs = get_random_int(euc->shopping_cart_data.sc_size) + 1;
+			for (i = 0; i < random_pairs; i++)
 			{
 				while (update_done == 0)
 				{
-					update_index=get_random(euc->shopping_cart_data.sc_size);
+					update_index =
+						get_random_int(euc->shopping_cart_data.sc_size);
 					if (update_flag[update_index] == 0)
 					{
-						euc->shopping_cart_data.scl_data[update_index].scl_qty=get_random(11);
-						update_flag[update_index]=1;
-						update_done=1;
+						euc->shopping_cart_data.scl_data[update_index].scl_qty = get_random_int(10) + 1;
+						update_flag[update_index] = 1;
+						update_done = 1;
 					}
 				}
-				update_done=0;
+				update_done = 0;
 			}
 			free(update_flag);
 		}	
@@ -1828,8 +1832,8 @@ int prepare_shopping_cart(struct eu_context_t *euc)
 	else
 	{
 		/*
-		 * If the previous interaction was Product Detail, then the user must
-		 * be adding an item into the shopping cart.
+		 * If the previous interaction was Product Detail, then the
+		 * user must be adding an item into the shopping cart.
 		 */
 		euc->shopping_cart_data.add_flag = TRUE;
 		euc->shopping_cart_data.i_id = euc->product_detail_data.i_id;

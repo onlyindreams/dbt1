@@ -248,7 +248,8 @@ int execute_buy_request(struct db_context_t *odbcc,
 		}
 		rc = SQLBindParameter(odbcc->hstmt,
 			j++, SQL_PARAM_OUTPUT, SQL_C_CHAR, SQL_VARCHAR, 0, 0,
-			data->scl_data[i].i_title, sizeof(data->scl_data[i].i_title), NULL);
+			data->scl_data[i].i_title,
+			sizeof(data->scl_data[i].i_title), NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
 			LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
@@ -275,8 +276,8 @@ int execute_buy_request(struct db_context_t *odbcc,
 		}
 		rc = SQLBindParameter(odbcc->hstmt,
 			j++, SQL_PARAM_OUTPUT, SQL_C_CHAR, SQL_VARCHAR, 0, 0,
-			data->scl_data[i].i_backing, sizeof(data->scl_data[i].i_backing),
-			NULL);
+			data->scl_data[i].i_backing,
+			sizeof(data->scl_data[i].i_backing), NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
 			LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
@@ -298,7 +299,7 @@ int execute_buy_request(struct db_context_t *odbcc,
 	/* discount is random number between 0.00 to 0.50 */
 	if (data->returning_flag == FALSE)
 	{
-		data->c_discount=((double)get_random(50)+1.0)/100.0;
+		data->c_discount = ((double) get_random_int(51) + 1.0) / 100.0;
 	}
 
 	/* Execute stored procedure. */
