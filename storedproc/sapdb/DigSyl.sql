@@ -22,7 +22,7 @@ set i=0;
 while i<N do begin
   set digits=D DIV base;
   set start=digits*2+1;
-  set Str=Str||SUBSTR('BAOGALRIRESEATILINNG', start, 2);
+  set Str=Str||SUBSTR('BAOGALRIRESEATULINNG', start, 2);
   set D=D MOD base;
   set base=base DIV 10;
   set i=i+1;
