@@ -65,7 +65,7 @@ struct Queue TxnQ;
 /*mutex for each each entry in the queue, this is used to 
   notify the DoConnection thread that the transaction is done
 */
-pthread_mutex_t *queue_entry_mutex;
+struct condition_bundle_t *queue_entry_condition;
 
 #ifdef GET_TIME
 FILE *timefp;
@@ -177,8 +177,8 @@ void *DoConnection(void *fd)
 	int QIndex;
 	struct QItem TxnQItem;
 #ifdef GET_TIME
-	struct timeval receive_request_time,  send_response_time;
-	double server_response_time, db_response_time;
+	struct timeval receive_request_time,  send_response_time, t1;
+	double server_response_time, db_response_time, server_db_time;
 #endif
 	
 	sf = (int *)(fd);
@@ -211,22 +211,34 @@ void *DoConnection(void *fd)
 			pthread_exit(NULL);
 		}
 		pthread_mutex_unlock(&queue_mutex);
+
 		sem_post(&TxnQSem);
+#ifdef GET_TIME
+		if (gettimeofday(&t1, NULL)== -1)
+		{
+			LOG_ERROR_MESSAGE("gettimeofday failed");
+		}
+#endif
 		/* wait for transation done */
 #ifdef DEBUG
 		DEBUGMSG("pthread_id%ld: wait for txn done...", pthread_self());
 #endif
-		pthread_mutex_lock(&queue_entry_mutex[QIndex]);
+		pthread_mutex_lock(&queue_entry_condition[QIndex].condition_mutex);
+		while (!queue_entry_condition[QIndex].txn_done_flag)
+			pthread_cond_wait(&queue_entry_condition[QIndex].txn_done_cv, &queue_entry_condition[QIndex].condition_mutex);
+		queue_entry_condition[QIndex].txn_done_flag=0;
+		pthread_mutex_unlock(&queue_entry_condition[QIndex].condition_mutex);
+			
 #ifdef DEBUG
 		DEBUGMSG("pthread_id%ld: got it, txn done", pthread_self());
 #endif
-		pthread_mutex_unlock(&queue_entry_mutex[QIndex]);
 #ifdef GET_TIME
 		if (gettimeofday(&send_response_time, NULL)== -1)
 		{
 			LOG_ERROR_MESSAGE("gettimeofday failed");
 		}
 		server_response_time=time_diff(receive_request_time, send_response_time);
+		server_db_time=time_diff(t1,send_response_time);
 		switch (TxnQItem.TxnType)
 		{
 			case ADMIN_CONFIRM:
@@ -270,9 +282,9 @@ void *DoConnection(void *fd)
 				break;
 		}
 		pthread_mutex_lock(&time_log_mutex);
-		fprintf(timefp, "%s, total %f, db %f\n",
+		fprintf(timefp, "%s, total %f, db %f, server_db_time %f\n",
 			interaction_short_name[TxnQItem.TxnType], 
-			server_response_time, db_response_time);
+			server_response_time, db_response_time, server_db_time);
 		fflush(timefp);
 		pthread_mutex_unlock(&time_log_mutex);
 #endif
