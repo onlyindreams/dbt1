@@ -95,23 +95,29 @@ CREATE DBPROC shoppingcart(IN C_ID fixed(10), INOUT sc_id fixed(10),
   OUT pp_i_id3 fixed(10), OUT pp_i_t3 fixed(10),
   OUT pp_i_id4 fixed(10), OUT pp_i_t4 fixed(10),
   OUT pp_i_id5 fixed(10), OUT pp_i_t5 fixed(10)) AS
+VAR sc_subtotal fixed(17,2);
 BEGIN
-  IF sc_id=0 THEN begin
-     CALL createSC(:c_id, :sc_id);
-  end;
-  IF (add_flag=1 or (add_flag=0 and itemcount=0)) THEN 
-    CALL addToSC(:sc_id, :add_flag, :i_id)
-  ELSE  CALL refreshSC(:sc_id, :itemcount, 
-    :i_id1, :qty1, :i_id2, :qty2,
-    :i_id3,  :qty3, :i_id4, :qty4, 
-    :i_id5, :qty5, :i_id6, :qty6, 
-    :i_id7, :qty7, :i_id8, :qty8, 
-    :i_id9, :qty9, :i_id10, :qty10, 
-    :i_id11, :qty11, :i_id12, :qty12, 
-    :i_id13, :qty13, :i_id14, :qty14, 
-    :i_id15, :qty15, :i_id16, :qty16,
-    :i_id17, :qty17, :i_id18, :qty18, 
-    :i_id19, :qty19, :i_id20, :qty20);
+  IF (add_flag=1 or (sc_id=0 and add_flag=0 and itemcount=0) or (add_flag=0 and itemcount <> 0)) THEN
+    BEGIN
+    IF sc_id=0 THEN CALL createSC(:c_id, :sc_id);
+    IF (add_flag=1 or (add_flag=0 and itemcount=0)) THEN 
+      CALL addToSC(:sc_id, :add_flag, :i_id)
+    ELSE 
+      CALL refreshSC(:sc_id, :itemcount, 
+      :i_id1, :qty1, :i_id2, :qty2,
+      :i_id3,  :qty3, :i_id4, :qty4, 
+      :i_id5, :qty5, :i_id6, :qty6, 
+      :i_id7, :qty7, :i_id8, :qty8, 
+      :i_id9, :qty9, :i_id10, :qty10, 
+      :i_id11, :qty11, :i_id12, :qty12, 
+      :i_id13, :qty13, :i_id14, :qty14, 
+      :i_id15, :qty15, :i_id16, :qty16,
+      :i_id17, :qty17, :i_id18, :qty18, 
+      :i_id19, :qty19, :i_id20, :qty20);
+    CALL getSCSubTotal(:sc_id, :sc_subtotal);
+    UPDATE dbt.shopping_cart SET sc_sub_total=:sc_subtotal, sc_date=timestamp
+      WHERE sc_id=:sc_id;
+  END;
   call getSCDetail(:sc_id, :itemcount,
     :scl_i_id1, :scl_title1, :scl_cost1, :scl_srp1, :scl_backing1, :scl_qty1,
     :scl_i_id2, :scl_title2, :scl_cost2, :scl_srp2, :scl_backing2, :scl_qty2,
