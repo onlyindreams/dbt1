@@ -19,4 +19,5 @@ psql -d $SID1 -f cc_xacts.sql &
 psql -d $SID1 -f address.sql &
 psql -d $SID1 -f item.sql &
 psql -d $SID1 -f customer.sql &
+psql -d $SID1 -f create_sequence.sql &
 wait
