@@ -54,6 +54,7 @@ param_put CAT_CACHE_SUPPLY 300
 param_put DATA_CACHE 2500
 param_put MAXDATADEVSPACES 5
 param_put MAXDATAPAGES 4096000
+param_put _IDXFILE_LIST_SIZE 8192
 param_put _PACKET_SIZE 131072
 param_checkall
 param_commitsession
