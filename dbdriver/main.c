@@ -11,6 +11,8 @@
  */
 
 #include <stdlib.h>
+#include <unistd.h>
+#include <time.h>
 #include <common.h>
 #include <eu.h>
 
@@ -20,17 +22,21 @@
  */
 int main(int argc, char *argv[])
 {
-	int eus, rampuprate, duration, port;
+	int eus, rampuprate, duration;
 	double think_time;
 	int running_eus;
-	char sname[32], uname[32], auth[32];
+	char sname[32];
 	time_t stop_time;
 #ifdef PHASE1
+	char uname[32], auth[32];
 #ifdef SEARCH_RESULTS_CACHE
 	char cache_host[32];
 	int cache_port;
-#endif
-#endif
+#endif /* SEARCH_RESULTS_CACHE */
+#endif /* PHASE1 */
+#ifdef PHASE2
+	int port;
+#endif /* PHASE2 */
 
 
 #ifdef PHASE1
