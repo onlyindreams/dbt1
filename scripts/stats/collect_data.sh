@@ -10,7 +10,7 @@ if [ -f ./run.sar.data ]; then
 	rm ./run.sar.data
 fi
 
-sar -u -U ALL -d -B -r -q -W -o run.sar.data 1 3 &
+sar -u -U ALL -d -B -r -q -W -o run.sar.data $1 $2 &
 sh ./io.sh $1 $2 $RESULTS_PATH &
 sh ./runtop.sh $1 $2 $RESULTS_PATH &
 
