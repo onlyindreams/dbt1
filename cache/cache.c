@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
 
 		if (pthread_create (&warm_up_thread[i], NULL, warm_up_cache, (void *)&range[i]) != 0)
 		{
-			perror("warm_up thread create failed");
+			printf("warm_up thread create failed");
 			return -1;
 		}
 
@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
 
 	if (mastersock < 0)
 	{
-		perror("init cache server master socket failed\n");
+		printf("init cache server master socket failed\n");
 		return -1;
 	}
 
