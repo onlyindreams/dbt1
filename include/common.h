@@ -160,5 +160,6 @@ extern const char *o_status[O_STATUS_MAX];
 extern const char *search_type[SEARCH_TYPE_MAX];
 extern const char *syl[10];
 extern int item_count;
+extern const char *interaction_short_name[INTERACTION_TOTAL];
 
 #endif /* _COMMON_H_ */

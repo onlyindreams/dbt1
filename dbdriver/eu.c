@@ -98,12 +98,6 @@ int a;
 time_t stop_time;
 double think_time_mean;
 
-const char *interaction_short_name[INTERACTION_TOTAL] =
-{
-	"AC", "AR", "BS", "BC", "BR", "CR", "HO", "NP", "OD", "OI", "PD", "SR",
-	"SU", "SC"
-};
-
 int mix_matrix[INTERACTION_TOTAL][INTERACTION_TOTAL];
 
 /* Log Files */

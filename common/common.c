@@ -104,6 +104,12 @@ const char *search_type[SEARCH_TYPE_MAX] =
 	"Author", "Title", "Subject"
 };
 
+const char *interaction_short_name[INTERACTION_TOTAL] =
+{
+	"AC", "AR", "BS", "BC", "BR", "CR", "HO", "NP", "OD", "OI", "PD", "SR",
+	"SU", "SC"
+};
+
 
 FILE *log_error;
 #ifdef DEBUG

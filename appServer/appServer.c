@@ -71,11 +71,6 @@ struct condition_bundle_t *queue_entry_condition;
 #ifdef GET_TIME
 FILE *timefp;
 pthread_mutex_t time_log_mutex=PTHREAD_MUTEX_INITIALIZER;
-const char *interaction_short_name[INTERACTION_TOTAL] =
-{
-	"AC", "AR", "BS", "BC", "BR", "CR", "HO", "NP", "OD", "OI", "PD", "SR",
-	"SU", "SC"
-};
 #endif
 
 #ifdef SEARCH_RESULTS_CACHE
