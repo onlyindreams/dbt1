@@ -8,24 +8,23 @@
  *
  */
 
-#include <sys/time.h>
-#include <unistd.h>
-#include <semaphore.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthread.h>
+#include <sys/time.h>
+#include <unistd.h>
 #include <string.h>
 #include <errno.h>
 #include <time.h>
 #include <ctype.h>
 #include <sys/types.h>
 #include <signal.h>
+
+#include <common.h>
+#include <_socket.h>
 #include <cache.h>
 #include <cache_interface.h>
-#include <common.h>
-#include <odbc_interaction.h>
-#include <odbc_interaction_search_results.h>
-#include <_socket.h>
+#include <db.h>
 
 struct search_results *author_results_table;
 struct search_results *title_results_table;
@@ -82,7 +81,8 @@ int main(int argc, char *argv[])
 
 	if (argc < 13)
 	{
-		printf("usage: %s -d <dbnodename> -u <username> -p <password> -l <port> -c <db_connection> -i <items> [-o <output_dir>] [-s 1]\n", argv[0]);
+		printf("usage: %s -d <dbnodename> -u <username> -p <password> -l <port>\n", argv[0]);
+		printf("          -c <db_connection> -i <items> [-o <output_dir>] [-s 1]\n");
 		return -1;
 	}
 
@@ -151,18 +151,20 @@ int main(int argc, char *argv[])
 
 	printf("The cache server is active...\n");
 
-	connectioncount=0;
+	connectioncount = 0;
 	while (1) {
 		addrlen = sizeof(socketaddr);
 		pthread_mutex_lock(&mutex_cache_server);
-		workersock = accept(mastersock, (struct sockaddr *)&socketaddr, (socklen_t *)&addrlen);
+		workersock = accept(mastersock, (struct sockaddr *) &socketaddr,
+			(socklen_t *)&addrlen);
 		if (workersock < 0) {
-			LOG_ERROR_MESSAGE("accept couldn't open worker socket, errno %d", errno);
+			LOG_ERROR_MESSAGE("accept couldn't open worker socket, errno %d",
+			errno);
 		}
 
 		connectioncount++;
-		printf("got %d connection\n", connectioncount);
-		if ((rec=pthread_create(&connect_thread, NULL, cache_thread, &workersock)) != 0)    
+		if ((rec = pthread_create(&connect_thread, NULL, cache_thread,
+			&workersock)) != 0)    
 		{
 			LOG_ERROR_MESSAGE("pthread_create failed, rec=%d", rec);
 			return -1;
@@ -178,11 +180,11 @@ int main(int argc, char *argv[])
 
 void sighandler(int signum)
 {
-	if (signum==SIGUSR1)
+	if (signum == SIGUSR1)
 		printf("connect to database failed\n");
-	else if (signum==SIGUSR2)
+	else if (signum == SIGUSR2)
 		printf("warm up threads failed\n");
-	else if (signum==SIGSEGV)
+	else if (signum == SIGSEGV)
 		printf("memory violation\n");
 	printf("please check error.log\n");
 	_exit(-1);
@@ -198,9 +200,9 @@ void *init_cache(void *data)
 	struct table_range *range;
 	int author_step, title_step;
 
-	if (odbc_init(sname2, uname2, auth2) != OK)
+	if (db_init(sname2, uname2, auth2) != OK)
 	{
-		printf("init_odbc environment failed\n");
+		printf("db environment initialization failed\n");
 		return NULL;
 	}
 
@@ -356,18 +358,18 @@ void *warm_up_cache(void *fd)
 {
 	struct table_range *range;
 	int rc, i, j, k;
-	struct odbc_context_t odbcc;
-	union odbc_data_t odbc_data;
+	struct db_context_t dbc;
+	union interaction_data_t data;
 
 	range = (struct table_range *)(fd);
 
 	/* Must initialize random number generator for Promotional Processing. */
 	srand(time(NULL) + pthread_self());
 
-	rc = odbc_connect(&odbcc);
+	rc = db_connect(&dbc);
 	if (rc == W_ERROR)
 	{
-		LOG_ERROR_MESSAGE("odbc_connect error\n");
+		LOG_ERROR_MESSAGE("could not connect to the database");
 		kill(0, SIGUSR1);
 		pthread_exit(NULL);
 	}
@@ -378,83 +380,81 @@ void *warm_up_cache(void *fd)
 	}
 
 	/* do search_by_author*/
-	odbc_data.search_results_odbc_data.eb.search_type = SEARCH_AUTHOR;
+	data.search_results_data.search_type = SEARCH_AUTHOR;
 	for (i = range->author_start; i <= range->author_end; i++)
 	{
-		digsyl2(odbc_data.search_results_odbc_data.eb.search_string,
+		digsyl2(data.search_results_data.search_string,
 			(long long) i + 1, (long long) 7);
-		rc = execute_search_results(&odbcc, &odbc_data);
+		rc = process_interaction(SEARCH_RESULTS, &dbc, &data);
 		if (rc == W_ERROR)
 		{
-			LOG_ERROR_MESSAGE("execute_search_results returned error");
 			kill(0, SIGUSR2);
 			pthread_exit(NULL);
 		}
 
 		/* copy the results out */
 		author_results_table[i].record_number =
-			odbc_data.search_results_odbc_data.eb.items;
+			data.search_results_data.items;
 
-		for (j = 0; j < odbc_data.search_results_odbc_data.eb.items; j++)
+		for (j = 0; j < data.search_results_data.items; j++)
 		{
 			author_results_table[i].search_results[j].i_id =
-				odbc_data.search_results_odbc_data.eb.results_data[j].i_id;
+				data.search_results_data.results_data[j].i_id;
 			strcpy(author_results_table[i].search_results[j].i_title,
-				odbc_data.search_results_odbc_data.eb.results_data[j].i_title);
+				data.search_results_data.results_data[j].i_title);
 			strcpy(author_results_table[i].search_results[j].a_fname,
-				odbc_data.search_results_odbc_data.eb.results_data[j].a_fname);
+				data.search_results_data.results_data[j].a_fname);
 			strcpy(author_results_table[i].search_results[j].a_lname,
-				odbc_data.search_results_odbc_data.eb.results_data[j].a_lname);
+				data.search_results_data.results_data[j].a_lname);
 		}
 		for (k = 0; k < PROMOTIONAL_ITEMS_MAX; k++)
 		{
 			author_results_table[i].i_related[k] =
-				odbc_data.search_results_odbc_data.eb.pp_data.i_related[k];
+				data.search_results_data.pp_data.i_related[k];
 			author_results_table[i].i_thumbnail[k] =
-				odbc_data.search_results_odbc_data.eb.pp_data.i_thumbnail[k];
+				data.search_results_data.pp_data.i_thumbnail[k];
 		}
 		status();
 	}
 
 	/* do search_by_title*/
-	odbc_data.search_results_odbc_data.eb.search_type = SEARCH_TITLE;
+	data.search_results_data.search_type = SEARCH_TITLE;
 	for (i = range->title_start; i <= range->title_end; i++)
 	{
-		digsyl2(odbc_data.search_results_odbc_data.eb.search_string,
+		digsyl2(data.search_results_data.search_string,
 			(long long) i + 1, (long long) 7);
-		rc = execute_search_results(&odbcc, &odbc_data);
+		rc = process_interaction(SEARCH_RESULTS, &dbc, &data);
 		if (rc == W_ERROR)
 		{
-			LOG_ERROR_MESSAGE("execute_search_results returned error");
 			kill(0, SIGUSR2);
 			pthread_exit(NULL);
 		}
 
 		/* copy the results out */
 		title_results_table[i].record_number =
-			odbc_data.search_results_odbc_data.eb.items;
+			data.search_results_data.items;
 
-		for (j = 0; j < odbc_data.search_results_odbc_data.eb.items; j++)
+		for (j = 0; j < data.search_results_data.items; j++)
 		{
 			title_results_table[i].search_results[j].i_id =
-				odbc_data.search_results_odbc_data.eb.results_data[j].i_id;
+				data.search_results_data.results_data[j].i_id;
 			strcpy(title_results_table[i].search_results[j].i_title,
-				odbc_data.search_results_odbc_data.eb.results_data[j].i_title);
+				data.search_results_data.results_data[j].i_title);
 			strcpy(title_results_table[i].search_results[j].a_fname,
-				odbc_data.search_results_odbc_data.eb.results_data[j].a_fname);
+				data.search_results_data.results_data[j].a_fname);
 			strcpy(title_results_table[i].search_results[j].a_lname,
-				odbc_data.search_results_odbc_data.eb.results_data[j].a_lname);
+				data.search_results_data.results_data[j].a_lname);
 		}
 		for (k = 0; k < PROMOTIONAL_ITEMS_MAX; k++)
 		{
 			title_results_table[i].i_related[k] =
-				odbc_data.search_results_odbc_data.eb.pp_data.i_related[k];
+				data.search_results_data.pp_data.i_related[k];
 			title_results_table[i].i_thumbnail[k] =
-				odbc_data.search_results_odbc_data.eb.pp_data.i_thumbnail[k];
+				data.search_results_data.pp_data.i_thumbnail[k];
 		}
 		status();
 	}
-	odbc_disconnect(&odbcc);
+	odbc_disconnect(&dbc);
 	return NULL;
 }
 
@@ -486,65 +486,86 @@ void *cache_thread(void *fd)
 		}		
 		if (rec == 0)
 		{
-			LOG_ERROR_MESSAGE("driver socket closed");
-			close(workersock);
-			pthread_exit(NULL);
-                }
-		
-		/* look up the results*/
-		index=undo_digsyl(search_results.search_string) - 1;
-		if (index < 0)
-		{
-			LOG_ERROR_MESSAGE("undo_digsyl failed");
+			LOG_ERROR_MESSAGE("app server socket closed");
 			close(workersock);
 			pthread_exit(NULL);
 		}
-		if (search_results.search_type==SEARCH_AUTHOR)
+		
+		/* look up the results*/
+		index = undo_digsyl(search_results.search_string) - 1;
+		if (index < 0)
 		{
+			bzero(&search_results, sizeof(struct search_results_t));
+			LOG_ERROR_MESSAGE("undo_digsyl returned index %s", index);
+		}
+		else if (search_results.search_type == SEARCH_AUTHOR)
+		{
+			if (index >= a_id_max)
+			{
+				bzero(&search_results, sizeof(struct search_results_t));
+				LOG_ERROR_MESSAGE("undo_digsyl returned out of range index %s", index);
+			}
 			/* copy out data */
 			search_results.items=author_results_table[index].record_number;
 			for(i=0; i<author_results_table[index].record_number; i++)
 			{
-				search_results.results_data[i].i_id=author_results_table[index].search_results[i].i_id;
-				strcpy(search_results.results_data[i].i_title, author_results_table[index].search_results[i].i_title);
-				strcpy(search_results.results_data[i].a_fname, author_results_table[index].search_results[i].a_fname);
-				strcpy(search_results.results_data[i].a_lname, author_results_table[index].search_results[i].a_lname);
+				search_results.results_data[i].i_id =
+					author_results_table[index].search_results[i].i_id;
+				strcpy(search_results.results_data[i].i_title,
+					author_results_table[index].search_results[i].i_title);
+				strcpy(search_results.results_data[i].a_fname,
+					author_results_table[index].search_results[i].a_fname);
+				strcpy(search_results.results_data[i].a_lname,
+					author_results_table[index].search_results[i].a_lname);
 			}
 			/* copy out promotion data */
-			for (i=0; i<PROMOTIONAL_ITEMS_MAX; i++)
+			for (i = 0; i < PROMOTIONAL_ITEMS_MAX; i++)
 			{
-				search_results.pp_data.i_related[i]=author_results_table[index].i_related[i];
-				search_results.pp_data.i_thumbnail[i]=author_results_table[index].i_thumbnail[i];
+				search_results.pp_data.i_related[i] =
+					author_results_table[index].i_related[i];
+				search_results.pp_data.i_thumbnail[i] =
+					author_results_table[index].i_thumbnail[i];
 			}
 		}
-		else if (search_results.search_type==SEARCH_TITLE)
+		else if (search_results.search_type == SEARCH_TITLE)
 		{
-			search_results.items=title_results_table[index].record_number;
-			/* copy out data */
-			for(i=0; i<title_results_table[index].record_number; i++)
+			if (index >= i_id_max)
 			{
-				search_results.results_data[i].i_id=title_results_table[index].search_results[i].i_id;
-				strcpy(search_results.results_data[i].i_title, title_results_table[index].search_results[i].i_title);
-				strcpy(search_results.results_data[i].a_fname, title_results_table[index].search_results[i].a_fname);
-				strcpy(search_results.results_data[i].a_lname, title_results_table[index].search_results[i].a_lname);
+				bzero(&search_results, sizeof(struct search_results_t));
+				LOG_ERROR_MESSAGE("undo_digsyl returned out of range index %s", index);
+			}
+			search_results.items = title_results_table[index].record_number;
+			/* copy out data */
+			for(i = 0; i < title_results_table[index].record_number; i++)
+			{
+				search_results.results_data[i].i_id =
+					title_results_table[index].search_results[i].i_id;
+				strcpy(search_results.results_data[i].i_title,
+					title_results_table[index].search_results[i].i_title);
+				strcpy(search_results.results_data[i].a_fname,
+					title_results_table[index].search_results[i].a_fname);
+				strcpy(search_results.results_data[i].a_lname,
+					title_results_table[index].search_results[i].a_lname);
 			}
 			/* copy out promotion data */
-			for (i=0; i<PROMOTIONAL_ITEMS_MAX; i++)
+			for (i = 0; i < PROMOTIONAL_ITEMS_MAX; i++)
 			{
-				search_results.pp_data.i_related[i]=title_results_table[index].i_related[i];
-				search_results.pp_data.i_thumbnail[i]=title_results_table[index].i_thumbnail[i];
+				search_results.pp_data.i_related[i] =
+					title_results_table[index].i_related[i];
+				search_results.pp_data.i_thumbnail[i] =
+					title_results_table[index].i_thumbnail[i];
 			}
 		}
 		else
 		{
-			LOG_ERROR_MESSAGE("wrong search type");
-			close(workersock);
-			pthread_exit(NULL);
+			LOG_ERROR_MESSAGE("invalid search type %d",
+				search_results.search_type);
+			bzero(&search_results, sizeof(struct search_results_t));
 		}		
 		
 		
 		/* send results back */
-		if ((rec=send_search_results(workersock, &search_results)) == W_ERROR)
+		if ((rec = send_search_results(workersock, &search_results)) == W_ERROR)
 		{
 			LOG_ERROR_MESSAGE("send_search_results_response failed");
 			close(workersock);
@@ -570,53 +591,56 @@ int undo_digsyl(char *search_string)
 	int i, j, k;
 	int rec, digit, base;
 
-	j=0;
-	rec=0;
-	for(i=13; i>=0; i=i-2)
+	j = 0;
+	rec = 0;
+	for(i = 13; i >= 0; i = i - 2)
 	{
-		if (search_string[i]=='A') digit=0;
-		else if (search_string[i]=='I') digit=3;
-		else if (search_string[i]=='T') digit=6;
-		else if (search_string[i]=='N') digit=8;
-		else if (search_string[i]=='G')
+		if (search_string[i] == 'A') digit = 0;
+		else if (search_string[i] == 'I') digit = 3;
+		else if (search_string[i] == 'T') digit = 6;
+		else if (search_string[i] == 'N') digit = 8;
+		else if (search_string[i] == 'G')
 		{
-			if (search_string[i-1]=='O') digit=1;
-			else if (search_string[i-1]=='N') digit=9;
+			if (search_string[i - 1] == 'O') digit = 1;
+			else if (search_string[i-1] == 'N') digit = 9;
 			else 
 			{
-				LOG_ERROR_MESSAGE("no digit for syllable %cG", search_string[i-1]);
+				LOG_ERROR_MESSAGE("no digit for syllable %cG",
+					search_string[i-1]);
 				return -1;
 			}
 		}
-		else if (search_string[i]=='L')
+		else if (search_string[i] == 'L')
 		{
-			if (search_string[i-1]=='A') digit=2;
-			else if (search_string[i-1]=='U') digit=7;
+			if (search_string[i-1] == 'A') digit = 2;
+			else if (search_string[i-1] == 'U') digit = 7;
 			else 
 			{
-				LOG_ERROR_MESSAGE("no digit for syllable %cL", search_string[i-1]);
+				LOG_ERROR_MESSAGE("no digit for syllable %cL",
+					search_string[i-1]);
 				return -1;
 			}
 		}
-		else if (search_string[i]=='E')
+		else if (search_string[i] == 'E')
 		{
-			if (search_string[i-1]=='R') digit=4;
-			else if (search_string[i-1]=='S') digit=5;
+			if (search_string[i - 1] == 'R') digit = 4;
+			else if (search_string[i - 1] == 'S') digit = 5;
 			else 
 			{
-				LOG_ERROR_MESSAGE("no digit for syllable %cE", search_string[i-1]);
+				LOG_ERROR_MESSAGE("no digit for syllable %cE",
+					search_string[i-1]);
 				return -1;
 			}
 		}
 		else 
 		{
-			LOG_ERROR_MESSAGE("no digit for syllable %c%c", search_string[i-1], search_string[i]);
+			LOG_ERROR_MESSAGE("no digit for syllable %c%c", search_string[i-1],					search_string[i]);
 			return -1;
 		}
-		base=1;
-		for(k=0; k<j; k++)
-			base=base*10;
-		rec+=base*digit;
+		base = 1;
+		for(k = 0; k < j; k++)
+			base = base * 10;
+		rec += base * digit;
 		j++;
 	}
 	return rec;
