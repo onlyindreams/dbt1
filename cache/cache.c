@@ -33,27 +33,33 @@ void *warm_up_cache(void *fd);
 void *cache_thread(void *fd);
 void sighandler(int signum);
 
-pthread_mutex_t mutex_cache_server=PTHREAD_MUTEX_INITIALIZER;
-sem_t sem_warm_up;
-int sanity_check = 1;
+pthread_mutex_t mutex_cache_server = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_counter = PTHREAD_MUTEX_INITIALIZER;
+int num_items;
+int db_thread;
+int sanity_check = 0;
+char sname2[32], uname2[32], auth2[32];
+int i_id_max, a_id_max;
+int cache_ready = 0;
+int warm_up = 0;
+int counter = 0;
 
+void *init_cache(void *data);
+void *warm_up_thread(void *fd);
+void status();
 int undo_digsyl(char *search_string);
 
 int main(int argc, char *argv[])
 {
 	int mastersock, workersock;
 	struct sockaddr_in socketaddr;
-	char sname[32], uname[32], auth[32];
-	pthread_t *warm_up_thread_id;
+	pthread_t tid;
 	pthread_t connect_thread;
-	struct table_range *range;
-	int port, db_thread, num_items, connectioncount;
+	int port, connectioncount;
 	int addrlen;
-	int i, j, rec;
+	int rec;
 	struct sigaction sa;
 	int c;
-	int warm_up_threads = 1;
-	int sem_val;
 
 	setlinebuf(stdout);
 	memset(&sa, 0, sizeof(sa));
@@ -76,33 +82,40 @@ int main(int argc, char *argv[])
 
 	if (argc < 13)
 	{
-		printf("usage: %s -d <dbnodename> -u <username> -p <password> -l <port> -c <db_connection> -i <items>\n", argv[0]);
+		printf("usage: %s -d <dbnodename> -u <username> -p <password> -l <port> -c <db_connection> -i <items> [-o <output_dir>] [-s 1]\n", argv[0]);
 		return -1;
 	}
 
 	opterr = 0;
-	while ((c = getopt(argc, argv, "c:d:i:l:p:u:")) != -1)
+	while ((c = getopt(argc, argv, "c:d:i:l:o:p:s:u:")) != -1)
 	{
 		switch (c)
 		{
 			case 'c':
-				db_thread=atoi(optarg);
+				db_thread = atoi(optarg);
 				break;
 			case 'd':
-				strcpy(sname, optarg);
+				strcpy(sname2, optarg);
 				break;
 			case 'i':
-				num_items=atoi(optarg);
-				item_count=num_items;
+				num_items = atoi(optarg);
+				a_id_max = num_items / 10;
+				i_id_max = num_items / 5;
 				break;
 			case 'l':
 				port = atoi(optarg);
 				break;
+			case 'o':
+				strcpy(output_path, optarg);
+				break;
 			case 'p':
-				strcpy(auth, optarg);
+				strcpy(auth2, optarg);
+				break;
+			case 's':
+				sanity_check = 1;
 				break;
 			case 'u':
-				strcpy(uname, optarg);
+				strcpy(uname2, optarg);
 				break;
 			case '?':
 				if (isprint(optopt))
@@ -121,83 +134,18 @@ int main(int argc, char *argv[])
 	}
 	init_common();
 	
-	warm_up_thread_id=(pthread_t *)malloc(warm_up_threads*sizeof(pthread_t));
-	range=(struct table_range *)malloc(warm_up_threads*sizeof(struct table_range));
-
-	if (init_cache(num_items, sname, uname, auth) != OK)
-	{
-		printf("init_odbc environment failed\n");
-		return -1;
-	}
-	
-	/* create threads to fill out the results tables */
-	if (sem_init(&sem_warm_up, 0, 0) != 0)
-	{
-		perror("sem_init");
-		return -1;
-	}
-	range[0].author_start = 0;
-	range[0].author_end = num_items / 10 - 1;
-	range[0].title_start = 0;
-	range[0].title_end = num_items / 5 - 1;
-	for (i=0; i<warm_up_threads; i++)
-	{
-		sem_post(&sem_warm_up);
-		if (pthread_create (&warm_up_thread_id[i], NULL, warm_up_cache, (void *)&range[i]) != 0)
-		{
-			printf("warm_up thread create failed");
-			return -1;
-		}
-
-	}
-
-	/* wait for all threads to finish */
-	do
-	{
-		sleep(2);
-		sem_getvalue(&sem_warm_up, &sem_val);
-	} while (sem_val > 0);
-
-	printf("Cache is warm.\n");
-
-	if (sanity_check == 1)
-	{
-		printf("Data sanity check.\n");
-		printf("Results for a_lname search:\n");
-		printf("a_id items i_r1 i_t1 i_r2 i_t2 i_r3 i_t3 i_r4 i_t4 i_r5 i_t5\n");
-
-		/* Check results for an a_lname search. */
-		for (i = 0; i < num_items / 10; i++)
-		{
-			printf("%4d %5d", i + 1, author_results_table[i].record_number);
-			for(j = 0; j < 5; j++)
-			{
-				printf(" %4lld %4lld", author_results_table[i].i_related[j],
-					author_results_table[i].i_thumbnail[j]);
-			}
-			printf("\n");
-		}
-
-		/* Check results for an i_title search. */
-		printf("Results for i_title search:\n");
-		printf("i_id items i_r1 i_t1 i_r2 i_t2 i_r3 i_t3 i_r4 i_t4 i_r5 i_t5\n");
-		for (i = 0; i < num_items / 10; i++)
-		{
-			printf("%4d %5d", i + 1, title_results_table[i].record_number);
-			for(j = 0; j < 5; j++)
-			{
-				printf(" %4lld %4lld", title_results_table[i].i_related[j],
-					title_results_table[i].i_thumbnail[j]);
-			}
-			printf("\n");
-		}
-		printf("Data sanity check complete.\n");
-	}
-
+	/* Start the listenter. */
 	mastersock = _server_init_socket(port);
 	if (mastersock < 0)
 	{
 		printf("init cache server master socket failed\n");
+		return -1;
+	}
+
+	/* Initialize the cache. */
+	if (pthread_create(&tid, NULL, init_cache, NULL) != 0)
+	{
+		printf("pthread_create for init_cache failed\n");
 		return -1;
 	}
 
@@ -240,18 +188,165 @@ void sighandler(int signum)
 	_exit(-1);
 }
 
-/* allocate results tables and initialize odbc environment */
-int init_cache(int item, char *sname, char *uname, char *auth)
+/*
+ * Allocate the results tables, initialize odbc environment, and warm up cache.
+ */
+void *init_cache(void *data)
 {
-	int rc;
-	author_results_table=malloc(item/10*sizeof(struct search_results));	
-	title_results_table=malloc(item/5*sizeof(struct search_results));	
+	int i, j;
+	pthread_t *warm_up_thread_id;
+	struct table_range *range;
+	int author_step, title_step;
 
-	if ((rc=odbc_init(sname, uname, auth))!=OK)
+	if (odbc_init(sname2, uname2, auth2) != OK)
 	{
-		return W_ERROR;
+		printf("init_odbc environment failed\n");
+		return NULL;
 	}
-	return OK;
+
+	author_results_table = malloc(a_id_max * sizeof(struct search_results));	
+	title_results_table = malloc(i_id_max * sizeof(struct search_results));	
+	for (i = 0; i < a_id_max; i++)
+	{
+		for(j = 0; j < PROMOTIONAL_ITEMS_MAX; j++)
+		{
+			author_results_table[i].i_related[j] = 0;
+			author_results_table[i].i_thumbnail[j] = 0;
+		}
+	}
+	for (i = 0; i < i_id_max; i++)
+	{
+		for(j = 0; j < PROMOTIONAL_ITEMS_MAX; j++)
+		{
+			title_results_table[i].i_related[j] = 0;
+			title_results_table[i].i_thumbnail[j] = 0;
+		}
+	}
+
+	warm_up_thread_id = (pthread_t *) malloc(db_thread * sizeof(pthread_t));
+	range =
+		(struct table_range *) malloc(db_thread * sizeof(struct table_range));
+
+	/* Determine the range of the data that each thread will retrieve. */
+	author_step = a_id_max / db_thread;
+	title_step = i_id_max / db_thread;
+	range[0].author_start = 0;
+	range[0].author_end = author_step - 1;
+	range[0].title_start = 0;
+	range[0].title_end = title_step - 1;
+	for (i = 1; i < db_thread; i++)
+	{
+		range[i].author_start = range[i - 1].author_end + 1;
+		range[i].author_end = range[i].author_start + author_step - 1;
+		range[i].title_start = range[i - 1].title_end + 1;
+		range[i].title_end = range[i].title_start + title_step - 1;
+	}
+	if (db_thread > 1)
+	{
+		/* Set the last range's end numbers in case of rounding error. */
+
+		range[db_thread - 1].author_end = a_id_max - 1;
+		range[db_thread - 1].title_end = i_id_max - 1;
+	}
+
+	if (sanity_check == 1)
+	{
+		printf("thread      a_id range      i_id range\n");
+		for (i = 0; i < db_thread; i++)
+		{
+			printf("%6d  %5d to %5d  %5d to %5d\n", i,
+				range[i].author_start + 1, range[i].author_end + 1,
+				range[i].title_start + 1, range[i].title_end + 1);
+		}
+	}
+
+	/* create threads to fill out the results tables */
+	for (i = 0; i < db_thread; i++)
+	{
+		if (pthread_create(&warm_up_thread_id[i], NULL, warm_up_cache,
+			(void *) &range[i]) != 0)
+		{
+			printf("warm_up thread create failed");
+			return NULL;
+		}
+		sleep(1);
+	}
+	printf("%d rows to retrieve.\n", a_id_max + i_id_max);
+	warm_up = 1;
+
+	/* Wait for all threads to finish warming up the cache. */
+	for (i = 0; i < db_thread; i++)
+	{
+		pthread_join(warm_up_thread_id[i], NULL);
+	}
+
+	printf("Cache is warm.\n");
+
+	if (sanity_check == 1)
+	{
+		printf("Data sanity check.\n");
+
+		/* Check results for an a_lname search. */
+		printf("Results for a_lname search:\n");
+		printf("%10s %3s %10s %10s %10s %10s %10s %10s %10s %10s %10s %10s\n",
+			"a_id", "#", "i_r1", "i_t1", "i_r2", "i_t2", "i_r3", "i_t3",
+			"i_r4", "i_t4", "i_r5", "i_t5");
+		for (i = 0; i < a_id_max; i++)
+		{
+			printf("%10d %3d", i + 1, author_results_table[i].record_number);
+			for(j = 0; j < PROMOTIONAL_ITEMS_MAX; j++)
+			{
+				printf(" %10lld %10lld",
+					author_results_table[i].i_related[j],
+					author_results_table[i].i_thumbnail[j]);
+			}
+			printf("\n");
+
+			printf("\t%10s %20s %20s %60s\n", "i_id", "a_fname", "a_lname",
+				"i_title");
+			for (j = 0; j < author_results_table[i].record_number; j++)
+			{
+				printf("\t%10lld %20s %20s %60s\n",
+					author_results_table[i].search_results[j].i_id,
+					author_results_table[i].search_results[j].a_fname,
+					author_results_table[i].search_results[j].a_lname,
+					author_results_table[i].search_results[j].i_title);
+			}
+			printf("\n");
+		}
+
+		/* Check results for an i_title search. */
+		printf("Results for i_title search:\n");
+		printf("%10s %3s %10s %10s %10s %10s %10s %10s %10s %10s %10s %10s\n",
+			"a_id", "#", "i_r1", "i_t1", "i_r2", "i_t2", "i_r3", "i_t3",
+			"i_r4", "i_t4", "i_r5", "i_t5");
+		for (i = 0; i < i_id_max; i++)
+		{
+			printf("%10d %3d", i + 1, title_results_table[i].record_number);
+			for(j = 0; j < PROMOTIONAL_ITEMS_MAX; j++)
+			{
+				printf(" %10lld %10lld",
+					title_results_table[i].i_related[j],
+					title_results_table[i].i_thumbnail[j]);
+			}
+			printf("\n");
+
+			printf("\t%10s %20s %20s %60s\n", "i_id", "a_fname", "a_lname",
+				"i_title");
+			for (j = 0; j < title_results_table[i].record_number; j++)
+			{
+				printf("\t%10lld %20s %20s %60s\n",
+					title_results_table[i].search_results[j].i_id,
+					title_results_table[i].search_results[j].a_fname,
+					title_results_table[i].search_results[j].a_lname,
+					title_results_table[i].search_results[j].i_title);
+			}
+			printf("\n");
+		}
+		printf("Data sanity check complete.\n");
+	}
+
+	return NULL;
 }
 
 /* thread filling out results tables */
@@ -264,7 +359,9 @@ void *warm_up_cache(void *fd)
 
 	range = (struct table_range *)(fd);
 
+	/* Must initialize random number generator for Promotional Processing. */
 	srand(time(NULL) + pthread_self());
+
 	rc = odbc_connect(&odbcc);
 	if (rc == W_ERROR)
 	{
@@ -273,11 +370,17 @@ void *warm_up_cache(void *fd)
 		pthread_exit(NULL);
 	}
 
-	/* do search_by_author*/
-	odbc_data.search_results_odbc_data.eb.search_type=SEARCH_AUTHOR;
-	for (i=range->author_start; i<=range->author_end;i++)
+	while (warm_up == 0)
 	{
-		digsyl2(odbc_data.search_results_odbc_data.eb.search_string, (long long)i+1, (long long)7);
+		sleep(2);
+	}
+
+	/* do search_by_author*/
+	odbc_data.search_results_odbc_data.eb.search_type = SEARCH_AUTHOR;
+	for (i = range->author_start; i <= range->author_end; i++)
+	{
+		digsyl2(odbc_data.search_results_odbc_data.eb.search_string,
+			(long long) i + 1, (long long) 7);
 		rc = execute_search_results(&odbcc, &odbc_data);
 		if (rc == W_ERROR)
 		{
@@ -287,27 +390,36 @@ void *warm_up_cache(void *fd)
 		}
 
 		/* copy the results out */
-		author_results_table[i].record_number=odbc_data.search_results_odbc_data.eb.items;
+		author_results_table[i].record_number =
+			odbc_data.search_results_odbc_data.eb.items;
 
-		for (j=0; j<odbc_data.search_results_odbc_data.eb.items; j++)
+		for (j = 0; j < odbc_data.search_results_odbc_data.eb.items; j++)
 		{
-			author_results_table[i].search_results[j].i_id=odbc_data.search_results_odbc_data.eb.results_data[j].i_id;
-			strcpy(author_results_table[i].search_results[j].i_title, odbc_data.search_results_odbc_data.eb.results_data[j].i_title);
-			strcpy(author_results_table[i].search_results[j].a_fname, odbc_data.search_results_odbc_data.eb.results_data[j].a_fname);
-			strcpy(author_results_table[i].search_results[j].a_lname, odbc_data.search_results_odbc_data.eb.results_data[j].a_lname);
+			author_results_table[i].search_results[j].i_id =
+				odbc_data.search_results_odbc_data.eb.results_data[j].i_id;
+			strcpy(author_results_table[i].search_results[j].i_title,
+				odbc_data.search_results_odbc_data.eb.results_data[j].i_title);
+			strcpy(author_results_table[i].search_results[j].a_fname,
+				odbc_data.search_results_odbc_data.eb.results_data[j].a_fname);
+			strcpy(author_results_table[i].search_results[j].a_lname,
+				odbc_data.search_results_odbc_data.eb.results_data[j].a_lname);
 		}
-		for (k=0; k<PROMOTIONAL_ITEMS_MAX; k++)
+		for (k = 0; k < PROMOTIONAL_ITEMS_MAX; k++)
 		{
-			author_results_table[i].i_related[k]= odbc_data.search_results_odbc_data.eb.pp_data.i_related[k];
-			author_results_table[i].i_thumbnail[k]= odbc_data.search_results_odbc_data.eb.pp_data.i_thumbnail[k];
+			author_results_table[i].i_related[k] =
+				odbc_data.search_results_odbc_data.eb.pp_data.i_related[k];
+			author_results_table[i].i_thumbnail[k] =
+				odbc_data.search_results_odbc_data.eb.pp_data.i_thumbnail[k];
 		}
+		status();
 	}
 
 	/* do search_by_title*/
-	odbc_data.search_results_odbc_data.eb.search_type=SEARCH_TITLE;
-	for (i=range->title_start; i<=range->title_end;i++)
+	odbc_data.search_results_odbc_data.eb.search_type = SEARCH_TITLE;
+	for (i = range->title_start; i <= range->title_end; i++)
 	{
-		digsyl2(odbc_data.search_results_odbc_data.eb.search_string, (long long)i+1, (long long)7);
+		digsyl2(odbc_data.search_results_odbc_data.eb.search_string,
+			(long long) i + 1, (long long) 7);
 		rc = execute_search_results(&odbcc, &odbc_data);
 		if (rc == W_ERROR)
 		{
@@ -317,23 +429,30 @@ void *warm_up_cache(void *fd)
 		}
 
 		/* copy the results out */
-		title_results_table[i].record_number=odbc_data.search_results_odbc_data.eb.items;
+		title_results_table[i].record_number =
+			odbc_data.search_results_odbc_data.eb.items;
 
-		for (j=0; j<odbc_data.search_results_odbc_data.eb.items; j++)
+		for (j = 0; j < odbc_data.search_results_odbc_data.eb.items; j++)
 		{
-			title_results_table[i].search_results[j].i_id=odbc_data.search_results_odbc_data.eb.results_data[j].i_id;
-			strcpy(title_results_table[i].search_results[j].i_title, odbc_data.search_results_odbc_data.eb.results_data[j].i_title);
-			strcpy(title_results_table[i].search_results[j].a_fname, odbc_data.search_results_odbc_data.eb.results_data[j].a_fname);
-			strcpy(title_results_table[i].search_results[j].a_lname, odbc_data.search_results_odbc_data.eb.results_data[j].a_lname);
+			title_results_table[i].search_results[j].i_id =
+				odbc_data.search_results_odbc_data.eb.results_data[j].i_id;
+			strcpy(title_results_table[i].search_results[j].i_title,
+				odbc_data.search_results_odbc_data.eb.results_data[j].i_title);
+			strcpy(title_results_table[i].search_results[j].a_fname,
+				odbc_data.search_results_odbc_data.eb.results_data[j].a_fname);
+			strcpy(title_results_table[i].search_results[j].a_lname,
+				odbc_data.search_results_odbc_data.eb.results_data[j].a_lname);
 		}
-		for (k=0; k<PROMOTIONAL_ITEMS_MAX; k++)
+		for (k = 0; k < PROMOTIONAL_ITEMS_MAX; k++)
 		{
-			title_results_table[i].i_related[k]= odbc_data.search_results_odbc_data.eb.pp_data.i_related[k];
-			title_results_table[i].i_thumbnail[k]= odbc_data.search_results_odbc_data.eb.pp_data.i_thumbnail[k];
+			title_results_table[i].i_related[k] =
+				odbc_data.search_results_odbc_data.eb.pp_data.i_related[k];
+			title_results_table[i].i_thumbnail[k] =
+				odbc_data.search_results_odbc_data.eb.pp_data.i_thumbnail[k];
 		}
+		status();
 	}
 	odbc_disconnect(&odbcc);
-	sem_wait(&sem_warm_up);
 	return NULL;
 }
 
@@ -348,6 +467,11 @@ void *cache_thread(void *fd)
 	sf = (int *)(fd);
 	workersock = *sf;
 	pthread_mutex_unlock(&mutex_cache_server);
+
+	while (cache_ready == 0)
+	{
+		sleep(1);
+	}
 
 	while (1)
 	{
@@ -426,6 +550,17 @@ void *cache_thread(void *fd)
 		}		
 	}
 	close(workersock);
+}
+
+void status()
+{
+	pthread_mutex_lock(&mutex_counter);
+	++counter;
+	if ((counter % 100) == 0)
+	{
+		printf("%d rows retrieved.\n", counter);
+	}
+	pthread_mutex_unlock(&mutex_counter);
 }
 
 int undo_digsyl(char *search_string)
