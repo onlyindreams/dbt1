@@ -24,6 +24,7 @@ then
 	date
 else
 	echo "build the database without generating the data files"
+fi
 	echo "drop db"
 	./drop_db.sh
 	echo
@@ -69,4 +70,3 @@ else
 	echo
 	
 	date
-fi
