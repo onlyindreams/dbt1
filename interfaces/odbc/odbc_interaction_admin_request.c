@@ -129,6 +129,14 @@ int execute_admin_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
 		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+		return W_ERROR;
+	}
+
+	/* Execute stored procedure. */
+	rc = SQLExecute(odbcc->hstmt);
+	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
+	{
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
 #ifndef AUTOCOMMIT_OFF
 		return W_ERROR;
 #endif
@@ -151,14 +159,6 @@ int execute_admin_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd
 		return W_ERROR;
 	}
 #endif
-
-	/* Execute stored procedure. */
-	rc = SQLExecute(odbcc->hstmt);
-	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
-	{
-		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
-		return W_ERROR;
-	}
 
 	return OK;
 }
