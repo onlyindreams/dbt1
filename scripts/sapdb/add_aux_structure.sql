@@ -1,4 +1,4 @@
-ql_execute create table new_products (i_id fixed(10), i_title varchar(60), i_subject varchar(60), i_pub_date date, a_fname varchar(20), a_lname varchar(20), primary key (i_id))
+sql_execute create table new_products (i_id fixed(10), i_title varchar(60), i_subject varchar(60), i_pub_date date, a_fname varchar(20), a_lname varchar(20), primary key (i_id))
 
 sql_execute create table best_sellers (i_id fixed(10), i_title varchar(60), i_subject varchar(60), i_pub_date date, a_fname varchar(20), a_lname varchar(20), primary key (i_id))
 
