@@ -110,6 +110,14 @@ const char *interaction_short_name[INTERACTION_TOTAL] =
 	"SU", "SC"
 };
 
+const char *interaction_name[INTERACTION_TOTAL] =
+{
+	"Admin Confirm", "Admin Request", "Best Sellers", "Buy Confirm",
+	"Buy Request", "Customer Registration", "Home", "New Products",
+	"Order Display", "Order Inquiry", "Product Detail", "Search Request",
+	"Search Results", "Shopping Cart"
+};
+
 
 char output_path[256] = "";
 FILE *log_error;
