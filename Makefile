@@ -1,5 +1,5 @@
 all: common_obj db_interface_obj dbdriver_exe appServer_exe tools_exe wgen_obj \
-	datagen_exe
+	datagen_exe cache_exe
 
 wgen_obj:
 	cd wgen; $(MAKE)
@@ -22,6 +22,9 @@ appServer_exe:
 tools_exe:
 	cd tools; $(MAKE)
 
+cache_exe:
+	cd cache; $(MAKE)
+
 clean:
 	cd wgen; $(MAKE) clean
 	cd interfaces/odbc; $(MAKE) clean
@@ -31,3 +34,4 @@ clean:
 	cd appServer; $(MAKE) clean
 	cd tools; $(MAKE) clean
 	cd datagen; $(MAKE) clean
+	cd cache; $(MAKE) clean
