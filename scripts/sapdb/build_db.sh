@@ -5,7 +5,7 @@ if [ $# -ne 0 ] # Script invoked with command-line args
 then
 	getopts "g" Option
 	if [ $Option != "g" ]
-		then echo "usage: $0 -g <items> <eus>" 
+		then echo "usage: $0 -g -i <items> -u <eus> -p <path>" 
 		exit
 	else
 		if [ $# -ne 7 ]
@@ -14,13 +14,13 @@ then
 		else
 			ITEMS=$3
 			EUS=$5	
-			PATH=$7
+			DATA_PATH=$7
 		fi
 	fi
 	echo "Generating data... $ITEMS item and $EUS eu"
 	cd ../../datagen
 	date
-	./datagen -i $ITEMS -u $EUS -p $PATH
+	./datagen -i $ITEMS -u $EUS -p $DATA_PATH
 	echo "data file is generated"
 	date
 	cd -
