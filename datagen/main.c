@@ -17,7 +17,8 @@
 #include <tpcw.h>
 #include <common.h>
 
-#define DELIMITER ','
+#define SAPDB 0
+#define PGSQL 1
 #define SEQUENCE_SQL "../scripts/sapdb/create_sequence.sql"
 
 int item_count, author_count;
@@ -43,6 +44,9 @@ int items, ebs;
 /* directory where the datafile will be put */
 char path[256];
 int flag_cust, flag_item, flag_author, flag_address, flag_order;
+int rdbms;
+char field_deco[3];
+char delimiter;
 
 /* Prototypes */
 void gen_addresses();
@@ -54,6 +58,7 @@ int process_options(int count, char **vector);
 void usage();
 /* Prototype for wgen/text.c since it doesn't provide one for us. */
 void load_dists(void);
+void print_timestamp(FILE *ofile, struct tm *date);
 
 int main(int argc, char *argv[])
 {
@@ -68,6 +73,16 @@ int main(int argc, char *argv[])
 	{
 		usage();
 		return 1;
+	}
+        if (rdbms == SAPDB)
+	{
+		strcpy(field_deco, "\"");
+		delimiter =  ',';
+	}
+	else if (rdbms == PGSQL)
+	{
+		strcpy(field_deco, "");
+		delimiter =  '\\';
 	}
 
 	if (items != 1000 && items != 10000 && items != 100000 &&
@@ -160,7 +175,14 @@ int main(int argc, char *argv[])
 		popen(cmd, "r");
 	}
 
-	sprintf(cmd, "ln -fs %s/country.data /tmp/country.data", pwd);
+	if (rdbms == SAPDB)
+	{
+		sprintf(cmd, "ln -fs %s/country.data /tmp/country.data", pwd);
+	}
+	else if (rdbms == PGSQL)
+	{
+		sprintf(cmd, "ln -fs %s/country.data.pgsql /tmp/country.data", pwd);
+	}
 	popen(cmd, "r");
 
 	free(dpath);
@@ -191,36 +213,36 @@ void gen_addresses()
 	for (i = 0; i < addresses; i++)
 	{
 		/* addr_id */
-		fprintf(output, "\"%d\"", i + 1);
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%d%s", field_deco, i + 1, field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* addr_street1 */
 		get_a_string(a_string, 15, ADDR_STREET1_LEN);
-		fprintf(output, "\"%s\"", a_string);
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%s%s", field_deco, a_string, field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* addr_street2 */
 		get_a_string(a_string, 15, ADDR_STREET1_LEN);
-		fprintf(output, "\"%s\"", a_string);
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%s%s", field_deco, a_string, field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* addr_city */
 		get_a_string(a_string, 4, ADDR_CITY_LEN);
-		fprintf(output, "\"%s\"", a_string);
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%s%s", field_deco, a_string, field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* addr_state */
 		get_a_string(a_string, 2, ADDR_STATE_LEN);
-		fprintf(output, "\"%s\"", a_string);
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%s%s", field_deco, a_string, field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* addr_zip */
 		get_a_string(a_string, 5, ADDR_ZIP_LEN);
-		fprintf(output, "\"%s\"", a_string);
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%s%s", field_deco, a_string, field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* addr_co_id */
-		fprintf(output, "\"%d\"", get_random_int(CO_ID_MAX) + 1);
+		fprintf(output, "%s%d%s", field_deco, get_random_int(CO_ID_MAX) + 1, field_deco);
 
 		fprintf(output, "\n");
 	}
@@ -257,22 +279,23 @@ void gen_authors()
 	for (i = 0; i < author_count; i++)
 	{
 		/* a_id */
-		fprintf(output, "\"%d\"", i + 1);
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%d%s", field_deco, i + 1, field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* a_fname */
 		get_a_string(a_string, 3, A_FNAME_LEN);
-		fprintf(output, "\"%s\"", a_string);
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%s%s", field_deco, a_string, field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* a_lname */
-		fprintf(output, "\"%s\"", mk_author(i + 1));
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%s%s", 
+			field_deco, mk_author(i + 1), field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* a_mname */
 		get_a_string(a_string, 1, A_MNAME_LEN);
-		fprintf(output, "\"%s\"", a_string);
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%s%s", field_deco, a_string, field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* a_dob */
 		/* The date is being calculated from 1900 instead of 1800. */
@@ -287,13 +310,14 @@ void gen_authors()
 		tm2 = localtime(&t2);
 		t3 = (time_t) (get_percentage() * (double) ((long long) t2 - (long long) t1 + (long long) 86400)) + t1;
 		tm3 = localtime(&t3);
-		fprintf(output, "\"%04d%02d%02d\"", tm3->tm_year + 1900,
-			tm3->tm_mon + 1, tm3->tm_mday);
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%04d%02d%02d%s", 
+			field_deco, tm3->tm_year + 1900,
+			tm3->tm_mon + 1, tm3->tm_mday, field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* a_bio */
 		get_a_string(a_string, 125, A_BIO_LEN);
-		fprintf(output, "\"%s\"", a_string);
+		fprintf(output, "%s%s%s", field_deco, a_string, field_deco);
 
 		fprintf(output, "\n");
 	}
@@ -334,57 +358,59 @@ void gen_customers()
 	{
 
 		/* c_id */
-		fprintf(output, "\"%d\"", i + 1);
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%d%s", field_deco, i + 1, field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* c_uname */
 		/* Clause 4.6.2.10 */
 		digsyl2(c_uname, i + 1, 0);
-		fprintf(output, "\"%s\"", c_uname);
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%s%s", field_deco, c_uname, field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* c_passwd */
 		/* Clause 4.6.2.11 */
 		max = strlen(c_uname);
-		fprintf(output, "\"");
+		fprintf(output, "%s", field_deco);
 		for (j = 0; j < max; j++)
 		{
 			fprintf(output, "%c", (char) tolower(c_uname[j]));
 		}
-		fprintf(output, "\"%c", DELIMITER);
+		fprintf(output, "%s%c", field_deco, delimiter);
 
 		/* c_lname */
 		get_a_string(a_string, 8, C_LNAME_LEN);
-		fprintf(output, "\"%s\"", a_string);
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%s%s", field_deco, a_string, field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* c_fname */
 		get_a_string(a_string, 8, C_FNAME_LEN);
-		fprintf(output, "\"%s\"", a_string);
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%s%s", field_deco, a_string, field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* c_addr_id */
-		fprintf(output, "\"%d\"", get_random_int(2 * customers) + 1);
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%d%s", field_deco, get_random_int(2 * customers) + 1, field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* c_phone */
 		get_n_string(a_string, 9, C_PHONE_LEN);
-		fprintf(output, "\"%s\"", a_string);
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%s%s", field_deco, a_string, field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* c_email */
 		/* Clause 6.4.2.14 */
 		get_a_string(a_string, 2, 9);
-		fprintf(output, "\"%s@%s\"", c_uname, a_string);
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%s@%s%s", 
+			field_deco, c_uname, a_string, field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* c_since */
 		time(&t2);
 		t1 = t2 - (86400 + get_random_int(63072000));
 		tm1 = localtime(&t1);
-		fprintf(output, "\"%04d%02d%02d\"", tm1->tm_year + 1900,
-			tm1->tm_mon + 1, tm1->tm_mday);
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%04d%02d%02d%s", 
+			field_deco, tm1->tm_year + 1900,
+			tm1->tm_mon + 1, tm1->tm_mday, field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* c_last_visit */
 		t3 = t1 + get_random_int(5270400);
@@ -393,40 +419,50 @@ void gen_customers()
 			t3 = t2;
 		}
 		tm3 = localtime(&t3);
-		fprintf(output, "\"%04d%02d%02d\"", tm3->tm_year + 1900,
-			tm3->tm_mon + 1, tm3->tm_mday);
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%04d%02d%02d%s", 
+			field_deco, tm3->tm_year + 1900,
+			tm3->tm_mon + 1, tm3->tm_mday, field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* c_login */
 		/* This should be changed to the date and time the table is
 		 * populated. Note that the milliseconds are not calculated. */
 		tm2 = localtime(&t2);
-		fprintf(output, "\"%04d%02d%02d%02d%02d%02d000000\"",
+		print_timestamp(output, tm2);
+		/*
+		fprintf(output, "%s%04d%02d%02d%02d%02d%02d000000%s",
+			field_deco, 
 			tm2->tm_year + 1900, tm2->tm_mon + 1, tm2->tm_mday,
-			tm2->tm_hour, tm2->tm_min, tm2->tm_sec);
-		fprintf(output, "%c", DELIMITER);
+			tm2->tm_hour, tm2->tm_min, tm2->tm_sec, field_deco);
+		*/
+		fprintf(output, "%c", delimiter);
 
 		/* c_expiration */
 		t2 += 7200;
 		tm2 = localtime(&t2);
-		fprintf(output, "\"%04d%02d%02d%02d%02d%02d000000\"",
+		print_timestamp(output, tm2);
+		/*
+		fprintf(output, "%s%04d%02d%02d%02d%02d%02d000000%s",
+			field_deco, 
 			tm2->tm_year + 1900, tm2->tm_mon + 1, tm2->tm_mday,
-			tm2->tm_hour, tm2->tm_min, tm2->tm_sec);
-		fprintf(output, "%c", DELIMITER);
+			tm2->tm_hour, tm2->tm_min, tm2->tm_sec, field_deco);
+		*/
+		fprintf(output, "%c", delimiter);
 
 		/* c_discount */
-		fprintf(output, "\"%0.2f\"",
-			(double) get_random_int(51) / 100.0);
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%0.2f%s",
+			field_deco, (double) get_random_int(51) / 100.0, 
+			field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* c_balance */
-		fprintf(output, "\"0.0\"");
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s0.0%s", field_deco, field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* c_ytd_pmt */
-		fprintf(output, "\"%0.2f\"",
-			(double) get_random_int(100000) / 100.0);
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%0.2f%s", field_deco, 
+			(double) get_random_int(100000) / 100.0, field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* c_birthdate */
 		/* The date is being calculated from 1900 instead of 1880. */
@@ -441,13 +477,14 @@ void gen_customers()
 		tm2 = localtime(&t2);
 		t3 = (time_t) (get_percentage() * (double) ((long long) t2 - (long long) t1 + (long long) 86400)) + t1;
 		tm3 = localtime(&t3);
-		fprintf(output, "\"%04d%02d%02d\"", tm3->tm_year + 1900,
-			tm3->tm_mon + 1, tm3->tm_mday);
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%04d%02d%02d%s", 
+			field_deco, tm3->tm_year + 1900,
+			tm3->tm_mon + 1, tm3->tm_mday, field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* c_data */
 		get_a_string(a_string, 100, C_DATA_LEN);
-		fprintf(output, "\"%s\"", a_string);
+		fprintf(output, "%s%s%s", field_deco, a_string, field_deco);
 
 		fprintf(output, "\n");
 	}
@@ -487,24 +524,25 @@ void gen_items()
 	{
 
 		/* i_id */
-		fprintf(output, "\"%d\"", i + 1);
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%d%s", field_deco, i + 1, field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* i_title */
-		fprintf(output, "\"%s\"", mk_title(i+1));
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%s%s", field_deco, mk_title(i+1), field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* i_a_id */
 		if (i < items / 4)
 		{
-			fprintf(output, "\"%d\"", i + 1);
+			fprintf(output, "%s%d%s", field_deco, i + 1, field_deco);
 		}
 		else
 		{
-			fprintf(output, "\"%d\"",
-				get_random_int(items / 4) + 1);
+			fprintf(output, "%s%d%s",
+				field_deco, 
+				get_random_int(items / 4) + 1, field_deco);
 		}
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%c", delimiter);
 
 		/* i_pub_date */
 		tm1.tm_year = 30;
@@ -518,29 +556,31 @@ void gen_items()
 		tm2 = localtime(&t2);
 		t3 = (time_t) (get_percentage() * (double) ((long long) t2 - (long long) t1 + (long long) 86400)) + t1;
 		tm3 = localtime(&t3);
-		fprintf(output, "\"%04d%02d%02d\"", tm3->tm_year + 1900,
-			tm3->tm_mon + 1, tm3->tm_mday);
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%04d%02d%02d%s", 
+			field_deco, tm3->tm_year + 1900,
+			tm3->tm_mon + 1, tm3->tm_mday, field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* i_publisher */
 		get_a_string(a_string, 14, I_PUBLISHER_LEN);
-		fprintf(output, "\"%s\"", a_string);
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%s%s", field_deco, a_string, field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* i_subject */
-		fprintf(output, "\"%s\"",
-			i_subject[get_random_int(I_SUBJECT_MAX)]);
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%s%s",
+			field_deco, 
+			i_subject[get_random_int(I_SUBJECT_MAX)], field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* i_desc */
 		get_a_string(a_string, 100, I_DESC_LEN);
-		fprintf(output, "\"%s\"", a_string);
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%s%s", field_deco, a_string, field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* i_related1 */
 		i1 = get_random_int(items) + 1;
-		fprintf(output, "\"%d\"", i1);
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%d%s", field_deco, i1, field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* i_related2 */
 		do
@@ -548,8 +588,8 @@ void gen_items()
 			i2 = get_random_int(items) + 1;
 		}
 		while (i2 == i1);
-		fprintf(output, "\"%d\"", i2);
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%d%s", field_deco, i2, field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* i_related3 */
 		do
@@ -557,8 +597,8 @@ void gen_items()
 			i3 = get_random_int(items) + 1;
 		}
 		while (i3 == i1 || i3 == i2);
-		fprintf(output, "\"%d\"", i3);
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%d%s", field_deco, i3, field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* i_related4 */
 		do
@@ -566,8 +606,8 @@ void gen_items()
 			i4 = get_random_int(items) + 1;
 		}
 		while (i4 == i1 || i4 == i2 || i4 == i3);
-		fprintf(output, "\"%d\"", i4);
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%d%s", field_deco, i4, field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* i_related5 */
 		do
@@ -575,26 +615,28 @@ void gen_items()
 			i5 = get_random_int(items) + 1;
 		}
 		while (i5 == i1 || i5 == i2 || i5 == i3 || i5 == i4);
-		fprintf(output, "\"%d\"", i5);
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%d%s", field_deco, i5, field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* i_thumbnail */
-		fprintf(output, "\"%d\"", i + 1);
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%d%s", field_deco, i + 1, field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* i_image */
-		fprintf(output, "\"%d\"", i + 1);
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%d%s", field_deco, i + 1, field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* i_srp */
 		srp = (get_random_int(999900) + 100.0) / 100;
-		fprintf(output, "\"%0.2f\"", srp);
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%0.2f%s", field_deco, srp, field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* i_cost */
-		fprintf(output, "\"%0.2f\"",
-			(1.0 - ((double) get_random_int(6) / 10.0)) * srp);
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%0.2f%s",
+			field_deco, 
+			(1.0 - ((double) get_random_int(6) / 10.0)) * srp, 
+			field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* i_avail */
 		/*
@@ -603,32 +645,37 @@ void gen_items()
 		 */
 		t3 += 86400 + (time_t) get_random_int(2505601);
 		tm3 = localtime(&t3);
-		fprintf(output, "\"%04d%02d%02d\"", tm3->tm_year + 1900,
-			tm3->tm_mon + 1, tm3->tm_mday);
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%04d%02d%02d%s", 
+			field_deco, tm3->tm_year + 1900,
+			tm3->tm_mon + 1, tm3->tm_mday, field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* i_stock */
-		fprintf(output, "\"%d\"", get_random_int(21) + 10);
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%d%s", 
+			field_deco, get_random_int(21) + 10, field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* i_isbn */
 		get_a_string(a_string, 13, I_ISBN_LEN);
-		fprintf(output, "\"%s\"", a_string);
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%s%s", field_deco, a_string, field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* i_page */
-		fprintf(output, "\"%d\"", get_random_int(9980) + 20);
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%d%s", 
+			field_deco, get_random_int(9980) + 20, field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* i_backing */
-		fprintf(output, "\"%s\"",
-			i_backing[get_random_int(I_BACKING_MAX)]);
-		fprintf(output, "%c", DELIMITER);
+		fprintf(output, "%s%s%s",
+			field_deco, 
+			i_backing[get_random_int(I_BACKING_MAX)], field_deco);
+		fprintf(output, "%c", delimiter);
 
 		/* i_dimensions */
 		/* Clause 4.6.2.17 */
-		fprintf(output, "\"%0.2fx%0.2fx%0.2f\"",
-			(double) (get_random_int(9999) + 1) / 100.0, (double) (get_random_int(9999) + 1) / 100.0, (double) (get_random_int(9999) + 1) / 100.0);
+		fprintf(output, "%s%0.2fx%0.2fx%0.2f%s",
+			field_deco, 
+			(double) (get_random_int(9999) + 1) / 100.0, (double) (get_random_int(9999) + 1) / 100.0, (double) (get_random_int(9999) + 1) / 100.0, field_deco);
 
 		fprintf(output, "\n");
 	}
@@ -695,31 +742,37 @@ void gen_orders()
 		for (j = 0; j < order_line_count; j++)
 		{
 			/* ol_id */
-			fprintf(order_line_file, "\"%d\"", j + 1);
-			fprintf(order_line_file, "%c", DELIMITER);
+			fprintf(order_line_file, "%s%d%s", 
+				field_deco, j + 1, field_deco);
+			fprintf(order_line_file, "%c", delimiter);
 
 			/* ol_o_id */
-			fprintf(order_line_file, "\"%d\"", i + 1);
-			fprintf(order_line_file, "%c", DELIMITER);
+			fprintf(order_line_file, "%s%d%s", 
+				field_deco, i + 1, field_deco);
+			fprintf(order_line_file, "%c", delimiter);
 
 			/* ol_i_id */
-			fprintf(order_line_file, "\"%d\"",
-				get_random_int(items) + 1);
-			fprintf(order_line_file, "%c", DELIMITER);
+			fprintf(order_line_file, "%s%d%s",
+				field_deco, 
+				get_random_int(items) + 1, field_deco);
+			fprintf(order_line_file, "%c", delimiter);
 
 			/* ol_qty */
-			fprintf(order_line_file, "\"%d\"",
-				get_random_int(300) + 1);
-			fprintf(order_line_file, "%c", DELIMITER);
+			fprintf(order_line_file, "%s%d%s",
+				field_deco, 
+				get_random_int(300) + 1, field_deco);
+			fprintf(order_line_file, "%c", delimiter);
 
 			/* ol_discount */
-			fprintf(order_line_file, "\"%0.2f\"",
-				(double) get_random_int(4) / 100.0);
-			fprintf(order_line_file, "%c", DELIMITER);
+			fprintf(order_line_file, "%s%0.2f%s",
+				field_deco, 
+				(double) get_random_int(4) / 100.0, field_deco);
+			fprintf(order_line_file, "%c", delimiter);
 
 			/* ol_comments */
 			get_a_string(a_string, 20, OL_COMMENT_LEN);
-			fprintf(order_line_file, "\"%s\"", a_string);
+			fprintf(order_line_file, "%s%s%s", 
+				field_deco, a_string, field_deco);
 
 			fprintf(order_line_file, "\n");
 		}
@@ -727,64 +780,80 @@ void gen_orders()
 		/* Orders */
 
 		/* o_id */
-		fprintf(orders_file, "\"%d\"", i + 1);
-		fprintf(orders_file, "%c", DELIMITER);
+		fprintf(orders_file, "%s%d%s", field_deco, i + 1, field_deco);
+		fprintf(orders_file, "%c", delimiter);
 
 		/* o_c_id */
-		fprintf(orders_file, "\"%d\"",  get_random_int(customers) + 1);
-		fprintf(orders_file, "%c", DELIMITER);
+		fprintf(orders_file, "%s%d%s",  
+			field_deco, get_random_int(customers) + 1, field_deco);
+		fprintf(orders_file, "%c", delimiter);
 
 		/* o_date */
 		/* Note that the milliseconds are not calculated. */
 		time(&t2);
 		t1 = t2 - (86400 + get_random_int(5184000));
 		tm1 = localtime(&t1);
-		fprintf(orders_file, "\"%04d%02d%02d%02d%02d%02d000000\"",
+		print_timestamp(orders_file, tm1);
+		/*fprintf(orders_file, "%s%04d%02d%02d%02d%02d%02d000000%s",
+			field_deco, 
 			tm1->tm_year + 1900, tm1->tm_mon + 1, tm1->tm_mday,
-			tm1->tm_hour, tm1->tm_min, tm1->tm_sec);
-		fprintf(orders_file, "%c", DELIMITER);
+			tm1->tm_hour, tm1->tm_min, tm1->tm_sec, field_deco);
+		*/
+		fprintf(orders_file, "%c", delimiter);
 
 		/* o_sub_total */
 		o_sub_total = (double) (get_random_int(999990) + 10) / 100.0;
-		fprintf(orders_file, "\"%0.2f\"", o_sub_total);
-		fprintf(orders_file, "%c", DELIMITER);
+		fprintf(orders_file, "%s%0.2f%s", 
+			field_deco, o_sub_total, field_deco);
+		fprintf(orders_file, "%c", delimiter);
 
 		/* o_tax */
 		o_tax = o_sub_total * 0.0825;
-		fprintf(orders_file, "\"%0.2f\"", o_tax);
-		fprintf(orders_file, "%c", DELIMITER);
+		fprintf(orders_file, "%s%0.2f%s", 
+			field_deco, o_tax, field_deco);
+		fprintf(orders_file, "%c", delimiter);
 
 		/* o_total */
 		o_total = o_sub_total + o_tax + order_line_count;
-		fprintf(orders_file, "\"%0.2f\"", o_total);
-		fprintf(orders_file, "%c", DELIMITER);
+		fprintf(orders_file, "%s%0.2f%s", 
+			field_deco, o_total, field_deco);
+		fprintf(orders_file, "%c", delimiter);
 
 		/* o_ship_type */
-		fprintf(orders_file, "\"%s\"",
-			o_ship_type[get_random_int(O_SHIP_TYPE_MAX)]);
-		fprintf(orders_file, "%c", DELIMITER);
+		fprintf(orders_file, "%s%s%s",
+			field_deco, 
+			o_ship_type[get_random_int(O_SHIP_TYPE_MAX)], 
+			field_deco);
+		fprintf(orders_file, "%c", delimiter);
 
 		/* o_ship_date */
 		/* Note that the milliseconds are not calculated. */
 		t1 += get_random_int(691200);
-		fprintf(orders_file, "\"%04d%02d%02d%02d%02d%02d000000\"",
+		print_timestamp(orders_file, tm1);
+		/*
+		fprintf(orders_file, "%s%04d%02d%02d%02d%02d%02d000000%s",
+			field_deco, 
 			tm1->tm_year + 1900, tm1->tm_mon + 1, tm1->tm_mday,
-			tm1->tm_hour, tm1->tm_min, tm1->tm_sec);
-		fprintf(orders_file, "%c", DELIMITER);
+			tm1->tm_hour, tm1->tm_min, tm1->tm_sec, field_deco);
+		*/
+		fprintf(orders_file, "%c", delimiter);
 
 		/* o_bill_addr_id */
-		fprintf(orders_file, "\"%d\"",
-			get_random_int(2 * customers) + 1);
-		fprintf(orders_file, "%c", DELIMITER);
+		fprintf(orders_file, "%s%d%s",
+			field_deco, 
+			get_random_int(2 * customers) + 1, field_deco);
+		fprintf(orders_file, "%c", delimiter);
 
 		/* o_ship_addr_id */
-		fprintf(orders_file, "\"%d\"",
-			get_random_int(2 * customers) + 1);
-		fprintf(orders_file, "%c", DELIMITER);
+		fprintf(orders_file, "%s%d%s",
+			field_deco, 
+			get_random_int(2 * customers) + 1, field_deco);
+		fprintf(orders_file, "%c", delimiter);
 
 		/* o_status */
-		fprintf(orders_file, "\"%s\"",
-			o_status[get_random_int(O_STATUS_MAX)]);
+		fprintf(orders_file, "%s%s%s",
+			field_deco, 
+			o_status[get_random_int(O_STATUS_MAX)], field_deco);
 
 		fprintf(orders_file, "\n");
 
@@ -792,51 +861,62 @@ void gen_orders()
 		/* CC Xacts */
 
 		/* cx_o_id */
-		fprintf(cc_xacts_file, "\"%d\"", i + 1);
-		fprintf(cc_xacts_file, "%c", DELIMITER);
+		fprintf(cc_xacts_file, "%s%d%s", field_deco, i + 1, field_deco);
+		fprintf(cc_xacts_file, "%c", delimiter);
 
 		/* cx_type */
-		fprintf(cc_xacts_file, "\"%s\"",
-			cx_type[get_random_int(CX_TYPE_MAX)]);
-		fprintf(cc_xacts_file, "%c", DELIMITER);
+		fprintf(cc_xacts_file, "%s%s%s",
+			field_deco, 
+			cx_type[get_random_int(CX_TYPE_MAX)], field_deco);
+		fprintf(cc_xacts_file, "%c", delimiter);
 
 		/* cx_num */
 		get_n_string(a_string, 16, 16);
-		fprintf(cc_xacts_file, "\"%s\"", a_string);
-		fprintf(cc_xacts_file, "%c", DELIMITER);
+		fprintf(cc_xacts_file, "%s%s%s", 
+			field_deco, a_string, field_deco);
+		fprintf(cc_xacts_file, "%c", delimiter);
 
 		/* cx_name */
 		/* Clause 4.7.1 says this should be an a_string[14..30] but the
 		 * column definition in Clause 1.4.7 says it is at least 31. */
 		get_a_string(a_string, 14, 30);
-		fprintf(cc_xacts_file, "\"%s\"", a_string);
-		fprintf(cc_xacts_file, "%c", DELIMITER);
+		fprintf(cc_xacts_file, "%s%s%s", 
+			field_deco, a_string, field_deco);
+		fprintf(cc_xacts_file, "%c", delimiter);
 
 		/* cx_expiry */
 		t2 += 864000 + get_random_int(62294400);
 		tm2 = localtime(&t2);
-		fprintf(cc_xacts_file, "\"%04d%02d%02d\"", tm2->tm_year + 1900,
-			tm2->tm_mon + 1, tm2->tm_mday);
-		fprintf(cc_xacts_file, "%c", DELIMITER);
+		fprintf(cc_xacts_file, "%s%04d%02d%02d%s", 
+			field_deco, tm2->tm_year + 1900,
+			tm2->tm_mon + 1, tm2->tm_mday, field_deco);
+		fprintf(cc_xacts_file, "%c", delimiter);
 
 		/* cx_auth_id */
 		get_a_string(a_string, CX_AUTH_ID_LEN, CX_AUTH_ID_LEN);
-		fprintf(cc_xacts_file, "\"%s\"", a_string);
-		fprintf(cc_xacts_file, "%c", DELIMITER);
+		fprintf(cc_xacts_file, "%s%s%s", 
+			field_deco, a_string, field_deco);
+		fprintf(cc_xacts_file, "%c", delimiter);
 
 		/* cx_xact_amt */
-		fprintf(cc_xacts_file, "\"%0.2f\"", o_total);
-		fprintf(cc_xacts_file, "%c", DELIMITER);
+		fprintf(cc_xacts_file, "%s%0.2f%s", 
+			field_deco, o_total, field_deco);
+		fprintf(cc_xacts_file, "%c", delimiter);
 
 		/* cx_xact_date */
 		/* Note that the milliseconds are not calculated. */
-		fprintf(cc_xacts_file, "\"%04d%02d%02d%02d%02d%02d000000\"",
-			tm1->tm_year + 1900, tm1->tm_mon + 1, tm1->tm_mday, tm1->tm_hour,
-			tm1->tm_min, tm1->tm_sec);
-		fprintf(cc_xacts_file, "%c", DELIMITER);
+		print_timestamp(cc_xacts_file, tm1);
+		/*
+		fprintf(cc_xacts_file, "%s%04d%02d%02d%02d%02d%02d000000%s",
+			field_deco, tm1->tm_year + 1900, tm1->tm_mon + 1, 
+			tm1->tm_mday, tm1->tm_hour,
+			tm1->tm_min, tm1->tm_sec, field_deco);
+		*/
+		fprintf(cc_xacts_file, "%c", delimiter);
 
 		/* cx_co_id */
-		fprintf(cc_xacts_file, "\"%d\"", get_random_int(92) + 1);
+		fprintf(cc_xacts_file, "%s%d%s", 
+			field_deco, get_random_int(92) + 1, field_deco);
 
 		fprintf(cc_xacts_file, "\n");
 	}
@@ -856,23 +936,43 @@ int process_options(int count, char **vector)
 	int option;
 	int set_items;
 	int set_eus;
+	int set_rdbms;
 	int flag_all = 1;
 
 	set_items = 0;
 	set_eus = 0;
+	set_rdbms = 0;
 
 	flag_cust = 0;
 	flag_item = 0;
 	flag_author = 0;
 	flag_address = 0;
 	flag_order = 0;
-	while ((option = getopt (count, vector, "i:u:p:T:h:m")) != -1)
+	while ((option = getopt (count, vector, "i:d:u:p:T:h")) != -1)
 	{
 		switch (option)
 		{
 			case 'i':
 				items = atoi(optarg);
 				set_items = 1;
+				break;
+			case 'd':
+				if (strcmp(optarg, "SAPDB") == 0 ||
+					strcmp(optarg, "sapdb") == 0)
+				{
+					rdbms = SAPDB;
+					set_rdbms=1;
+				}
+				else if (strcmp(optarg, "PGSQL") == 0 ||
+					strcmp(optarg, "pgsql") == 0)
+				{
+					rdbms = PGSQL;
+					set_rdbms=1;
+				}
+				else
+				{
+					set_rdbms=0;
+				}      
 				break;
 			case 'u':
 				ebs = atoi(optarg);
@@ -918,9 +1018,10 @@ int process_options(int count, char **vector)
 		flag_address = 1;
 		flag_order = 1;
 	}
-	if (set_items == 0 || set_eus == 0)
+	if (set_items == 0 || set_eus == 0 || set_rdbms==0 )
 	{
-		printf("item and eu numbers are required\n");
+		printf("item, eu numbers and rdbms type are required\n");
+		usage();
 		return 0;
 	}
 	return 1;
@@ -928,13 +1029,28 @@ int process_options(int count, char **vector)
 
 void usage()
 {
-	printf("usage: ./datagen -i <item> -u <eu> -p <path> -T <table_name>\n");
+	printf("usage: ./datagen -d <rdbms> -i <item> -u <eu> -p <path> -T <table_name>\n");
 	printf("table name is:\n");
 	printf(" i -- item\n");
 	printf(" c -- customer\n");
 	printf(" a -- author\n");
 	printf(" d -- address\n");
 	printf(" o -- order\n");
-	printf("example: ./datagen -i 10000 -u 1000 -p /tmp -T i -T c\n");
-	printf("generates table ITEM and CUSTOMER for 10k item 1k eu in directory /tmp\n");
+	printf(" rdbms is SAPDB or PGSQL\n");
+	printf("example: ./datagen -d SAPDB -i 10000 -u 1000 -p /dbt1/data -T i -T c\n");
+	printf("generates table ITEM and CUSTOMER for 10k item 1k eu in directory /dbt1/data in SAPDB load file format\n");
+}
+
+/* copied from dbt2 */
+void print_timestamp(FILE *ofile, struct tm *date)
+{
+	if (rdbms == SAPDB) {
+		fprintf(ofile, "\"%04d%02d%02d%02d%02d%02d000000\"",
+			date->tm_year + 1900, date->tm_mon + 1, date->tm_mday,
+			date->tm_hour, date->tm_min, date->tm_sec);
+	} else if (rdbms == PGSQL) {
+		fprintf(ofile, "%04d-%02d-%02d %02d:%02d:%02d",
+			date->tm_year + 1900, date->tm_mon + 1, date->tm_mday,
+			date->tm_hour, date->tm_min, date->tm_sec);
+	}
 }
