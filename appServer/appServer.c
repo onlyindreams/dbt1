@@ -176,6 +176,7 @@ void *DoConnection(void *fd)
 	char size[100];
 	int QIndex;
 	struct QItem TxnQItem;
+	int rec;
 #ifdef GET_TIME
 	struct timeval receive_request_time,  send_response_time, t1;
 	double server_response_time, db_response_time, server_db_time;
@@ -188,9 +189,14 @@ void *DoConnection(void *fd)
 #endif
 	while (1)
 	{
-		if(receive_transaction_packet(workersock, &TxnQItem) != W_OK) 
+		if((rec=receive_transaction_packet(workersock, &TxnQItem)) == W_ERROR) 
 		{
 			LOG_ERROR_MESSAGE("receive_transaction_packet failed");
+			pthread_exit(NULL);
+		}
+		if (rec==SOCKET_CLOSE)
+		{
+			LOG_ERROR_MESSAGE("driver socket closed");
 			pthread_exit(NULL);
 		}
 #ifdef DEBUG
@@ -207,6 +213,8 @@ void *DoConnection(void *fd)
 		QIndex=enqueue(TxnQItem, &TxnQ);
 		if (QIndex==-1)
 		{
+			pthread_mutex_unlock(&queue_mutex);
+			close(workersock);
 			LOG_ERROR_MESSAGE("enquue failed");
 			pthread_exit(NULL);
 		}
