@@ -1,0 +1,19 @@
+fastload table customer
+c_id 1
+c_uname 2
+c_passwd 3
+c_lname 4
+c_fname 5
+c_addr_id 6
+c_phone 7
+c_email 8
+c_since 9
+c_last_visit 10
+c_login 11
+c_expiration 12
+c_discount 13
+c_balance 14
+c_ytd_pmt 15
+c_birthdate 16
+c_data 17
+infile '/tmp/customer.data'

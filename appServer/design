@@ -1,0 +1,69 @@
+appServer: the middle tier of this kit. It is a transaction management application server. It receives transaction request from the RBE, feeds the query to database, and returns the query result to the RBE
+
+Data Structure:
+interaction array data structure:
+  struct app_txn_array
+  {
+        int pin[ArrayDim];
+        pthread_mutex_t odbc_txn_array_mutex;
+        union odbc_data_t odbc_data_array[ArrayDim];
+  };
+
+union odbc_data_t is defined in eb.h. Middle tier shares the same data structure with EB to simplify the socket interface between those two. 
+odbc_txn_array_mutex is used to protect the array from being accessed by  two threads at the same time. 
+There is a flag for each slot in the array  indicating if this slot is free(pin[ArrayDim]).
+  app_txn_array is used to hold input/output for each interaction. app_txn_array is created for each type of interaction.
+
+transaction queue element:
+  struct QItem
+  {
+   int TxnType;
+   int SlotID;
+  };
+transaction type and slot id is stored in the queue item. So that  Dotxn can take input from/put output to corresponding app_txn_array.
+
+transaction queue structure:
+  struct Queue
+  {
+        int front;
+        int rear;
+        int items;
+        struct QItem TxnQ[TxnQSize];
+  };
+this simulates a Queue, we use an array since we do not want to alloc/dealloc memory frequently.
+in addition to an ordinary queue, we have an array of queue_entry_mutex,   dimention of this mutex array is TxnQSize.  This is designed to inform DoConnect when txn is done.
+
+.c files
+app_txn_array.c: implement txn_array. includes PinSlot and FreeSlot function.
+        PinSlot: returns a free slot number in the array
+        FreeSlot: mark this slot free
+app_txn_queue.c: implements txn_queue. Main functions are enqueue and dequeue.
+        enqueue: put a transaction queue element in the queue.
+        dequeue: remove a element from the queue.
+app_interface.c: includes receive_transaction_packet, and send_transaction_packet functions. These two functions are called by DoConnection to communicate with
+EB.
+appServer.c: include main function and DoConnection worker function.
+        Main thread listens to a dedicated port for incoming connection. Once got a connection, it forks a DoConnection thread.
+
+        DoConnection reads request from EB,
+        decide which txn_array it will use based on trasaction type
+        pins a slot in the corresponding txn_array,
+        puts input in that slot,
+        fills out transaction queue element(slot number and transaction type).
+        enqueue
+        Raise a semaphore letting DoTxn know that there is a transaction requset in the Queue, wait for transaction done.
+        Once get the signal that transaction is done, go to the corresponding txn_array's slot, get output, free that slot.
+         sends data back.
+app_threadpool.c: has InitThreadPool function and DoTxn worker function.
+        InitThreadPool is called in main function. It starts certain number of DoTxn threads.
+        Each DoTxn threads opens one database connection.
+        Waits till there is a transaction request in transaction queue
+        Once gets the signal, dequeue, get transaction type and slot number,
+        according to transaction type, go to corresponding txn_array's slot, get input
+        accesses/updates database
+        puts output in corresponding txn_array's slot
+        sends a signal letting DoConnection that transaction is done.
+
+Note: ArrayDim and TxnQSize should be big enough to handle the load, we need to test and determine an appropricate value, but has to be hard coded.
+Number of database connections is configurable.
+

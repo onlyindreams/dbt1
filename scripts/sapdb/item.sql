@@ -1,0 +1,24 @@
+fastload table item
+i_id 1
+i_title 2
+i_a_id 3
+i_pub_date 4
+i_publisher 5
+i_subject 6
+i_desc 7
+i_related1 8
+i_related2 9
+i_related3 10
+i_related4 11
+i_related5 12
+i_thumbnail 13
+i_image 14
+i_srp 15
+i_cost 16
+i_avail 17
+i_stock 18
+i_isbn 19
+i_page 20
+i_backing 21
+i_dimensions 22
+infile '/tmp/item.data'

@@ -1,0 +1,85 @@
+/*
+ * odbc_interaction_order_inquiry.c
+ *
+ * This file is released under the terms of the Artistic License.  Please see
+ * the file LICENSE, included in this package, for details.
+ *
+ * Copyright (C) 2002 Mark Wong & Jenny Zhang &
+ *                    Open Source Development Lab, Inc.
+ *
+ * 28 february 2002
+ */
+
+#include <odbc_interaction_order_inquiry.h>
+#include <sql.h>
+#include <sqlext.h>
+
+#ifdef PHASE1
+#include <odbc_interaction.h>
+#define ORDER_INQUIRY_ODBC_DATA order_inquiry_odbc_data
+#endif /* PHASE1 */
+
+#ifdef PHASE2
+#include <app_interaction.h>
+#define ORDER_INQUIRY_ODBC_DATA order_inquiry_odbc_data.eb
+#endif /* PHASE2 */
+
+#ifdef PHASE1
+int copy_in_order_inquiry(struct eu_context_t *euc, union odbc_data_t *odbcd)
+{
+	odbcd->order_inquiry_odbc_data.c_id = euc->order_inquiry_data.c_id;
+	return W_OK;
+}
+
+int copy_out_order_inquiry(struct eu_context_t *euc, union odbc_data_t *odbcd)
+{
+	int i;
+
+	strcpy(euc->order_inquiry_data.c_uname, odbcd->order_inquiry_odbc_data.c_uname);
+	return W_OK;
+}
+#endif /* PHASE1*/
+
+int execute_order_inquiry(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
+{
+	SQLRETURN rc;
+	int i, j;
+
+	/* Perpare statement for Order Inquiry interaction. */
+	rc = SQLPrepare(odbcc->hstmt, STMT_ORDER_INQUIRY, SQL_NTS);
+	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
+	{
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+		return W_ERROR;
+	}
+
+	/* Bind variables for OrderInquiry interaction. */
+	j = 1;
+	rc = SQLBindParameter(odbcc->hstmt,
+		j++, SQL_PARAM_INPUT, SQL_C_ULONG, SQL_INTEGER,
+		0, 0, &odbcd->ORDER_INQUIRY_ODBC_DATA.c_id, 0, NULL);
+	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
+	{
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+		return W_ERROR;
+	}
+	rc = SQLBindParameter(odbcc->hstmt,
+		j++, SQL_PARAM_OUTPUT, SQL_C_CHAR, SQL_VARCHAR,
+		0, 0, odbcd->ORDER_INQUIRY_ODBC_DATA.c_uname,
+		sizeof(odbcd->ORDER_INQUIRY_ODBC_DATA.c_uname), NULL);
+	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
+	{
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+		return W_ERROR;
+	}
+
+	/* Execute stored procedure. */
+	rc = SQLExecute(odbcc->hstmt);
+	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
+	{
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+		return W_ERROR;
+	}
+
+	return W_OK;
+}

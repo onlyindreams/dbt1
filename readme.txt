@@ -1,0 +1,13 @@
+appServer		middle tier application server.
+common			Functions described in the specification that can be shared.
+datagen			The database data generator.
+dbdriver		The database driver.
+db_interface	Currently contains a DB interface using ODBC.
+include			All include files.
+LICENSE			The Artistic license that this project is released under.
+readme.txt		This file.
+script			Various shell scripts.
+sizing.sdc		Star Office spreadsheet that calculates various sizing info.
+storedproc		SAP DB stored procedure files.
+tools			Various tools to use with this kit.
+wgen			TPC supplied data generator required by datagen.
