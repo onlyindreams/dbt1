@@ -10,7 +10,7 @@ INCLUDE_DIR=../include
 EXE = appServer
 APP_PRGS = appServer.c app_txn_array.c app_threadpool.c \
 	app_txn_queue.c app_interface.c
-APP_OBJS = $(APP_PRGS:.c=.o)
+APP_OBJS = $(APP_PRGS:.c=.so)
 
 LIBS = $(SAPDBROOT)/lib/libsqlod.so -lm -lpthread
 OBJS = $(COMMON_OBJS) $(ODBC_OBJS) $(APP_OBJS)
@@ -21,8 +21,8 @@ all: $(EXE)
 $(EXE): $(OBJS)
 	$(CC) -o $@ $(OBJS) $(LIBS)
 
-%.o:%.c
-	$(CC) -c $(CFLAGS) -o $@ $<
+%.so:%.c
+	$(CC) -c -shared -fpic $(CFLAGS) -o $@ $<
 
 $(COMMON_OBJS):$(COMMON_PRGS)
 	cd $(COMMON_DIR); $(make)
@@ -31,7 +31,7 @@ $(ODBC_OBJS): $(ODBC_PRGS)
 	cd $(ODBC_DIR); $(MAKE)
 
 clean:
-	rm $(EXE) *.o
+	rm -f $(EXE) *.so
 
 explain:
 	@echo "$(OBJS)"

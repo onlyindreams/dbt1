@@ -23,10 +23,11 @@ tools_exe:
 	cd tools; $(MAKE)
 
 clean:
-	cd wgen; rm -f *.o tpcw
-	cd interfaces/odbc; rm -f *.o datagen
-	cd common; rm -f *.o
-	cd db_interface; rm -f *.o
-	cd dbdriver; rm -f *.o dbdriver_p1 dbdriver_p2
-	cd appServer; rm -f *.o appServer
-	cd tools; rm -f *.o odbc_test_p1 odbc_test_p2 load_db_proc results
+	cd wgen; $(MAKE) clean
+	cd interfaces/odbc; $(MAKE) clean
+	cd common; $(MAKE) clean
+	cd interfaces/odbc; $(MAKE) clean
+	cd dbdriver; $(MAKE) clean
+	cd appServer; $(MAKE) clean
+	cd tools; $(MAKE) clean
+	cd datagen; $(MAKE) clean

@@ -8,12 +8,12 @@ INCLUDE_DIR=../include
 
 all: $(COMMON_OBJS)
 
-%.o:%.c
-	$(CC) -c $(CFLAGS) -o $@ $<
+%.so:%.c
+	$(CC) -c -shared -fpic $(CFLAGS) -o $@ $<
 
-common.o: ../common.mk Makefile common.c ../include/common.h
+common.so: ../common.mk Makefile common.c ../include/common.h
 
-socket.o: ../common.mk Makefile _socket.c ../include/_socket.h
+socket.so: ../common.mk Makefile _socket.c ../include/_socket.h
 
 clean: 
-	rm -f *.o
+	rm -f *.so

@@ -5,7 +5,7 @@ SAPDBROOT=/opt/sapdb/interfaces/odbc
 CFLAGS = -g -I$(INCLUDE_DIR) -I$(SAPDBROOT)/incl -DDEBUG -DGET_TIME
 
 COMMON_PRGS = $(COMMON_DIR)/common.c $(COMMON_DIR)/_socket.c
-COMMON_OBJS = $(COMMON_PRGS:.c=.o)
+COMMON_OBJS = $(COMMON_PRGS:.c=.so)
 
 ODBC_PRGS = \
 	$(ODBC_DIR)/odbc_interaction.c \
@@ -22,7 +22,7 @@ ODBC_PRGS = \
 	$(ODBC_DIR)/odbc_interaction_search_request.c \
 	$(ODBC_DIR)/odbc_interaction_search_results.c \
 	$(ODBC_DIR)/odbc_interaction_shopping_cart.c 
-ODBC_OBJS = $(ODBC_PRGS:.c=.o)
+ODBC_OBJS = $(ODBC_PRGS:.c=.so)
 
 ODBC_INCLUDE = $(INCLUDE_DIR)/odbc_interaction_home.h \
 	$(INCLUDE_DIR)/odbc_interaction.h \

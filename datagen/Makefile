@@ -5,22 +5,29 @@ CC = gcc
 
 CFLAGS = -g -I../include -I../wgen
 
-all: orders.o address.o author.o customer.o item.o datagen
+all: orders.so address.so author.so customer.so item.so datagen
 
-orders.o: Makefile orders.c ../include/datagen.h ../wgen/tpcw.h
-	$(CC) -c $(CFLAGS) orders.c -o orders.o
+orders.so: Makefile orders.c ../include/datagen.h ../wgen/tpcw.h
+	$(CC) -c -shared -fpic $(CFLAGS) orders.c -o orders.so
 
-address.o: Makefile address.c ../include/datagen.h ../wgen/tpcw.h
-	$(CC) -c $(CFLAGS) address.c -o address.o
+address.so: Makefile address.c ../include/datagen.h ../wgen/tpcw.h
+	$(CC) -c -shared -fpic $(CFLAGS) address.c -o address.so
 
-author.o: Makefile author.c ../include/datagen.h ../wgen/tpcw.h
-	$(CC) -c $(CFLAGS) author.c -o author.o
+author.so: Makefile author.c ../include/datagen.h ../wgen/tpcw.h
+	$(CC) -c -shared -fpic $(CFLAGS) author.c -o author.so
 
-customer.o: Makefile customer.c ../include/datagen.h ../wgen/tpcw.h
-	$(CC) -c $(CFLAGS) customer.c -o customer.o
+customer.so: Makefile customer.c ../include/datagen.h ../wgen/tpcw.h
+	$(CC) -c -shared -fpic $(CFLAGS) customer.c -o customer.so
 
-item.o: Makefile item.c ../include/datagen.h ../wgen/tpcw.h
-	$(CC) -c $(CFLAGS) item.c -o item.o
+item.so: Makefile item.c ../include/datagen.h ../wgen/tpcw.h
+	$(CC) -c -shared -fpic $(CFLAGS) item.c -o item.so
 
-datagen: Makefile main.c orders.o address.o author.o customer.o item.o ../include/datagen.h ../include/common.h ../common/common.o ../wgen/tpcw.o ../wgen/text.o ../wgen/rnd.o ../wgen/bm_utils.o
-	$(CC) $(CFLAGS) main.c -o datagen ../common/common.o orders.o address.o author.o customer.o item.o ../wgen/tpcw.o ../wgen/text.o ../wgen/rnd.o ../wgen/bm_utils.o -lm
+datagen: Makefile main.c orders.so address.so author.so customer.so item.so \
+	../include/datagen.h ../include/common.h ../common/common.so \
+	../wgen/tpcw.o ../wgen/text.o ../wgen/rnd.o ../wgen/bm_utils.o
+	$(CC) $(CFLAGS) main.c -o datagen ../common/common.so orders.so address.so \
+		author.so customer.so item.so ../wgen/tpcw.o ../wgen/text.o \
+		../wgen/rnd.o ../wgen/bm_utils.o -lm
+
+clean:
+	rm -f *.so

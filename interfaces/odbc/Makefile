@@ -9,11 +9,11 @@ CFLAGS_ODBC=$(CFLAGS) -DPHASE1
 
 all: $(ODBC_OBJS)
 
-%.o:%.c
-	$(CC) -c $(CFLAGS_ODBC) -o $@ $<
+%.so:%.c
+	$(CC) -c -shared -fpic $(CFLAGS_ODBC) -o $@ $<
 
 clean:
-	rm *.o
+	rm -f *.so
 
 explain:
 	@echo "$(ODBC_OBJS)"
