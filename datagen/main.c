@@ -11,6 +11,7 @@
 
 #define _LARGEFILE64_SOURCE
 
+#include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -54,12 +55,12 @@ int main(int argc, char *argv[])
 	char pwd[256];
 	char cmd[256];
 
-	flag_cust=0;
-	flag_item=0;
-	flag_author=0;
-	flag_address=0;
-	flag_order=0;
-	path[0]='\0';
+	flag_cust = 0;
+	flag_item = 0;
+	flag_author = 0;
+	flag_address = 0;
+	flag_order = 0;
+	path[0] = '\0';
 
 	process_options(argc, argv);
 
@@ -109,9 +110,9 @@ int main(int argc, char *argv[])
 	init_common();
 	load_dists();
 	printf("generating data files...\n");
-	/*if -T is not specified, then generate all the files */
-	if (flag_item==0 && flag_cust==0 && flag_author==0 && flag_address==0 &&
-		flag_order==0)
+	/* if -T is not specified, then generate all the files */
+	if (flag_items == 0 && flag_cust == 0 && flag_author == 0 &&
+		flag_address == 0 && flag_order == 0)
 	{
 		gen_items(items, path);
 		gen_customers(ebs, path);
@@ -119,8 +120,8 @@ int main(int argc, char *argv[])
 		gen_addresses(ebs, path);
 		gen_orders(ebs, items, path);
 		/*
-		 * In my environment, I don't have enough /tmp space to put the data files
-		 * in /tmp.
+		 * In my environment, I don't have enough /tmp space to put the data
+		 * files in /tmp.
 		 */
 
 		printf("creating links in /tmp to data files...\n");
@@ -170,7 +171,8 @@ int main(int argc, char *argv[])
 			gen_orders(ebs, items, path);
 			sprintf(cmd, "ln -fs %s/orders.data /tmp/orders.data", path);
 			popen(cmd, "r");
-			sprintf(cmd, "ln -fs %s/order_line.data /tmp/order_line.data", path);
+			sprintf(cmd, "ln -fs %s/order_line.data /tmp/order_line.data",
+				path);
 			popen(cmd, "r");
 			sprintf(cmd, "ln -fs %s/cc_xacts.data /tmp/cc_xacts.data", path);
 			popen(cmd, "r");
@@ -212,19 +214,19 @@ void process_options(int count, char **vector)
 				switch (*optarg)
 				{
 					case 'i':
-						flag_item = 1 ; /*generate item ONLY */
+						flag_item = 1 ; /* generate item ONLY */
 						break;
 					case 'c':
-						flag_cust = 1 ; /*generate customer ONLY */
+						flag_cust = 1 ; /* generate customer ONLY */
 						break;
 					case 'o':
-						flag_order = 1; /*generate order ONLY */
+						flag_order = 1; /* generate order ONLY */
 						break;
 					case 'a':
-						flag_author = 1; /*generate author ONLY */
+						flag_author = 1; /* generate author ONLY */
 						break;
 					case 'd':
-						flag_address = 1; /*generate address ONLY */
+						flag_address = 1; /* generate address ONLY */
 						break;
 				}
 				break;
@@ -237,7 +239,7 @@ void process_options(int count, char **vector)
 				exit(1);
 		}
 	}
-	if (set_items==0 || set_eus==0)
+	if (set_items == 0 || set_eus == 0)
 	{
 		printf("item and eu numbers are required\n");
 		usage();
@@ -249,7 +251,11 @@ void usage()
 {
 	printf("usage: ./datagen -i <item> -u <eu> -p <path> -T <table_name>\n");
 	printf("table name is:\n");
-	printf(" i -- item\n c -- customer\n a -- author\n d -- address\n o -- order\n");
+	printf(" i -- item\n");
+	printf(" c -- customer\n");
+	printf(" a -- author\n");
+	printf(" d -- address\n");
+	printf(" o -- order\n");
 	printf("example: ./datagen -i 10000 -u 1000 -p /tmp -T i -T c\n");
 	printf("generates table ITEM and CUSTOMER for 10k item 1k eu in directory /tmp\n");
 }
