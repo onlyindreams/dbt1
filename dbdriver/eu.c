@@ -347,10 +347,15 @@ int do_interaction(struct eu_context_t *euc)
 		LOG_ERROR_MESSAGE("send failed");
 		return W_ERROR;
 	}
-	if (receive_interaction_packet(euc->s, euc) == W_ERROR)
+	if ( (rc=receive_interaction_packet(euc->s, euc)) == W_ERROR)
 	{
 		LOG_ERROR_MESSAGE("receive failed");
 		return W_ERROR;
+	}
+	if (rc==SOCKET_CLOSE)
+	{
+		LOG_ERROR_MESSAGE("appServer socket closed");
+		return SOCKET_CLOSE;
 	}
 
 	if (euc->interaction == SHOPPING_CART) 
@@ -1699,12 +1704,14 @@ void *start_eu(void *data)
 				perror("gettimeofday");
 			}
 			rc = do_interaction(&euc);
+			LOG_ERROR_MESSAGE("do_interaction returns %d", rc);
+			
 			/* Get the time after the interaction has executed. */
 			if (gettimeofday(&rt1, NULL) == -1)
 			{
 				perror("gettimeofday");
 			}
-			if (rc != W_OK)
+			if (rc == W_ERROR)
 			{
 				LOG_ERROR_MESSAGE("error executing %s",
 					interaction_short_name[euc.interaction]);
@@ -1720,8 +1727,22 @@ void *start_eu(void *data)
 				/* If an error occurs, sleep for 10 seconds and try again. */
 				sleep(10);
 			}
+		} while (rc == W_ERROR);
+#ifdef PHASE2
+		/* if appServer close this socket, reconnect */
+		if (rc == SOCKET_CLOSE)
+		{
+			close(euc.s);
+
+			if ((euc.s = _connect(tm_address, *port)) == -1)
+			{
+				LOG_ERROR_MESSAGE("re-connect failed");
+				return;
+			}
+			LOG_ERROR_MESSAGE("re-connect");
+			continue;
 		}
-		while (rc != W_OK);
+#endif
 		response_time = time_diff(rt0, rt1);
 
 		/* Log the response time and the interaction that was just executed. */
@@ -1774,12 +1795,13 @@ void *start_eu(void *data)
 					perror("gettimeofday");
 				}
 				rc = do_interaction(&euc);
+				LOG_ERROR_MESSAGE("do_interaction returns %d", rc);
 				/* Get the time after the interaction has executed. */
 				if (gettimeofday(&rt1, NULL) == -1)
 				{
 					perror("gettimeofday");
 				}
-				if (rc != W_OK)
+				if (rc == W_ERROR)
 				{
 					LOG_ERROR_MESSAGE("error executing %s",
 						interaction_short_name[euc.interaction]);
@@ -1797,8 +1819,22 @@ void *start_eu(void *data)
 					 */
 					sleep(10);
 				}
-			}
-			while (rc != W_OK);
+			} while (rc == W_ERROR);
+#ifdef PHASE2
+	                /* if appServer close this socket, reconnect */
+        	        if (rc == SOCKET_CLOSE)
+			{
+                        	close(euc.s);
+                        	if ((euc.s = _connect(tm_address, *port)) == -1)
+                        	{
+                               		LOG_ERROR_MESSAGE("re-connect failed");
+                                	return;
+                        	}
+                        	LOG_ERROR_MESSAGE("re-connect");
+                        	continue;
+                	}
+#endif
+
 			response_time =
 				(double) (rt1.tv_sec - rt0.tv_sec) + (double) (rt1.tv_usec - rt0.tv_usec) / 1000000.0;
 
