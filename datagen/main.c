@@ -44,9 +44,15 @@ int items, ebs;
 /* directory where the datafile will be put */
 char path[256];
 int flag_cust, flag_item, flag_author, flag_address, flag_order;
+/* rdbms type: SAPDB or PGSQL */
 int rdbms;
+/* SAPDB requires " around data field */
 char field_deco[3];
 char delimiter;
+/* path of the create_sequence.sql */
+char sequence_file[256];
+/* SAPDB requires 'sql_execute' in front of the SQL command */
+char exec_sql[20];
 
 /* Prototypes */
 void gen_addresses();
@@ -78,11 +84,15 @@ int main(int argc, char *argv[])
 	{
 		strcpy(field_deco, "\"");
 		delimiter =  ',';
+		strcpy(sequence_file, "../scripts/sapdb/create_sequence.sql");
+		strcpy(exec_sql, "sql_execute");
 	}
 	else if (rdbms == PGSQL)
 	{
 		strcpy(field_deco, "");
 		delimiter =  '\\';
+		strcpy(sequence_file, "../scripts/pgsql/create_sequence.sql");
+		strcpy(exec_sql, "");
 	}
 
 	if (items != 1000 && items != 10000 && items != 100000 &&
@@ -109,22 +119,28 @@ int main(int argc, char *argv[])
 	printf("user scale factor %10d\n", ebs);
 	printf("data files are in %10s\n", path);
 
-	printf("generating sequence creation file: %s\n", SEQUENCE_SQL);
-	sequence_sql = fopen(SEQUENCE_SQL, "w");
+	printf("generating sequence creation file: %s\n", sequence_file);
+	sequence_sql = fopen(sequence_file, "w");
 	if (sequence_sql == NULL)
 	{
-		printf("cannot open %s\n", SEQUENCE_SQL);
+		printf("cannot open %s\n", sequence_file);
 		return 3;
 	}
-	fprintf(sequence_sql, "sql_connect dbt,dbt\n");
+	if (rdbms == SAPDB)
+	{
+		fprintf(sequence_sql, "sql_connect dbt,dbt\n");
+	}
 	fprintf(sequence_sql,
-		"sql_execute CREATE SEQUENCE custid INCREMENT BY 1 START WITH %d\n",
+		"%s CREATE SEQUENCE custid INCREMENT BY 1 START WITH %d\n",
+		exec_sql,
 		2880 * ebs + 1);
 	fprintf(sequence_sql,
-		"sql_execute CREATE SEQUENCE addrid INCREMENT BY 1 START WITH %d\n",
+		"%s CREATE SEQUENCE addrid INCREMENT BY 1 START WITH %d\n",
+		exec_sql,
 		ebs * 2880 * 2 + 1);
 	fprintf(sequence_sql,
-		"sql_execute CREATE SEQUENCE scid INCREMENT BY 1 START WITH %d\n",
+		"%s CREATE SEQUENCE scid INCREMENT BY 1 START WITH %d\n",
+		exec_sql,
 		(int) ((double) ebs * 2880.0 * 0.9 + 1.0));
 	fclose(sequence_sql);
 
