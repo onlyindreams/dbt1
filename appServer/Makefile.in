@@ -8,7 +8,8 @@ APP_PRGS = appServer.c app_txn_array.c app_threadpool.c \
 	app_txn_queue.c app_interface.c
 APP_OBJS = $(APP_PRGS:.c=.so)
 
-OBJS = $(COMMON_OBJS) $(ODBC_OBJS) $(APP_OBJS) $(CACHE_DIR)/cache_interface.so
+OBJS = $(COMMON_OBJS) $(ODBC_OBJS) $(APP_OBJS) $(CACHE_DIR)/cache_interface.so \
+		$(TOPDIR)/interfaces/db.so
 PRGS = $(COMMON_PRGS) $(ODBC_PRGS) $(APP_PRGS)
 
 all: $(EXE)
@@ -36,8 +37,7 @@ $(EXE): \
 	Makefile \
 	$(OBJS) \
 	$(INCLUDE_DIR)/common.h \
-	$(INCLUDE_DIR)/eu.h \
-	$(INCLUDE_DIR)/odbc_interaction.h \
+	$(INCLUDE_DIR)/db.h \
 	$(INCLUDE_DIR)/app_interface.h \
 	$(INCLUDE_DIR)/app_threadpool.h \
 	$(INCLUDE_DIR)/app_txn_array.h \
