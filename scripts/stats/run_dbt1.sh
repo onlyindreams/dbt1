@@ -8,7 +8,7 @@ fi
 CPUS=`grep -c processor /proc/cpuinfo`
 RESULTS_PATH=$1
 
-#rm /tmp/*.log
+rm /tmp/*.log
 #
 # Use $IFS (Internal File Separator variable) to split a line of input to
 # "read", if you do not want the default to be whitespace.
