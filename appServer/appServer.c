@@ -217,7 +217,7 @@ void *DoConnection(void *fd)
 	int rec;
 #ifdef GET_TIME
 	struct timeval receive_request_time,  send_response_time, t1;
-	double server_response_time, db_response_time, server_db_time;
+	double server_response_time, db_response_time = 0, server_db_time;
 #endif
 	
 	sf = (int *)(fd);

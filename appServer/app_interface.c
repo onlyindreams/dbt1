@@ -9,6 +9,7 @@
  * 18 march 2002
  */
 
+#include <stdlib.h>
 #include <errno.h>
 #include <common.h>
 #include <app_interface.h>
@@ -31,9 +32,9 @@ extern struct app_txn_array app_shopping_cart_array;
 
 int receive_transaction_packet(int s, struct QItem *TxnQItem)
 {
-	void *data;
-	int length;
-	int interaction_q_slot_id;
+	void *data = NULL;
+	int length = 0;
+	int interaction_q_slot_id = -1;
 	int interaction;
 	int rec;
 
@@ -192,8 +193,8 @@ int receive_transaction_packet(int s, struct QItem *TxnQItem)
 
 int send_transaction_packet(int s, struct QItem TxnQItem)
 {
-	void *data;
-	int length;
+	void *data = NULL;
+	int length = 0;
 	int interaction;
 	int result;
 

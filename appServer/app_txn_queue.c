@@ -9,8 +9,9 @@
  */
 
 #include <pthread.h>
-#include "app_txn_queue.h"
-#include "common.h"
+#include <stdlib.h>
+#include <app_txn_queue.h>
+#include <common.h>
 
 extern pthread_mutex_t *queue_entry_mutex;
 
