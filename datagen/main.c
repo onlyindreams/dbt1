@@ -3,10 +3,11 @@
  * This file is released under the terms of the Artistic License.  Please see
  * the file LICENSE, included in this package, for details.
  *
- * Copyright (C) 2002 Mark Wong & Jenny Zhang &
- *                    Open Source Development Lab, Inc.
+ * Copyright (C) 2002 Open Source Development Lab, Inc.
  *
- * 10 january 2001
+ * History:  
+ * Jan-10-2001 Original version: Mark Wong and Jenny Zhang
+ * May-20-2003 Modified by Jenny Zhang to generate data for PostgreSQL
  */
 
 #include <stdlib.h>
