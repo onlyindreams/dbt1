@@ -1,3 +1,16 @@
+/*
+/*
+/* This file is released under the terms of the Artistic License.  Please see
+/* the file LICENSE, included in this package, for details.
+/*
+/* Copyright (C) 2002 Mark Wong & Jenny Zhang &
+/*                    Open Source Development Lab, Inc.
+/*
+/*/
+/* Clause 2.13.3 */
+/* Non-complient, exactly the same as New Products. */
+/* This stored procedure is too big to for repmcli to handle.  Use the
+ * odbc_test tool. */
 CREATE DBPROC best_sellers(IN i_subject VARCHAR(60), IN i_id FIXED(10),
 OUT i_related1 FIXED(10), OUT i_related2 FIXED(10), OUT i_related3 FIXED(10),
 OUT i_related4 FIXED(10), OUT i_related5 FIXED(10),
