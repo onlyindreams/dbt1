@@ -281,6 +281,8 @@ void *init_cache(void *data)
 	}
 
 	printf("Cache is warm.\n");
+	pthread_mutex_destroy(&mutex_counter);
+	cache_ready = 1;
 
 	if (sanity_check == 1)
 	{
