@@ -1794,7 +1794,15 @@ void *start_eu(void *data)
 			{
 				LOG_ERROR_MESSAGE("error executing %s",
 					interaction_short_name[euc.interaction]);
-					dump_interaction_data(&euc);
+				dump_interaction_data(&euc);
+
+				/* Log the error */
+				pthread_mutex_lock(&mutex_mix_log);
+				fprintf(log_mix, "%d,ER,%f,%d\n",
+					time(NULL), (double)retry, pthread_self());
+				fflush(log_mix);
+				pthread_mutex_unlock(&mutex_mix_log);
+
 #ifdef PHASE1
 				/*
 				 * If an error occurs, reconnect since it could be a dropped
@@ -1896,6 +1904,13 @@ void *start_eu(void *data)
 				{
 					LOG_ERROR_MESSAGE("error executing %s",
 						interaction_short_name[euc.interaction]);
+					/* Log the error */
+					pthread_mutex_lock(&mutex_mix_log);
+					fprintf(log_mix, "%d,ER,%f,%d\n",
+						time(NULL), response_time, (double)retry, pthread_self());
+					fflush(log_mix);
+					pthread_mutex_unlock(&mutex_mix_log);
+
 					dump_interaction_data(&euc);
 #ifdef PHASE1
 					/*
