@@ -316,7 +316,6 @@ void *DoTxn(void *fd)
 					}
 				}
 
-				rc = OK;
 				rc = receive_search_results(workersock, &app_search_results_array.odbc_data_array[TxnQItem.SlotID].search_results_odbc_data.eb);
 				if (rc!=OK)
 				{
@@ -331,14 +330,6 @@ void *DoTxn(void *fd)
 					}
 					rc = W_ERROR;
 				}
-/*
-				if (rc==0)
-				{
-					LOG_ERROR_MESSAGE("cache host closed socket");
-					close(workersock);
-					workersock=_connect(search_results_cache_host, search_results_cache_port);
-				}
-*/
 			}
 			else 
 			{
