@@ -269,6 +269,7 @@ void *warm_up_cache(void *fd)
 			title_results_table[i].i_thumbnail[k]= odbc_data.search_results_odbc_data.eb.pp_data.i_thumbnail[k];
 		}
 	}
+	odbc_disconnect(&odbcc);
 }
 
 void *cache_thread(void *fd)
