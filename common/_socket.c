@@ -59,7 +59,8 @@ int _connect(char *address, unsigned short port)
 		return sockfd;
 	}
 
-	connect(sockfd, (struct sockaddr *) &sa, sizeof(struct sockaddr_in));
+	if ( connect(sockfd, (struct sockaddr *) &sa, sizeof(struct sockaddr_in)) <0)
+	return -1;
 
 	return sockfd;
 }
@@ -75,6 +76,10 @@ int _receive(int s, void *data, int length)
 		if (received == -1)
 		{
 			return -1;
+		}
+		if (received == 0)
+		{
+			return 0;
 		}
 		total += received;
 		data += received;
