@@ -32,6 +32,9 @@ struct eu_context_t
 #ifdef PHASE1
 	struct odbc_context_t odbcc;
 	union odbc_data_t odbcd;
+#ifdef SEARCH_RESULTS_CACHE
+	int cache_s;
+#endif
 #endif /* PHASE1 */
 
 #ifdef PHASE2
@@ -63,9 +66,15 @@ struct eu_context_t
 /* Prototypes */
 
 #ifdef PHASE1
+#ifdef SEARCH_RESULTS_CACHE
+int init_eus(char *sname, char *uname, char *auth, int eus,
+	int interaction_mix, int rampuprate, int duration, double tt_mean,
+	int item_scale, char *host, int port);
+#else
 int init_eus(char *sname, char *uname, char *auth, int eus,
 	int interaction_mix, int ramptuprate, int duration, double tt_mean,
 	int item_scale);
+#endif
 #endif /* PHASE1 */
 
 #ifdef PHASE2
