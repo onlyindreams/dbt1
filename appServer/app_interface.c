@@ -35,13 +35,15 @@ int receive_transaction_packet(int s, struct QItem *TxnQItem)
 	int length;
 	int interaction_q_slot_id;
 	int interaction;
+	int rec;
 
 	/* Receive transaction type. */
-	if (_receive(s, (void *) &interaction, sizeof(interaction)) == -1)
+	if ( (rec=_receive(s, (void *) &interaction, sizeof(interaction))) == -1)
 	{
 		LOG_ERROR_MESSAGE("cannot receive interaction type");
 		return W_ERROR;
 	}
+	if (rec==SOCKET_CLOSE) return SOCKET_CLOSE;
 
 	TxnQItem->TxnType=interaction;
 	/* Receive transaction data. */
