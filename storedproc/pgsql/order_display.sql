@@ -8,10 +8,11 @@
 -- July-2003: Created by Satoshi Nagayasu
 -- Aug-14-2003:  Reviewed and Tested by Jenny Zhang
 --
+\set AUTOCOMMIT off
 CREATE OR REPLACE FUNCTION order_display (
 	VARCHAR(20),
 	VARCHAR(20)
-) RETURNS SETOF RECORD AS '
+) RETURNS RECORD AS '
 	DECLARE
 		v_c_uname ALIAS FOR $1;
 		v_c_passwd ALIAS FOR $2;
@@ -502,8 +503,7 @@ CREATE OR REPLACE FUNCTION order_display (
 		v_ol_comments20::VARCHAR(100)
 		INTO ret;
 
-		RETURN NEXT ret;
-	RETURN;
+	RETURN ret;
 
 	END;
 ' LANGUAGE 'plpgsql';

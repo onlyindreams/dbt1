@@ -80,7 +80,6 @@ int db_disconnect(struct db_context_t *dbc)
 int process_interaction(int interaction, struct db_context_t *dbc,
 	union interaction_data_t *data)
 {
-	int i;
 	int rc;
 	int status;
 
@@ -129,7 +128,6 @@ int process_interaction(int interaction, struct db_context_t *dbc,
 			LOG_ERROR_MESSAGE("unknown interaction type %d", interaction);
 			return ERROR;
 	}
-
 #ifdef odbc
 	if (rc == OK)
 	{
@@ -148,6 +146,8 @@ int process_interaction(int interaction, struct db_context_t *dbc,
 		status = ERROR;
 	}
 #endif
+/* libpq does not have autocommit implemented yet, it is controlled by BEGIN/END
+*/
 #ifdef libpq
 	if (rc == OK)
 	{

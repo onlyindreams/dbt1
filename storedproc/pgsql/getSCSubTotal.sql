@@ -7,7 +7,8 @@
 -- History: 
 -- July-2003: Created by Satoshi Nagayasu
 --
-CREATE OR REPLACE FUNCTION getSCSubTotal  ( NUMERIC(10,0) ) RETURNS NUMERIC(17,2) AS '
+\set AUTOCOMMIT off
+CREATE OR REPLACE FUNCTION getSCSubTotal  ( NUMERIC(10) ) RETURNS NUMERIC(17,2) AS '
   DECLARE
     _sc_id ALIAS FOR $1;
     

@@ -1,2 +1,3 @@
-COPY author FROM '/tmp/author.data' USING DELIMITERS '\\';
+\set AUTOCOMMIT off
+COPY author FROM '/tmp/author.data' WITH DELIMITER '>';
 commit;

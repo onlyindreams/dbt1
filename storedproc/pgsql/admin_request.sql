@@ -8,7 +8,8 @@
 -- July 2003 Created by 2003 Satoshi Nagayasu
 --
 --
-CREATE OR REPLACE FUNCTION admin_request ( NUMERIC(10) ) RETURNS SETOF RECORD AS '
+\set AUTOCOMMIT off
+CREATE OR REPLACE FUNCTION admin_request ( NUMERIC(10) ) RETURNS RECORD AS '
   DECLARE
     _i_id ALIAS FOR $1;
     rec RECORD;
@@ -18,8 +19,7 @@ CREATE OR REPLACE FUNCTION admin_request ( NUMERIC(10) ) RETURNS SETOF RECORD AS
       INTO rec
       FROM item, author
      WHERE i_id = _i_id AND i_a_id = a_id;
-    RETURN NEXT rec;
-    RETURN;
+    RETURN rec;
   END;
 ' LANGUAGE 'plpgsql';
 commit;

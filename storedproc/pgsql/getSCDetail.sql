@@ -8,9 +8,10 @@
 -- July-2003: Created by Satoshi Nagayasu
 -- Aug-12-2003: Removed initSC part and added init _num_item by Jenny Zhang
 --
+\set AUTOCOMMIT off
 CREATE OR REPLACE FUNCTION getSCDetail (
   NUMERIC(10)
-) RETURNS SETOF RECORD AS '
+) RETURNS RECORD AS '
   DECLARE
     _sc_id ALIAS FOR $1;
     _num_item NUMERIC(2,0);
@@ -368,9 +369,8 @@ CREATE OR REPLACE FUNCTION getSCDetail (
     scl_backing20::VARCHAR(15),
     scl_qty20::NUMERIC(3,0)
     INTO rec;
-    RETURN NEXT rec;
 --  END IF;
-  RETURN;
+    RETURN rec;
   END;
 ' LANGUAGE 'plpgsql';
 commit;

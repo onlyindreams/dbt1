@@ -1,3 +1,3 @@
-COPY orders FROM '/tmp/orders.data' USING DELIMITERS '\\';
+\set AUTOCOMMIT off
+COPY orders FROM '/tmp/orders.data' WITH DELIMITER '>';
 commit ;
-

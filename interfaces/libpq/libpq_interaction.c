@@ -29,12 +29,17 @@ char authentication[32]="pgsql";
 
 int _db_connect(struct db_context_t *dbc)
 {
+	const char *conninfo;
+	char tmp[256];
 	/* Allocate connection handles. */
 	pthread_mutex_lock(&db_source_mutex);
 
 //	dbc->conn = PQsetdbLogin(servername, dbport, NULL, NULL, dbname,
 //					 username, authentication);
-	dbc->conn = PQsetdb(servername, "5432", NULL, NULL, "DBT1");
+	sprintf(tmp, "host = %s dbname = %s", servername, dbname);
+	conninfo = tmp;
+	//dbc->conn = PQsetdb(servername, "5432", NULL, NULL, "DBT1");
+	dbc->conn = PQconnectdb(conninfo);
 
 	if ( PQstatus(dbc->conn)==CONNECTION_BAD )
 	{

@@ -8,8 +8,9 @@
 -- July-2003: Created by Satoshi Nagayasu
 --
 -- -
+\set AUTOCOMMIT off
 CREATE OR REPLACE FUNCTION order_inquiry (
-  NUMERIC(10, 0)
+  NUMERIC(10)
 ) RETURNS VARCHAR(20) AS '
   DECLARE
 	i_c_id ALIAS FOR $1;

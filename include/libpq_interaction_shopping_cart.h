@@ -19,11 +19,14 @@
 
 #define STMT_SC \
   "SELECT * FROM shopping_cart( %lld, %lld, %d, %d, %lld, %lld, " \
-			"%lld, %d, %lld, %d, %lld, %d, %lld, %d, " \
-			"%lld, %d, %lld, %d, %lld, %d, %lld, %d, " \
-			"%lld, %d, %lld, %d, %lld, %d, %lld, %d, " \
-			"%lld, %d, %lld, %d, %lld, %d, %lld, %d, " \
-			"%lld, %d, %lld, %d, %lld, %d, %lld, %d )" \
+			"'{ %lld, %lld, %lld, %lld, %lld, " \
+			"%lld, %lld, %lld, %lld, %lld, " \
+			"%lld, %lld, %lld, %lld, %lld, " \
+			"%lld, %lld, %lld, %lld, %lld}', " \
+			"'{%d, %d, %d, %d, %d, " \
+			"%d, %d, %d, %d, %d, " \
+			"%d, %d, %d, %d, %d, " \
+			"%d, %d, %d, %d, %d}' )" \
   "AS l( " \
   "   sc_id NUMERIC(10)," \
   "   itemcount NUMERIC(2)," \

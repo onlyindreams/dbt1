@@ -1,3 +1,4 @@
-COPY customer FROM '/tmp/customer.data' USING DELIMITERS '\\';
+\set AUTOCOMMIT off
+COPY customer FROM '/tmp/customer.data' WITH DELIMITER '>';
 commit ;
 

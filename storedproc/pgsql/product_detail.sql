@@ -8,7 +8,8 @@
 -- July-2003: Created by Satoshi Nagayasu & Hideyuki Kawashima
 --
 --
-CREATE OR REPLACE FUNCTION product_detail ( numeric(10) ) RETURNS SETOF RECORD AS '
+\set AUTOCOMMIT off
+CREATE OR REPLACE FUNCTION product_detail ( numeric(10) ) RETURNS RECORD AS '
   DECLARE
     _i_id ALIAS FOR $1;
   
@@ -63,8 +64,7 @@ CREATE OR REPLACE FUNCTION product_detail ( numeric(10) ) RETURNS SETOF RECORD A
 
 	INTO rec;
 
-	RETURN NEXT rec;
-	RETURN;
+	RETURN rec;
  
 
 

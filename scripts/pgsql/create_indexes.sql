@@ -1,3 +1,4 @@
+\set AUTOCOMMIT off
 create index i_i_subject on item (i_subject);
 commit;
 create index i_i_a_id on item (i_a_id);

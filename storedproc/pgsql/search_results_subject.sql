@@ -8,10 +8,11 @@
 -- July-2003: Created by Satoshi Nagayasu & Hideyuki Kawashima
 --
 -- search_results_author.sql
+\set AUTOCOMMIT off
 CREATE OR REPLACE FUNCTION search_results_subject (
   VARCHAR(60),
   NUMERIC(10)
-) RETURNS SETOF RECORD AS '
+) RETURNS RECORD AS '
   DECLARE
     _i_subject ALIAS FOR $1;
     _i_id ALIAS FOR $2;
@@ -740,8 +741,7 @@ CREATE OR REPLACE FUNCTION search_results_subject (
     a_fname50::VARCHAR(20),
     a_lname50::VARCHAR(20)
     INTO rec;
-    RETURN NEXT rec;
-    RETURN;
+    RETURN rec;
   END;
 ' LANGUAGE 'plpgsql';
 commit;

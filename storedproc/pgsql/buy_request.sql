@@ -7,6 +7,7 @@
 -- History: 
 -- July-2003: Created by Satoshi Nagayasu & Hideyuki Kawashima
 --
+\set AUTOCOMMIT off
 CREATE OR REPLACE FUNCTION buy_request (
 	NUMERIC(1),
 	VARCHAR(20),
@@ -24,7 +25,7 @@ CREATE OR REPLACE FUNCTION buy_request (
 	VARCHAR(50),
 	CHAR(10),
 	VARCHAR(500)
-) RETURNS SETOF RECORD AS '
+) RETURNS RECORD AS '
 	DECLARE
 		_flag ALIAS FOR $1;
 		_c_uname ALIAS FOR $2;
@@ -538,8 +539,7 @@ CREATE OR REPLACE FUNCTION buy_request (
 		scl_qty20::NUMERIC(3)
 		INTO rec;
 
-		RETURN NEXT rec;
-		RETURN;
+		RETURN rec;
 
 	END;
 ' LANGUAGE 'plpgsql';

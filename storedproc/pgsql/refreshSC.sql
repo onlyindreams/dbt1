@@ -8,10 +8,11 @@
 -- July-2003: Created by Satoshi Nagayasu & Hideyuki Kawashima
 -- Aug-12-2003: Reviewed by Jenny Zhang
 -- refreshSC.sql
+\set AUTOCOMMIT off
 CREATE OR REPLACE FUNCTION refreshSC (
-  NUMERIC(10,0),
-  NUMERIC(10,0),
-  NUMERIC(3,0)
+  NUMERIC(10),
+  NUMERIC(10),
+  NUMERIC(3)
 ) RETURNS INT AS'
   DECLARE
     sc_id ALIAS FOR $1;

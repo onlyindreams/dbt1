@@ -7,7 +7,8 @@
 -- History: 
 -- July-2003: Created by Satoshi Nagayasu
 --
-CREATE OR REPLACE FUNCTION GetPromoImages ( numeric(10) ) RETURNS SETOF RECORD AS '
+\set AUTOCOMMIT off
+CREATE OR REPLACE FUNCTION GetPromoImages ( numeric(10) ) RETURNS RECORD AS '
   DECLARE
     _I_ID ALIAS FOR $1;
 
@@ -71,8 +72,7 @@ CREATE OR REPLACE FUNCTION GetPromoImages ( numeric(10) ) RETURNS SETOF RECORD A
            I_ID5::numeric(10), I_T5::numeric(10)
       INTO rec;
 
-    RETURN NEXT rec;
-    RETURN;
+    RETURN rec;
   END;
 ' LANGUAGE 'plpgsql';
 commit;

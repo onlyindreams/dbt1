@@ -10,6 +10,7 @@
  *		  Bull, Linux Competence Center
  *
  */
+\set AUTOCOMMIT off
 CREATE FUNCTION GetPromoImages_Id(NUMERIC(10)) RETURNS NUMERIC(10) AS'
 DECLARE
 	item_id alias for $1;

@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
 	else if (rdbms == PGSQL)
 	{
 		strcpy(field_deco, "");
-		delimiter =  '\\';
+		delimiter =  '>';
 		strcpy(sequence_file, "@TOPDIR@/scripts/pgsql/create_sequence.sql");
 		strcpy(exec_sql, "");
 	}

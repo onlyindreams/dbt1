@@ -1,3 +1,4 @@
+\set AUTOCOMMIT off
 alter table item add constraint fk_i_a_id foreign key ( i_a_id ) references author ( a_id );
 
 commit;

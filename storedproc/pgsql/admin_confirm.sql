@@ -8,7 +8,8 @@
 -- July 2003 Created by 2003 Satoshi Nagayasu
 --
 --
-CREATE OR REPLACE FUNCTION admin_confirm ( NUMERIC(10), numeric(10), NUMERIC(10), NUMERIC (17,2) ) RETURNS SETOF RECORD AS '
+\set AUTOCOMMIT off
+CREATE OR REPLACE FUNCTION admin_confirm ( NUMERIC(10), numeric(10), NUMERIC(10), NUMERIC (17,2) ) RETURNS RECORD AS '
   DECLARE
     _i_id ALIAS FOR $1;
     _i_image ALIAS FOR $2;
@@ -29,8 +30,7 @@ CREATE OR REPLACE FUNCTION admin_confirm ( NUMERIC(10), numeric(10), NUMERIC(10)
      WHERE i_id = _i_id
        AND i_a_id = a_id;
 
-    RETURN NEXT rec;
-    RETURN;
+    RETURN rec;
   END;
 ' LANGUAGE 'plpgsql';
 commit;

@@ -1,3 +1,5 @@
+\set AUTOCOMMIT off
+
 create table author ( a_id numeric(10), a_fname varchar(20), a_lname varchar(20), a_mname varchar(20), a_dob date, a_bio varchar(500), primary key (a_id) );
 
 commit;

@@ -7,6 +7,7 @@
 -- History: 
 -- July-2003: Created by Satoshi Nagayasu & Hideyuki Kawashima
 --
+\set AUTOCOMMIT off
 CREATE OR REPLACE FUNCTION buy_confirm (
 	VARCHAR(10),
 	NUMERIC(16),
@@ -23,7 +24,7 @@ CREATE OR REPLACE FUNCTION buy_confirm (
 	VARCHAR(20),
 	VARCHAR(10),
 	VARCHAR(50)
-) RETURNS SETOF RECORD AS '
+) RETURNS RECORD AS '
 	DECLARE
 		_cc_type ALIAS FOR $1;
 		_cc_num ALIAS FOR $2;
@@ -184,11 +185,6 @@ CREATE OR REPLACE FUNCTION buy_confirm (
 		localdays NUMERIC(1);
 		tmpdate DATE;
 	BEGIN
-		/******************************************************
-		*
-		*									 Starting logic
-		*
-		*******************************************************/
 		tmpdate := _cc_expiry;
 
 		SELECT sc_sub_total, sc_tax, sc_ship_cost, sc_total 
@@ -483,9 +479,8 @@ CREATE OR REPLACE FUNCTION buy_confirm (
 		scl_backing20::VARCHAR(15), 
 		scl_qty20::NUMERIC(3)
 		INTO rec;
-		RETURN NEXT rec;
 
-		RETURN;
+		RETURN rec;
 	END;
 ' LANGUAGE 'plpgsql';
 commit;

@@ -7,10 +7,11 @@
 -- History: 
 -- July-2003: Created by Satoshi Nagayasu
 --
+\set AUTOCOMMIT off
 CREATE OR REPLACE FUNCTION home (
   numeric(10),
   numeric(10)
-) RETURNS SETOF RECORD AS '
+) RETURNS RECORD AS '
   DECLARE
     _C_ID ALIAS FOR $1;
     _I_ID ALIAS FOR $2;
@@ -66,8 +67,7 @@ CREATE OR REPLACE FUNCTION home (
     		pp_t_id5::numeric(10)
 	INTO rec;
 
-	RETURN NEXT rec;
-	RETURN;
+	RETURN rec;
   END;
 ' LANGUAGE 'plpgsql';
 commit;

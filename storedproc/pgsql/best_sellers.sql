@@ -7,7 +7,8 @@
 -- History: 
 -- July-2003: Created by Satoshi Nagayasu & Hideyuki Kawashima
 -- Aug-2003:  fixed a bug so that items returns the actual item number by Jenny 
-CREATE OR REPLACE FUNCTION best_sellers ( VARCHAR(60), NUMERIC(10) ) RETURNS SETOF RECORD AS '
+\set AUTOCOMMIT off
+CREATE OR REPLACE FUNCTION best_sellers ( VARCHAR(60), NUMERIC(10) ) RETURNS RECORD AS '
   DECLARE
     _i_subject ALIAS FOR $1;
     _i_id ALIAS FOR $2;
@@ -680,8 +681,7 @@ CREATE OR REPLACE FUNCTION best_sellers ( VARCHAR(60), NUMERIC(10) ) RETURNS SET
            a_lname50::VARCHAR(20)
       INTO rec;
 
-    RETURN NEXT rec;
-    RETURN;
+    RETURN rec;
   END
 ' LANGUAGE 'plpgsql';
 commit;

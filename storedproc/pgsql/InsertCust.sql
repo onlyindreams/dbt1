@@ -9,6 +9,7 @@
 --
 --
 --
+\set AUTOCOMMIT off
 CREATE OR REPLACE FUNCTION InsertCust ( varchar(50), varchar(40), varchar(40), varchar(30), varchar(20), varchar(10), varchar(15), varchar(15), varchar(16), varchar(50), varchar(500), numeric(10,0), numeric(5,2), char(8) ) RETURNS numeric(10,0) AS '
   DECLARE
     _Co_Name ALIAS FOR $1;

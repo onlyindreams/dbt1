@@ -9,7 +9,8 @@
 --
 --
 --
-CREATE OR REPLACE FUNCTION createSC  ( numeric(10,0) ) RETURNS numeric(10,0) AS '
+\set AUTOCOMMIT off
+CREATE OR REPLACE FUNCTION createSC  ( numeric(10) ) RETURNS numeric(10,0) AS '
   DECLARE
     _C_ID ALIAS FOR $1;
 

@@ -7,7 +7,8 @@
 -- History:
 -- July-2003: Created by Satoshi Nagayasu & Hideyuki Kawashima
 -- Aug-13-2003: Rewrote and tested by Jenny Zhang
-
+-- Feb-9-2003: Changed the input to arrays for PG 7.4 by Jenny Zhang
+\set AUTOCOMMIT off
 CREATE OR REPLACE FUNCTION shopping_cart (
   NUMERIC(10),
   NUMERIC(10),
@@ -15,47 +16,9 @@ CREATE OR REPLACE FUNCTION shopping_cart (
   NUMERIC(1),
   NUMERIC(10),
   NUMERIC(10),
-  NUMERIC(10),
-  NUMERIC(3),
-  NUMERIC(10),
-  NUMERIC(3),
-  NUMERIC(10),
-  NUMERIC(3),
-  NUMERIC(10),
-  NUMERIC(3),
-  NUMERIC(10),
-  NUMERIC(3),
-  NUMERIC(10),
-  NUMERIC(3),
-  NUMERIC(10),
-  NUMERIC(3),
-  NUMERIC(10),
-  NUMERIC(3),
-  NUMERIC(10),
-  NUMERIC(3),
-  NUMERIC(10),
-  NUMERIC(3),
-  NUMERIC(10),
-  NUMERIC(3),
-  NUMERIC(10),
-  NUMERIC(3),
-  NUMERIC(10),
-  NUMERIC(3),
-  NUMERIC(10),
-  NUMERIC(3),
-  NUMERIC(10),
-  NUMERIC(3),
-  NUMERIC(10),
-  NUMERIC(3),
-  NUMERIC(10),
-  NUMERIC(3),
-  NUMERIC(10),
-  NUMERIC(3),
-  NUMERIC(10),
-  NUMERIC(3),
-  NUMERIC(10),
-  NUMERIC(3)
-) RETURNS SETOF RECORD AS '
+  NUMERIC[],
+  NUMERIC[]
+) RETURNS RECORD AS '
   DECLARE
     C_ID ALIAS FOR $1;
     _sc_id ALIAS FOR $2;
@@ -63,49 +26,11 @@ CREATE OR REPLACE FUNCTION shopping_cart (
     _add_flag ALIAS FOR $4;
     _i_id ALIAS FOR $5;
     _pp_i_id ALIAS FOR $6;
-    i_id1 ALIAS FOR $7;
-    qty1 ALIAS FOR $8;
-    i_id2 ALIAS FOR $9;
-    qty2 ALIAS FOR $10;
-    i_id3 ALIAS FOR $11;
-    qty3 ALIAS FOR $12;
-    i_id4 ALIAS FOR $13;
-    qty4 ALIAS FOR $14;
-    i_id5 ALIAS FOR $15;
-    qty5 ALIAS FOR $16;
-    i_id6 ALIAS FOR $17;
-    qty6 ALIAS FOR $18;
-    i_id7 ALIAS FOR $19;
-    qty7 ALIAS FOR $20;
-    i_id8 ALIAS FOR $21;
-    qty8 ALIAS FOR $22;
-    i_id9 ALIAS FOR $23;
-    qty9 ALIAS FOR $24;
-    i_id10 ALIAS FOR $25;
-    qty10 ALIAS FOR $26;
-    i_id11 ALIAS FOR $27;
-    qty11 ALIAS FOR $28;
-    i_id12 ALIAS FOR $29;
-    qty12 ALIAS FOR $30;
-    i_id13 ALIAS FOR $31;
-    qty13 ALIAS FOR $32;
-    i_id14 ALIAS FOR $33;
-    qty14 ALIAS FOR $34;
-    i_id15 ALIAS FOR $35;
-    qty15 ALIAS FOR $36;
-    i_id16 ALIAS FOR $37;
-    qty16 ALIAS FOR $38;
-    i_id17 ALIAS FOR $39;
-    qty17 ALIAS FOR $40;
-    i_id18 ALIAS FOR $41;
-    qty18 ALIAS FOR $42;
-    i_id19 ALIAS FOR $43;
-    qty19 ALIAS FOR $44;
-    i_id20 ALIAS FOR $45;
-    qty20 ALIAS FOR $46;
+    _i_id_array ALIAS FOR $7;
+    _qty_array ALIAS FOR $8;
 -- we can not asign value to _sc_id and _itemcount, since they are CONSTANT
--- declare sc_id and itemcount 
-    sc_id NUMERIC(10);
+-- declare t_sc_id and itemcount 
+    t_sc_id NUMERIC(10);
     itemcount NUMERIC(2);
     scl_i_id1 NUMERIC(10);
     scl_title1 VARCHAR(60);
@@ -241,7 +166,6 @@ CREATE OR REPLACE FUNCTION shopping_cart (
     i smallint;
     sc_subtotal NUMERIC(17,2);
     rec RECORD;
-    refcur REFCURSOR;
   BEGIN
 
 --    RAISE NOTICE ''_sc_id=%, _add_flag=%, _itemcount=%, _i_id=%, _pp_i_id=%, c_id=%'', _sc_id, _add_flag, _itemcount, _i_id, _pp_i_id, c_id;
@@ -256,103 +180,25 @@ CREATE OR REPLACE FUNCTION shopping_cart (
     -- from SC to SC, refresh the cart
     --		_add_flag=0, _itemcount>0
     IF ( _sc_id=0 ) THEN 
-	SELECT createSC(c_id) INTO sc_id;
+	SELECT createSC(c_id) INTO t_sc_id;
     ELSE
-	sc_id := _sc_id;
+	t_sc_id := _sc_id;
     END IF;
 --    RAISE NOTICE ''sc_id=%'', sc_id;
     IF ( _add_flag=1 OR ( _sc_id=0 AND  _add_flag=0 AND _itemcount=0 )) THEN
 --    	RAISE NOTICE ''call addToSC'';
-	PERFORM addToSC(sc_id, _add_flag, _i_id);
-    ELSIF (_itemcount > 0) THEN
-	-- we have to write it this way, since we can not pass > 16
-	-- parameters to the functions
-	i := 0;
-	IF ( i < _itemcount) THEN
-		PERFORM refreshSC(sc_id, i_id1, qty1);
-		i := i + 1;
-	END IF;
-	IF ( i < _itemcount) THEN
-		PERFORM refreshSC(sc_id, i_id2, qty2);
-		i := i + 1;
-	END IF;
-	IF ( i < _itemcount) THEN
-		PERFORM refreshSC(sc_id, i_id3, qty3);
-		i := i + 1;
-	END IF;
-	IF ( i < _itemcount) THEN
-		PERFORM refreshSC(sc_id, i_id4, qty4);
-		i := i + 1;
-	END IF;
-	IF ( i < _itemcount) THEN
-		PERFORM refreshSC(sc_id, i_id5, qty5);
-		i := i + 1;
-	END IF;
-	IF ( i < _itemcount) THEN
-		PERFORM refreshSC(sc_id, i_id6, qty6);
-		i := i + 1;
-	END IF;
-	IF ( i < _itemcount) THEN
-		PERFORM refreshSC(sc_id, i_id7, qty7);
-		i := i + 1;
-	END IF;
-	IF ( i < _itemcount) THEN
-		PERFORM refreshSC(sc_id, i_id8, qty8);
-		i := i + 1;
-	END IF;
-	IF ( i < _itemcount) THEN
-		PERFORM refreshSC(sc_id, i_id9, qty9);
-		i := i + 1;
-	END IF;
-	IF ( i < _itemcount) THEN
-		PERFORM refreshSC(sc_id, i_id10, qty10);
-		i := i + 1;
-	END IF;
-	IF ( i < _itemcount) THEN
-		PERFORM refreshSC(sc_id, i_id11, qty11);
-		i := i + 1;
-	END IF;
-	IF ( i < _itemcount) THEN
-		PERFORM refreshSC(sc_id, i_id12, qty12);
-		i := i + 1;
-	END IF;
-	IF ( i < _itemcount) THEN
-		PERFORM refreshSC(sc_id, i_id13, qty13);
-		i := i + 1;
-	END IF;
-	IF ( i < _itemcount) THEN
-		PERFORM refreshSC(sc_id, i_id14, qty14);
-		i := i + 1;
-	END IF;
-	IF ( i < _itemcount) THEN
-		PERFORM refreshSC(sc_id, i_id15, qty15);
-		i := i + 1;
-	END IF;
-	IF ( i < _itemcount) THEN
-		PERFORM refreshSC(sc_id, i_id16, qty16);
-		i := i + 1;
-	END IF;
-	IF ( i < _itemcount) THEN
-		PERFORM refreshSC(sc_id, i_id17, qty17);
-		i := i + 1;
-	END IF;
-	IF ( i < _itemcount) THEN
-		PERFORM refreshSC(sc_id, i_id18, qty18);
-		i := i + 1;
-	END IF;
-	IF ( i < _itemcount) THEN
-		PERFORM refreshSC(sc_id, i_id19, qty19);
-		i := i + 1;
-	END IF;
-	IF ( i < _itemcount) THEN
-		PERFORM refreshSC(sc_id, i_id20, qty20);
-		i := i + 1;
-	END IF;
-    	SELECT getSCSubTotal(sc_id) INTO sc_subtotal;
+	PERFORM addToSC(t_sc_id, _add_flag, _i_id);
+    ELSE
+	--FOR i in array_lower(_i_id_array,1) .. array_upper(_i_id_array,1) LOOP 
+	FOR i in 0..(_itemcount-1) LOOP 
+		PERFORM refreshSC(t_sc_id, _i_id_array[i], _qty_array[i]);
+	END LOOP;
+
+    	SELECT getSCSubTotal(t_sc_id) INTO sc_subtotal;
 
         UPDATE shopping_cart 
            SET sc_sub_total=sc_subtotal, sc_date=now()
-           WHERE sc_id=sc_id;
+           WHERE sc_id=t_sc_id;
     END IF;
 
 
@@ -378,7 +224,7 @@ CREATE OR REPLACE FUNCTION shopping_cart (
     scl_i_id18, scl_title18, scl_cost18, scl_srp18, scl_backing18, scl_qty18,
     scl_i_id19, scl_title19, scl_cost19, scl_srp19, scl_backing19, scl_qty19,
     scl_i_id20, scl_title20, scl_cost20, scl_srp20, scl_backing20, scl_qty20
-    FROM getSCDetail(sc_id)
+    FROM getSCDetail(t_sc_id)
     AS l( N_I NUMERIC(2,0), 
     S_I_ID1 NUMERIC(10,0), S_T1 VARCHAR(60), S_C1 NUMERIC(17,2), 
     S_S1 NUMERIC(17,2), S_B1 VARCHAR(15), S_Q1 NUMERIC(3,0),
@@ -442,7 +288,7 @@ CREATE OR REPLACE FUNCTION shopping_cart (
          P_I_T5 NUMERIC(10));
 
     SELECT
-    sc_id::NUMERIC(10),
+    t_sc_id::NUMERIC(10),
     itemcount::NUMERIC(2),
     pp_i_id1::NUMERIC(10),
     pp_i_t1::NUMERIC(10),
@@ -576,8 +422,7 @@ CREATE OR REPLACE FUNCTION shopping_cart (
     scl_qty20::NUMERIC(3)
     INTO rec;
 
-    RETURN NEXT rec;
-    RETURN;
+    RETURN rec;
 
   END;
 ' LANGUAGE 'plpgsql';

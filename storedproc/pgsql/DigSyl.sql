@@ -8,6 +8,7 @@
 -- July-2003: Created by Satoshi Nagayasu
 --
 --
+\set AUTOCOMMIT off
 CREATE OR REPLACE FUNCTION DigSyl(INTEGER, INTEGER) RETURNS VARCHAR(64) AS '
   DECLARE
     _D ALIAS FOR $1;

@@ -8,10 +8,11 @@
 -- July-2003: Created by Satoshi Nagayasu & Hideyuki Kawashima
 --
 -- search_results_author.sql.sap
+\set AUTOCOMMIT off
 CREATE OR REPLACE FUNCTION search_results_author (
   VARCHAR(60),
   numeric(10)
-) RETURNS SETOF RECORD AS '
+) RETURNS RECORD AS '
   DECLARE
     a_lname ALIAS FOR $1;
     i_id ALIAS FOR $2;
@@ -247,7 +248,7 @@ CREATE OR REPLACE FUNCTION search_results_author (
          I_T4 NUMERIC(10),
          I_R5 NUMERIC(10), 
          I_T5 NUMERIC(10));
-
+/*
   PERFORM i_id, i_title, a_fname, a_lname
   FROM item, author
   WHERE i_a_id = a_id 
@@ -257,7 +258,7 @@ CREATE OR REPLACE FUNCTION search_results_author (
   IF NOT FOUND THEN
     RETURN;
   END IF;
-
+*/
 --
 --  Opening refcur
 --    
@@ -688,8 +689,7 @@ CREATE OR REPLACE FUNCTION search_results_author (
     a_fname50::VARCHAR(20),
     a_lname50::VARCHAR(20)
     INTO rec;
-    RETURN NEXT rec;
-    RETURN;
+    RETURN rec;
 
   END;
 

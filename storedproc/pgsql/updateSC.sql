@@ -7,7 +7,8 @@
 -- History:
 -- July-2003: Created by Satoshi Nagayasu & Hideyuki Kawashima
 --
-CREATE OR REPLACE FUNCTION updateSC ( numeric(10), numeric(5,2) ) RETURNS SETOF RECORD AS '
+\set AUTOCOMMIT off
+CREATE OR REPLACE FUNCTION updateSC ( numeric(10), numeric(5,2) ) RETURNS RECORD AS '
   DECLARE
     _sc_id ALIAS FOR $1;
     discount ALIAS FOR $2;
@@ -70,8 +71,7 @@ CREATE OR REPLACE FUNCTION updateSC ( numeric(10), numeric(5,2) ) RETURNS SETOF 
            _sc_ship_cost::numeric(5,2), _sc_total::numeric(17,2)
       INTO rec;
 
-    RETURN NEXT rec;
-    RETURN;
+    RETURN rec;
   END;
 ' LANGUAGE 'plpgsql';
 commit;

@@ -1,2 +1,3 @@
-COPY address FROM '/tmp/address.data' USING DELIMITERS '\\';
+\set AUTOCOMMIT off
+COPY address FROM '/tmp/address.data' WITH DELIMITER '>';
 commit ;

@@ -8,6 +8,7 @@
 -- July-2003: Created by Satoshi Nagayasu & Hideyuki Kawashima
 -- Aug-12-2003:  Removed initializing values by Jenny Zhang
 --
+\set AUTOCOMMIT off
 CREATE OR REPLACE FUNCTION addToSC (NUMERIC(10,0), NUMERIC(1,0), NUMERIC(10,0) ) RETURNS INT AS '
 	DECLARE
 		_sc_id ALIAS FOR $1;

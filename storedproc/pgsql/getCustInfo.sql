@@ -12,7 +12,8 @@
 -- SELECT * FROM getCustInfo('OG') l(c_id numeric(10), c_passwd varchar(20), c_fname varchar(15), c_lname varchar(15), addr_street1 varchar(40), addr_street2 varchar(40), addr_city varchar(30), addr_state varchar(20), addr_zip varchar(10), co_name varchar(50), c_phone varchar(16), c_email varchar(50), c_data varchar(500), c_birthdate date, c_discount numeric(5,2));
 --
 
-CREATE OR REPLACE FUNCTION getCustInfo (VARCHAR(20)) RETURNS SETOF RECORD AS '
+\set AUTOCOMMIT off
+CREATE OR REPLACE FUNCTION getCustInfo (VARCHAR(20)) RETURNS RECORD AS '
   DECLARE
     rs RECORD;
   BEGIN
@@ -28,8 +29,7 @@ CREATE OR REPLACE FUNCTION getCustInfo (VARCHAR(20)) RETURNS SETOF RECORD AS '
 	RAISE EXCEPTION ''can not find record c_id=%, c_uname=%'', rs.c_id, $1;
     END IF;
     UPDATE customer set c_login=now(), c_expiration = now()+''02:00''  WHERE c_id = rs.c_id;
-    RETURN NEXT rs;
-    RETURN;
+    RETURN rs;
   END;
 ' LANGUAGE 'plpgsql';
 commit;
