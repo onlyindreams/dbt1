@@ -6,6 +6,7 @@ include ../common.mk
 ODBC_DIR=../interfaces/odbc
 COMMON_DIR=../common
 INCLUDE_DIR=../include
+CACHE_DIR=../cache
 
 EXE = appServer
 APP_PRGS = appServer.c app_txn_array.c app_threadpool.c \
@@ -13,7 +14,7 @@ APP_PRGS = appServer.c app_txn_array.c app_threadpool.c \
 APP_OBJS = $(APP_PRGS:.c=.so)
 
 LIBS = $(SAPDBROOT)/lib/libsqlod.so -lm -lpthread
-OBJS = $(COMMON_OBJS) $(ODBC_OBJS) $(APP_OBJS)
+OBJS = $(COMMON_OBJS) $(ODBC_OBJS) $(APP_OBJS) $(CACHE_DIR)/cache_interface.so
 PRGS = $(COMMON_PRGS) $(ODBC_PRGS) $(APP_PRGS)
 
 all: $(EXE)
