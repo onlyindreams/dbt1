@@ -11,6 +11,8 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <odbc_interaction_admin_confirm.h>
 #include <odbc_interaction_admin_request.h>
 #include <odbc_interaction_best_sellers.h>
@@ -22,7 +24,9 @@
 #include <odbc_interaction_order_inquiry.h>
 #include <odbc_interaction_product_detail.h>
 #include <odbc_interaction_shopping_cart.h>
+#include <odbc_interaction_search_request.h>
 #include <odbc_interaction_search_results.h>
+#include <_socket.h>
 #include <sql.h>
 #include <sqlext.h>
 
@@ -35,7 +39,9 @@
 
 int main(int argc, char *argv[])
 {
+#ifdef PHASE1
 	int rc;
+#endif /* PHASE1 */
 	int i;
 	char sname[32];
 	int parameter_number;
@@ -100,7 +106,7 @@ int main(int argc, char *argv[])
 	if ((euc.s = _connect(sname, port)) == -1)
 	{
 		LOG_ERROR_MESSAGE("connect failed");
-		return;
+		return 2;
 	}
 	parameter_number=3;
 #endif /* PHASE2 */
@@ -343,13 +349,13 @@ int main(int argc, char *argv[])
 		for (i = 0; i < euc.buy_confirm_data.sc_size; i++)
 		{
 			printf("scl_i_id%d: %ld\n", i, 
-				euc.buy_confirm_data.scl_data[i].scl_i_id);
+				(long) euc.buy_confirm_data.scl_data[i].scl_i_id);
 			printf("scl_qty%d: %d\n", i, 
-				euc.buy_confirm_data.scl_data[i].scl_qty);
+				(int) euc.buy_confirm_data.scl_data[i].scl_qty);
 			printf("scl_cost%d: %f\n", i, 
-				euc.buy_confirm_data.scl_data[i].scl_cost);
+				(double) euc.buy_confirm_data.scl_data[i].scl_cost);
 			printf("scl_srp%d: %f\n", i, 
-				euc.buy_confirm_data.scl_data[i].scl_srp);
+				(double) euc.buy_confirm_data.scl_data[i].scl_srp);
 			printf("scl_title%d: %s\n", i, 
 				euc.buy_confirm_data.scl_data[i].i_title);
 			printf("scl_backing%d: %s\n", i, 
@@ -401,7 +407,7 @@ int main(int argc, char *argv[])
 				euc.buy_request_data.sc_id=atoi(argv[parameter_number+4]);
 				printf("c_uname: %s\n", euc.buy_request_data.c_uname);
 				printf("c_passwd: %s\n", euc.buy_request_data.c_passwd);
-				printf("sc_id: %d\n", euc.buy_request_data.sc_id);
+				printf("sc_id: %d\n", (int) euc.buy_request_data.sc_id);
 				euc.buy_request_data.returning_flag=1;
 				break;
 			default:
@@ -511,9 +517,9 @@ int main(int argc, char *argv[])
 		for (i = 0; i < PROMOTIONAL_ITEMS_MAX; i++)
 		{
 			printf("i_related%d: %ld\n", i, 
-				euc.home_data.pp_data.i_related[i]);
+				(long) euc.home_data.pp_data.i_related[i]);
 			printf("i_thumbnail%d: %ld\n", i, 
-				euc.home_data.pp_data.i_thumbnail[i]);
+				(long) euc.home_data.pp_data.i_thumbnail[i]);
 		}
 	}
 	else if (strcmp(argv[parameter_number], "np") == 0)
@@ -791,9 +797,9 @@ int main(int argc, char *argv[])
 		for (i = 0; i < PROMOTIONAL_ITEMS_MAX; i++)
 		{
 			printf("i_related%d: %ld\n", i, 
-				euc.search_request_data.pp_data.i_related[i]);
+				(long) euc.search_request_data.pp_data.i_related[i]);
 			printf("i_thumbnail%d: %ld\n", i, 
-				euc.search_request_data.pp_data.i_thumbnail[i]);
+				(long) euc.search_request_data.pp_data.i_thumbnail[i]);
 		}
 	}
 	else if (strcmp(argv[parameter_number], "su") == 0)
@@ -951,7 +957,7 @@ int main(int argc, char *argv[])
 		for (i = 0; i < euc.shopping_cart_data.sc_size; i++)
 		{
 			printf("scl_i_id%d: %ld\n", i, 
-				euc.shopping_cart_data.scl_data[i].scl_i_id);
+				(long) euc.shopping_cart_data.scl_data[i].scl_i_id);
 			printf("scl_qty%d: %d\n", i, 
 				euc.shopping_cart_data.scl_data[i].scl_qty);
 			printf("scl_cost%d: %f\n", i, 
