@@ -82,6 +82,7 @@ int init_eus(char *sname, int port, int eus,
 	int interaction_mix, int ramptuprate, int duration, double tt_mean,
 	int item_scale);
 #endif /* PHASE2 */
+int mark_logs(char *mark);
 
 extern int customers;
 extern sem_t running_eu_count;

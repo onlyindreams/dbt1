@@ -117,12 +117,14 @@ int main(int argc, char *argv[])
 	 * place to implement some real-time statistics reporting, if someone is so
 	 * inclined.
 	 */
+	mark_logs(RUN_START);
 	do
 	{
 		sem_getvalue(&running_eu_count, &running_eus);
 		sleep(1);
 	}
 	while (time(NULL) <= stop_time);
+	mark_logs(RUN_END);
 
 	return 0;
 }

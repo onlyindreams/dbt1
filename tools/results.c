@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
 	float response_time;
 	int tid;
 	time_t start_time = -1;
-	float total_response_time;
+	float total_response_time = 0;
 	float ips; /* bogotransactions per second */
 	long long total_interaction_count = 0;
 	long long interaction_count[INTERACTION_TOTAL];
@@ -54,17 +54,14 @@ int main(int argc, char *argv[])
 	FILE *log_io;
 	FILE *log_paging;
 	int count;
-	float user, nice, sys, idle;
-	float total_user = 0, total_nice = 0, total_sys = 0, total_idle = 0;
-	float pgpgin, pgpgout, activepg, inadtypg, inaclnpg, inatarpg;
-	float total_pgpgin = 0, total_pgpgout = 0, total_activepg = 0,
-		total_inadtypg = 0, total_inaclnpg = 0, total_inatarpg = 0;
-	char iostat_line[128];
 
 	time_t previous_time;
 	int elapsed_time = 0;
 	int current_interation_count = 0;
-	error_count=0;
+
+	char marker[128];
+
+	error_count = 0;
 
 	if (argc != 2)
 	{
@@ -102,30 +99,23 @@ int main(int argc, char *argv[])
 	 */
 	interaction[2] = '\0';
 
-	/* Read the first line individually to capture the start time. */
-	fscanf(log_mix, "%d,%c%c,%f,%d", &start_time, &interaction[0],
-		&interaction[1], &total_response_time, &tid);
-
-	/*
-	 * The first line is always the Home interaction if no errors, 
-	 * so update the appropriate counters.
-	 */
-	if (strcmp(interaction, "ER") != 0)
+	while (fscanf(log_mix, "%s", marker))
 	{
-		++interaction_count[HOME];
-		interaction_response_time[HOME] += response_time;
+		if (strcmp(marker, RUN_START) == 0)
+		{
+			break;
+		}
 	}
-	else
-	{
-		error_count++;
-	}
-	++total_interaction_count;
-	previous_time = start_time;
 
 	/* Keep reading the file until we hit the end. */
 	while (fscanf(log_mix, "%d,%c%c,%f,%d", &current_time, &interaction[0],
-		&interaction[1], &response_time, &tid) != EOF)
+		&interaction[1], &response_time, &tid) == 5)
 	{
+		if (start_time == -1)
+		{
+			start_time = current_time;
+		}
+
 		/*
 		 * Note that we're factoring in Customer Registration even though
 		 * it isn't a database interaction.

@@ -130,6 +130,10 @@
 #define DEBUGMSG(arg...) log_debug_message(__FILE__, __LINE__, ## arg)
 #endif
 
+/* Macros for marking the log files. */
+#define RUN_START "START"
+#define RUN_END "END"
+
 /* Prototypes */
 
 int init_common();

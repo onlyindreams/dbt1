@@ -1341,6 +1341,26 @@ int init_eus(char *sname, int port, int eus,
 	return W_OK;
 }
 
+int mark_logs(char *mark)
+{
+	pthread_mutex_lock(&mutex_mix_log);
+	fprintf(log_mix, "%s\n", mark);
+	fflush(log_mix);
+	pthread_mutex_unlock(&mutex_mix_log);
+
+	pthread_mutex_lock(&mutex_think_time_log);
+	fprintf(log_think_time, "%s\n", mark);
+	fflush(log_think_time);
+	pthread_mutex_unlock(&mutex_think_time_log);
+
+	pthread_mutex_lock(&mutex_usmd_log);
+	fprintf(log_usmd, "%s\n", mark);
+	fflush(log_usmd);
+	pthread_mutex_unlock(&mutex_usmd_log);
+
+	return W_OK;
+}
+
 /*
  * Clause 2.16
  */
@@ -1772,7 +1792,7 @@ void *start_eu(void *data)
 #endif /* PHASE2 */
 
 	/* Main loop for the user logic. */
-	retry=0;
+	retry = 0;
 	do
 	{
 		/* Determine this users minimum duration and note the start time. */
