@@ -9,6 +9,8 @@
  */
 
 #include <sys/time.h>
+#include <sys/types.h>
+#include <signal.h>
 #include <semaphore.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -89,7 +91,10 @@ int init_thread_pool(int PoolThreads, int TxnQSize, char *sname, char *uname, ch
 	}
 
 #ifndef _SIMDB
-	odbc_init(sname, uname, auth);
+	if (odbc_init(sname, uname, auth)==W_ERROR)
+	{
+		return W_ERROR;
+	}
 #endif
 	//create pool threads
 	for (i=0; i<PoolThreads; i++)
@@ -123,6 +128,7 @@ void *DoTxn(void *fd)
 	if (rc == W_ERROR)
 	{
 		LOG_ERROR_MESSAGE("odbc_connect error\n");
+		kill(0, SIGUSR1);
 		pthread_exit(NULL);
 	}
 #endif
@@ -132,6 +138,12 @@ void *DoTxn(void *fd)
 #ifdef SEARCH_RESULTS_CACHE
 	/* connect to search_results_cache_hsot */
 	workersock=_connect(search_results_cache_host, search_results_cache_port);
+	if (workersock==-1)
+	{
+		LOG_ERROR_MESSAGE("connect to cache failed\n");
+		kill(0, SIGUSR1);
+		pthread_exit(NULL);
+	}
 #endif
 
 	/*wait on the TxnQSem. Its value is positive when the queue is not
@@ -153,6 +165,8 @@ void *DoTxn(void *fd)
 		if ((QIndex=dequeue(&TxnQItem, &TxnQ))==-1)
 		{
 			LOG_ERROR_MESSAGE("TxnQ dequeue error");
+			pthread_mutex_unlock(&queue_mutex);
+			kill(0, SIGUSR1);
 			pthread_exit(NULL);
 		}
 		pthread_mutex_unlock(&queue_mutex);
@@ -193,14 +207,13 @@ void *DoTxn(void *fd)
 			{
 				LOG_ERROR_MESSAGE("execute_admin_confirm returned error");
 			}
+			app_admin_confirm_array.txn_result[TxnQItem.SlotID]=rc;
 #ifdef GET_TIME
         		if (gettimeofday(&txn_end_time, NULL)==-1)
 				LOG_ERROR_MESSAGE("gettimeofday failed");
-			app_home_array.db_response_time[TxnQItem.SlotID]=time_diff(txn_start_time, txn_end_time);
+			app_admin_confirm_array.db_response_time[TxnQItem.SlotID]=time_diff(txn_start_time, txn_end_time);
 #endif
 #endif
-			set_txn_done_flag(&TxnQ, QIndex);
-			//-- kill(TxnQItem.pid, SIGUSR1);
 			break;
 		case ADMIN_REQUEST:
 #ifdef DEBUG
@@ -225,14 +238,13 @@ void *DoTxn(void *fd)
 			{
 				LOG_ERROR_MESSAGE("execute_admin_request returned error");
 			}
+			app_admin_request_array.txn_result[TxnQItem.SlotID]=rc;
 #ifdef GET_TIME
         		if (gettimeofday(&txn_end_time, NULL)==-1)
 				LOG_ERROR_MESSAGE("gettimeofday failed");
 			app_admin_request_array.db_response_time[TxnQItem.SlotID]=time_diff(txn_start_time, txn_end_time);
 #endif
 #endif
-			set_txn_done_flag(&TxnQ, QIndex);
-			//-- kill(TxnQItem.pid, SIGUSR1);
 			break;
 		case SEARCH_REQUEST:
 #ifdef DEBUG
@@ -250,14 +262,13 @@ void *DoTxn(void *fd)
 			{
 				LOG_ERROR_MESSAGE("execute_search_results returned error");
 			}
+			app_search_request_array.txn_result[TxnQItem.SlotID]=rc;
 #ifdef GET_TIME
         		if (gettimeofday(&txn_end_time, NULL)==-1)
 				LOG_ERROR_MESSAGE("gettimeofday failed");
 			app_search_request_array.db_response_time[TxnQItem.SlotID]=time_diff(txn_start_time, txn_end_time);
 #endif
 #endif
-			set_txn_done_flag(&TxnQ, QIndex);
-			//--kill(TxnQItem.pid, SIGUSR1);
 			break;
 		case SEARCH_RESULTS:
 #ifdef DEBUG
@@ -284,18 +295,49 @@ void *DoTxn(void *fd)
 			/* author and title search results are cached */
 			if (app_search_results_array.odbc_data_array[TxnQItem.SlotID].search_results_odbc_data.eb.search_type!=SEARCH_SUBJECT)
 			{
-				rc = send_search_results(workersock, &app_search_results_array.odbc_data_array[TxnQItem.SlotID].search_results_odbc_data.eb);
-				if (rc!=W_OK)
-					LOG_ERROR_MESSAGE("send search_results to cache host failed");
+				rc = W_ERROR;
+				/* retry if send fails */
+				while (rc != W_OK)
+				{
+					rc = send_search_results(workersock, &app_search_results_array.odbc_data_array[TxnQItem.SlotID].search_results_odbc_data.eb);
+					/* if send fails, reopen a new socket */
+					if (rc!=W_OK)
+					{
+						LOG_ERROR_MESSAGE("send search_results to cache host failed");
+						close(workersock);
+						workersock=_connect(search_results_cache_host, search_results_cache_port);
+						if (workersock==-1)
+						{
+							LOG_ERROR_MESSAGE("connect to cache failed\n");
+							kill(0, SIGUSR1);
+							pthread_exit(NULL);
+						}
+					}
+				}
+
+				rc = W_OK;
 				rc = receive_search_results(workersock, &app_search_results_array.odbc_data_array[TxnQItem.SlotID].search_results_odbc_data.eb);
 				if (rc!=W_OK)
+				{
 					LOG_ERROR_MESSAGE("receive search_results from cache host failed");
+					close(workersock);
+					workersock=_connect(search_results_cache_host, search_results_cache_port);
+					if (workersock==-1)
+					{
+						LOG_ERROR_MESSAGE("connect to cache failed\n");
+						kill(0, SIGUSR1);
+						pthread_exit(NULL);
+					}
+					rc = W_ERROR;
+				}
+/*
 				if (rc==0)
 				{
 					LOG_ERROR_MESSAGE("cache host closed socket");
 					close(workersock);
 					workersock=_connect(search_results_cache_host, search_results_cache_port);
 				}
+*/
 			}
 			else 
 			{
@@ -305,12 +347,14 @@ void *DoTxn(void *fd)
 					LOG_ERROR_MESSAGE("execute_search_results returned error");
 				}
 			}
+			app_search_results_array.txn_result[TxnQItem.SlotID]=rc;
 #else
 			rc = execute_search_results(&odbcc, &app_search_results_array.odbc_data_array[TxnQItem.SlotID]);
 			if (rc == W_ERROR)
 			{
 				LOG_ERROR_MESSAGE("execute_search_results returned error");
 			}
+			app_search_results_array.txn_result[TxnQItem.SlotID]=rc;
 #endif //SEARCH_RESULTS_CACHE
 #ifdef GET_TIME
         		if (gettimeofday(&txn_end_time, NULL)==-1)
@@ -318,8 +362,6 @@ void *DoTxn(void *fd)
 			app_search_results_array.db_response_time[TxnQItem.SlotID]=time_diff(txn_start_time, txn_end_time);
 #endif
 #endif
-			set_txn_done_flag(&TxnQ, QIndex);
-			//--kill(TxnQItem.pid, SIGUSR1);
 			break;
 		case BEST_SELLERS:
 #ifdef DEBUG
@@ -346,14 +388,13 @@ void *DoTxn(void *fd)
 			{
 				LOG_ERROR_MESSAGE("execute_best_sellers returned error");
 			}
+			app_best_sellers_array.txn_result[TxnQItem.SlotID]=rc;
 #ifdef GET_TIME
         		if (gettimeofday(&txn_end_time, NULL)==-1)
 				LOG_ERROR_MESSAGE("gettimeofday failed");
 			app_best_sellers_array.db_response_time[TxnQItem.SlotID]=time_diff(txn_start_time, txn_end_time);
 #endif
 #endif
-			set_txn_done_flag(&TxnQ, QIndex);
-			//--kill(TxnQItem.pid, SIGUSR1);
 			break;
 		case NEW_PRODUCTS:
 #ifdef DEBUG
@@ -380,14 +421,13 @@ void *DoTxn(void *fd)
 			{
 				LOG_ERROR_MESSAGE("execute_new_products returned error");
 			}
+			app_new_products_array.txn_result[TxnQItem.SlotID]=rc;
 #ifdef GET_TIME
         		if (gettimeofday(&txn_end_time, NULL)==-1)
 				LOG_ERROR_MESSAGE("gettimeofday failed");
 			app_new_products_array.db_response_time[TxnQItem.SlotID]=time_diff(txn_start_time, txn_end_time);
 #endif
 #endif
-			set_txn_done_flag(&TxnQ, QIndex);
-			//--kill(TxnQItem.pid, SIGUSR1);
 			break;
 		case BUY_CONFIRM:
 #ifdef DEBUG
@@ -433,13 +473,13 @@ void *DoTxn(void *fd)
 			{
 				LOG_ERROR_MESSAGE("execute_buy_confirm returned error");
 			}
+			app_buy_confirm_array.txn_result[TxnQItem.SlotID]=rc;
 #ifdef GET_TIME
         		if (gettimeofday(&txn_end_time, NULL)==-1)
 				LOG_ERROR_MESSAGE("gettimeofday failed");
 			app_buy_confirm_array.db_response_time[TxnQItem.SlotID]=time_diff(txn_start_time, txn_end_time);
 #endif
 #endif
-			set_txn_done_flag(&TxnQ, QIndex);
 			break;
 		case BUY_REQUEST:
 #ifdef DEBUG
@@ -506,13 +546,13 @@ void *DoTxn(void *fd)
 			{
 				LOG_ERROR_MESSAGE("execute_buy_request returned error");
 			}
+			app_buy_request_array.txn_result[TxnQItem.SlotID]=rc;
 #ifdef GET_TIME
         		if (gettimeofday(&txn_end_time, NULL)==-1)
 				LOG_ERROR_MESSAGE("gettimeofday failed");
 			app_buy_request_array.db_response_time[TxnQItem.SlotID]=time_diff(txn_start_time, txn_end_time);
 #endif
 #endif
-			set_txn_done_flag(&TxnQ, QIndex);
 			break;
 		case HOME:
 			//do transaction
@@ -534,6 +574,7 @@ void *DoTxn(void *fd)
 			{
 				LOG_ERROR_MESSAGE("execute_home returned error");
 			}
+			app_home_array.txn_result[TxnQItem.SlotID]=rc;
 #ifdef GET_TIME
         		if (gettimeofday(&txn_end_time, NULL)==-1)
 				LOG_ERROR_MESSAGE("gettimeofday failed");
@@ -543,8 +584,6 @@ void *DoTxn(void *fd)
 #ifdef DEBUG
 			DEBUGMSG("thread_id%ld: HOME TXN DONE", pthread_self());
 #endif
-			set_txn_done_flag(&TxnQ, QIndex);
-			//--kill(TxnQItem.pid, SIGUSR1);
 			break;
 		case ORDER_DISPLAY:
 #ifdef DEBUG
@@ -600,13 +639,13 @@ void *DoTxn(void *fd)
 			{
 				LOG_ERROR_MESSAGE("execute_order_display returned error");
 			}
+			app_order_display_array.txn_result[TxnQItem.SlotID]=rc;
 #ifdef GET_TIME
         		if (gettimeofday(&txn_end_time, NULL)==-1)
 				LOG_ERROR_MESSAGE("gettimeofday failed");
 			app_order_display_array.db_response_time[TxnQItem.SlotID]=time_diff(txn_start_time, txn_end_time);
 #endif
 #endif
-			set_txn_done_flag(&TxnQ, QIndex);
 			break;
 		case ORDER_INQUIRY:
 #ifdef DEBUG
@@ -625,13 +664,13 @@ void *DoTxn(void *fd)
 			{
 				LOG_ERROR_MESSAGE("execute_order_inquiry returned error");
 			}
+			app_order_inquiry_array.txn_result[TxnQItem.SlotID]=rc;
 #ifdef GET_TIME
         		if (gettimeofday(&txn_end_time, NULL)==-1)
 				LOG_ERROR_MESSAGE("gettimeofday failed");
 			app_order_inquiry_array.db_response_time[TxnQItem.SlotID]=time_diff(txn_start_time, txn_end_time);
 #endif
 #endif
-			set_txn_done_flag(&TxnQ, QIndex);
 			break;
 		case PRODUCT_DETAIL:
 #ifdef DEBUG
@@ -664,13 +703,13 @@ void *DoTxn(void *fd)
 			{
 				LOG_ERROR_MESSAGE("execute_product_detail returned error");
 			}
+			app_product_detail_array.txn_result[TxnQItem.SlotID]=rc;
 #ifdef GET_TIME
         		if (gettimeofday(&txn_end_time, NULL)==-1)
 				LOG_ERROR_MESSAGE("gettimeofday failed");
 			app_product_detail_array.db_response_time[TxnQItem.SlotID]=time_diff(txn_start_time, txn_end_time);
 #endif
 #endif
-			set_txn_done_flag(&TxnQ, QIndex);
 			break;
 		case SHOPPING_CART:
 #ifdef DEBUG
@@ -723,6 +762,7 @@ void *DoTxn(void *fd)
 			{
 				LOG_ERROR_MESSAGE("execute_shopping_cart returned error");
 			}
+			app_shopping_cart_array.txn_result[TxnQItem.SlotID]=rc;
 #ifdef GET_TIME
         		if (gettimeofday(&txn_end_time, NULL)==-1)
 				LOG_ERROR_MESSAGE("gettimeofday failed");
@@ -734,9 +774,10 @@ void *DoTxn(void *fd)
 				app_shopping_cart_array.odbc_data_array[TxnQItem.SlotID].shopping_cart_odbc_data.eb.sc_id);
 			
 #endif
-			set_txn_done_flag(&TxnQ, QIndex);
 			break;
 		}
+
+		set_txn_done_flag(&TxnQ, QIndex);
 	}
 #ifdef DEBUG
 	DEBUGMSG("thread_id%ld: Terminated", pthread_self());

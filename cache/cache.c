@@ -9,6 +9,7 @@
  */
 
 #include <sys/time.h>
+#include <unistd.h>
 #include <semaphore.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,6 +17,8 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
+#include <sys/types.h>
+#include <signal.h>
 #include "cache.h"
 #include "common.h"
 #include "odbc_interaction.h"
@@ -26,6 +29,7 @@ struct search_results *author_results_table;
 struct search_results *title_results_table;
 void *warm_up_cache(void *fd);
 void *cache_thread(void *fd);
+void sighandler(int signum);
 
 pthread_mutex_t mutex_cache_server=PTHREAD_MUTEX_INITIALIZER;
 int main(int argc, char *argv[])
@@ -39,6 +43,20 @@ int main(int argc, char *argv[])
 	int port, db_thread, num_items, connectioncount;
 	int addrlen, author_step, title_step;
 	int i, j, rec;
+	struct sigaction sa;
+
+	memset(&sa, 0, sizeof(sa));
+	sa.sa_handler = &sighandler;
+	if (sigaction(SIGUSR1, &sa, NULL) == -1)
+	{
+		printf("can not register signal handler to SIGUSR1\n");
+		return -1;
+	}
+	if (sigaction(SIGUSR2, &sa, NULL) == -1)
+	{
+		printf("can not register signal handler to SIGUSR2\n");
+		return -1;
+	}
 
 	if (argc < 7)
 	{
@@ -57,7 +75,12 @@ int main(int argc, char *argv[])
 	
 	warm_up_thread=(pthread_t *)malloc(db_thread*sizeof(pthread_t));
 	range=(struct table_range *)malloc(db_thread*sizeof(struct table_range));
-	init_cache(num_items, sname, uname, auth);
+
+	if (init_cache(num_items, sname, uname, auth) != W_OK)
+	{
+		printf("init_odbc environment failed\n");
+		return -1;
+	}
 	
 	/* calculate the range of the results table that each thread can access */
 	author_step=num_items/10/db_thread;
@@ -92,6 +115,7 @@ int main(int argc, char *argv[])
 	{
 		pthread_join(warm_up_thread[i], NULL);
 	}
+
 	printf("cache warming up is done\n");
 /*
 	for (i=0;i<num_items/10; i++)
@@ -139,13 +163,28 @@ int main(int argc, char *argv[])
 	
 }
 
+void sighandler(int signum)
+{
+	if (signum==SIGUSR1)
+		printf("connect to database failed\n");
+	else if (signum==SIGUSR2)
+		printf("warm up threads failed\n");
+	printf("please check error.log\n");
+	_exit(-1);
+}
+
 /* allocate results tables and initialize odbc environment */
 int init_cache(int item, char *sname, char *uname, char *auth)
 {
+	int rc;
 	author_results_table=malloc(item/10*sizeof(struct search_results));	
 	title_results_table=malloc(item/5*sizeof(struct search_results));	
 
-	odbc_init(sname, uname, auth);
+	if ((rc=odbc_init(sname, uname, auth))!=W_OK)
+	{
+		return W_ERROR;
+	}
+	return W_OK;
 }
 
 /* thread filling out results tables */
@@ -163,6 +202,7 @@ void *warm_up_cache(void *fd)
 	if (rc == W_ERROR)
 	{
 		LOG_ERROR_MESSAGE("odbc_connect error\n");
+		kill(0, SIGUSR1);
 		pthread_exit(NULL);
 	}
 
@@ -177,6 +217,8 @@ void *warm_up_cache(void *fd)
 		if (rc == W_ERROR)
 		{
 			LOG_ERROR_MESSAGE("execute_search_results returned error");
+			kill(0, SIGUSR2);
+			pthread_exit(NULL);
 		}
 
 		/* copy the results out */
@@ -207,6 +249,8 @@ void *warm_up_cache(void *fd)
 		if (rc == W_ERROR)
 		{
 			LOG_ERROR_MESSAGE("execute_search_results returned error");
+			kill(0, SIGUSR2);
+			pthread_exit(NULL);
 		}
 
 		/* copy the results out */

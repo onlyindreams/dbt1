@@ -26,8 +26,8 @@
 #include "app_txn_queue.h"
 #include "app_threadpool.h"
 
-#define WELCOME "You have connected to the ecommerce server.  Welcome!"
 void *DoConnection(void *fd);
+void sighandler(int signum);
 
 static int connectioncount = 0;
 
@@ -95,6 +95,20 @@ int main(int argc, char *argv[])
 	pthread_t ConnThread;
 	int rec;
 	int port, PoolThreads, TxnQSize, ArraySize;
+	struct sigaction sa;
+
+	memset(&sa, 0, sizeof(sa));
+	sa.sa_handler = &sighandler;
+	if (sigaction(SIGUSR1, &sa, NULL) == -1)
+	{
+		printf("can not register signal handler to SIGUSR1\n");
+		return -1;
+	}
+	if (sigaction(SIGINT, &sa, NULL) == -1)
+	{
+		printf("can not register signal handler to SIGINT\n");
+		return -1;
+	}
 
 	if (argc < 9)
 	{
@@ -155,6 +169,7 @@ int main(int argc, char *argv[])
 	if (mastersock < 0)
 	{
 		LOG_ERROR_MESSAGE("init server master socket failed\n");
+		perror("init server master socket failed");
 		return -1;
 	}
 
@@ -166,6 +181,8 @@ int main(int argc, char *argv[])
 		workersock = accept(mastersock, (struct sockaddr *)&socketaddr, (socklen_t *)&addrlen);
 		if (workersock < 0) {
 			LOG_ERROR_MESSAGE("accept couldn't open worker socket, errno %d", errno);
+			perror("accept failed");
+			return -1;
 		}
 
 		connectioncount++;
@@ -181,6 +198,18 @@ int main(int argc, char *argv[])
 	close(mastersock);
  
 	return 0;
+}
+
+void sighandler(int signum)
+{
+        if (signum==SIGUSR1)
+		printf("db connect thread failed, please check error.log\n");
+        else if (signum==SIGINT)
+	{
+		kill(pthread_self(), SIGTERM);
+                printf("program ended by user\n");
+	}
+        _exit(-1);
 }
 
 void *DoConnection(void *fd)
@@ -208,11 +237,13 @@ void *DoConnection(void *fd)
 		if((rec=receive_transaction_packet(workersock, &TxnQItem)) == W_ERROR) 
 		{
 			LOG_ERROR_MESSAGE("receive_transaction_packet failed");
+			close(workersock);
 			pthread_exit(NULL);
 		}
 		if (rec==SOCKET_CLOSE)
 		{
 			LOG_ERROR_MESSAGE("driver socket closed");
+			close(workersock);
 			pthread_exit(NULL);
 		}
 #ifdef DEBUG
@@ -315,6 +346,7 @@ void *DoConnection(void *fd)
 		if(send_transaction_packet(workersock, TxnQItem) != W_OK) 
 		{
 			LOG_ERROR_MESSAGE("send_transaction_packet failed");
+			close(workersock);
 			pthread_exit(NULL);
 		}
 	}
