@@ -1,12 +1,14 @@
 appServer		middle tier application server.
 common			Functions described in the specification that can be shared.
+common.mk		Makefile include file.
 datagen			The database data generator.
 dbdriver		The database driver.
-db_interface	Currently contains a DB interface using ODBC.
+interfaces		Currently contains a DB interface using ODBC.
 include			All include files.
 LICENSE			The Artistic license that this project is released under.
+Makefile		Makefile to build the entire package.
 readme.txt		This file.
-script			Various shell scripts.
+scripts			Various shell scripts.
 sizing.sdc		Star Office spreadsheet that calculates various sizing info.
 storedproc		SAP DB stored procedure files.
 tools			Various tools to use with this kit.
