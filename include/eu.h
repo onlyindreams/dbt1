@@ -17,6 +17,10 @@
 
 #include <interaction_data.h>
 
+#ifdef HAVE_CONFIG_H
+#include "../config.h"
+#endif
+
 #include <common.h>
 #ifdef ODBC
 #include <odbc_interaction.h>

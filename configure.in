@@ -45,14 +45,14 @@ AC_ARG_WITH(sapdb,
 	[ DATABASE_TO_USE="sapdb" DBI_NAME="odbc" ])
 
 dnl> Set up rules depending on what database is selected.
-if test "$DATABASE_TO_USE" != "pgsql"; then
+if test "$DATABASE_TO_USE" = "pgsql"; then
 	CFLAGS="-I${DATABASE_TO_USE}/include $CFLAGS"
 	CPPFLAGS="-I${DATABASE_TO_USE}/include $CPPFLAGS"
 	LDFLAGS="-L${DATABASE_TO_USE}/lib -Wl,-R${DATABASE_TO_USE}/lib $LDFLAGS"
 	AC_CHECK_HEADERS(libpq-fe.h, [], AC_MSG_ERROR([libpq headers required]))
 	AC_SEARCH_LIBS(PQexec, pq, [], AC_MSG_ERROR([libpq libs required]))
 	AC_DEFINE(LIBPQ, 1, [using PostgreSQL])
-elif test "$DATABASE_TO_USE" != "sapdb"; then
+elif test "$DATABASE_TO_USE" = "sapdb"; then
 	dnl>
 	dnl> ODBC Library (required)
 	dnl>

@@ -30,6 +30,10 @@
 #include <app_txn_queue.h>
 #include <app_threadpool.h>
 
+#ifdef HAVE_CONFIG_H
+#include "../config.h"
+#endif
+
 void *DoConnection(void *fd);
 void sighandler(int signum);
 
