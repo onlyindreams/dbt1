@@ -13,8 +13,11 @@
 
 #include <pthread.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <time.h>
 #include <errno.h>
+#include <ctype.h>
 #include <math.h>
 #include <eu.h>
 #include <common.h>
@@ -33,13 +36,19 @@
 #include <odbc_interaction_order_inquiry.h>
 #include <odbc_interaction_product_detail.h>
 #include <odbc_interaction_shopping_cart.h>
+#include <odbc_interaction_search_request.h>
 #include <odbc_interaction_search_results.h>
 #endif /* PHASE1 */
 
 #include <_socket.h>
+
 #ifdef PHASE2
 #include <tm_interface.h>
 #endif /* PHASE2 */
+
+#ifdef SEARCH_RESULTS_CACHE
+#include <cache_interface.h>
+#endif /* SEARCH_RESULTS_CACHE */
 
 /* Defined some log file names. */
 #define MIX_LOG_NAME "mix.log"
@@ -310,7 +319,7 @@ int do_interaction(struct eu_context_t *euc)
 			break;
 		case SEARCH_REQUEST:
 #ifdef PHASE1
-			rc = execute_search_request(euc, &euc->odbcd);
+			rc = execute_search_request(&euc->odbcc, &euc->odbcd);
 			if (rc == W_OK)
 			{
 				copy_out_search_request(euc, &euc->odbcd);
@@ -938,7 +947,7 @@ int get_think_time()
 	/* Log the calculate think time. */
 	pthread_mutex_lock(&mutex_think_time_log);
 	time(&t);
-	fprintf(log_think_time, "%d,%d,%d\n", t, tt, pthread_self());
+	fprintf(log_think_time, "%d,%d,%d\n", (int) t, tt, (int) pthread_self());
 	fflush(log_think_time);
 	pthread_mutex_unlock(&mutex_think_time_log);
 
@@ -968,7 +977,7 @@ double get_usmd()
 	/* Log the calculated USMD. */
 	pthread_mutex_lock(&mutex_usmd_log);
 	time(&t);
-	fprintf(log_usmd, "%d,%f,%d\n", t, usmd, pthread_self());
+	fprintf(log_usmd, "%d,%f,%d\n", (int) t, usmd, (int) pthread_self());
 	fflush(log_usmd);
 	pthread_mutex_unlock(&mutex_usmd_log);
 
@@ -1364,7 +1373,7 @@ int init_eus(char *sname, int port, int eus,
 int mark_logs(char *mark)
 {
 	pthread_mutex_lock(&mutex_mix_log);
-	fprintf(log_mix, "%d,%s\n", time(NULL), mark);
+	fprintf(log_mix, "%d,%s\n", (int) time(NULL), mark);
 	fflush(log_mix);
 	pthread_mutex_unlock(&mutex_mix_log);
 
@@ -1680,8 +1689,6 @@ int prepare_product_detail(struct eu_context_t *euc)
  */
 int prepare_search_results(struct eu_context_t *euc)
 {
-	char msg[64];
-
 	euc->previous_search_interaction = SEARCH_RESULTS;
 
 	euc->search_results_data.search_type = (int) get_random(SEARCH_TYPE_MAX);
@@ -1797,7 +1804,6 @@ void *start_eu(void *data)
 	time_t user_start;
 	struct timeval rt0, rt1;
 	double response_time;
-	int i;
 	struct eu_context_t euc;
 	int rc;
 	struct timespec think_time, rem;
@@ -1834,7 +1840,7 @@ void *start_eu(void *data)
 	{
 		printf("connect to cache failed\n");
 		LOG_ERROR_MESSAGE("connect to cache failed");
-		return;
+		return NULL;
 	}
 #endif
 #endif /* PHASE1 */
@@ -1844,7 +1850,7 @@ void *start_eu(void *data)
 	{
 		printf("connect to appServer failed\n");
 		LOG_ERROR_MESSAGE("connect failed");
-		return;
+		return NULL;
 	}
 #endif /* PHASE2 */
 
@@ -1885,7 +1891,7 @@ void *start_eu(void *data)
 				/* Log the error */
 				pthread_mutex_lock(&mutex_mix_log);
 				fprintf(log_mix, "%d,ER,%f,%d\n",
-					time(NULL), (double)retry, pthread_self());
+					(int) time(NULL), (double)retry, (int) pthread_self());
 				fflush(log_mix);
 				pthread_mutex_unlock(&mutex_mix_log);
 
@@ -1921,7 +1927,7 @@ void *start_eu(void *data)
 			if ((euc.s = _connect(tm_address, *port)) == -1)
 			{
 				LOG_ERROR_MESSAGE("re-connect failed");
-				return;
+				return NULL;
 			}
 			LOG_ERROR_MESSAGE("re-connect");
 			continue;
@@ -1933,8 +1939,8 @@ void *start_eu(void *data)
 		/* log only successful interactions */
 		pthread_mutex_lock(&mutex_mix_log);
 		fprintf(log_mix, "%d,%s,%f,%d\n",
-			time(NULL), interaction_short_name[euc.interaction],
-			response_time, pthread_self());
+			(int) time(NULL), interaction_short_name[euc.interaction],
+			response_time, (int) pthread_self());
 		fflush(log_mix);
 		pthread_mutex_unlock(&mutex_mix_log);
 
@@ -1994,7 +2000,7 @@ void *start_eu(void *data)
 					/* Log the error */
 					pthread_mutex_lock(&mutex_mix_log);
 					fprintf(log_mix, "%d,ER,%f,%d\n",
-						time(NULL), response_time, (double)retry, pthread_self());
+						(int) time(NULL), response_time, (int) pthread_self());
 					fflush(log_mix);
 					pthread_mutex_unlock(&mutex_mix_log);
 
@@ -2026,7 +2032,7 @@ void *start_eu(void *data)
                         	if ((euc.s = _connect(tm_address, *port)) == -1)
                         	{
                                		LOG_ERROR_MESSAGE("re-connect failed");
-                                	return;
+                                	return NULL;
                         	}
                         	LOG_ERROR_MESSAGE("re-connect");
                         	continue;
@@ -2042,8 +2048,8 @@ void *start_eu(void *data)
 			 */
 			pthread_mutex_lock(&mutex_mix_log);
 			fprintf(log_mix, "%d,%s,%f,%d\n",
-				time(NULL), interaction_short_name[euc.interaction],
-				response_time, pthread_self());
+				(int) time(NULL), interaction_short_name[euc.interaction],
+				response_time, (int) pthread_self());
 			fflush(log_mix);
 			pthread_mutex_unlock(&mutex_mix_log);
 
@@ -2080,4 +2086,5 @@ void *start_eu(void *data)
 	while (time(NULL) < stop_time);
 
 	sem_wait(&running_eu_count);
+	return NULL;
 }
