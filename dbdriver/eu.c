@@ -204,6 +204,7 @@ int do_interaction(struct eu_context_t *euc)
 			{
 				copy_out_buy_confirm(euc, &euc->odbcd);
 			}
+			euc->sc_id = UNKNOWN_SHOPPING_CART;
 #endif /* PHASE1 */
 			break;
 		case BUY_REQUEST:
@@ -289,9 +290,11 @@ int do_interaction(struct eu_context_t *euc)
 			break;
 		case PRODUCT_DETAIL:
 			rc = prepare_product_detail(euc);
+/*
 #ifdef DEBUG
 			DEBUGMSG("product detail id %lld", euc->product_detail_data.i_id);
 #endif
+*/
 			if (rc != W_OK)
 			{
 				return W_ERROR;
@@ -417,9 +420,12 @@ int do_interaction(struct eu_context_t *euc)
 		euc->sc_id = euc->shopping_cart_data.sc_id;
 	else if (euc->interaction == BUY_REQUEST) 
 		euc->c_id = euc->buy_request_data.c_id;
-#ifdef DEBUG
-	dump_interaction_output(euc);
-#endif /* DEBUG */
+	/* reset sc_id after buy_confirm */
+	else if (euc->interaction == BUY_CONFIRM) 
+		euc->sc_id = UNKNOWN_SHOPPING_CART;
+//#ifdef DEBUG
+//	dump_interaction_output(euc);
+//#endif /* DEBUG */
 #endif /* PHASE2 */
 
 	return rc;
@@ -1344,7 +1350,7 @@ int init_eus(char *sname, int port, int eus,
 int mark_logs(char *mark)
 {
 	pthread_mutex_lock(&mutex_mix_log);
-	fprintf(log_mix, "%s\n", mark);
+	fprintf(log_mix, "%d,%s\n", time(NULL), mark);
 	fflush(log_mix);
 	pthread_mutex_unlock(&mutex_mix_log);
 
@@ -1478,6 +1484,9 @@ int prepare_buy_request(struct eu_context_t *euc)
 		time_t t1, t2, t3;
 		struct tm tm1, *tm2, *tm3;
 
+#ifdef DEBUG
+		DEBUGMSG("creating new customer...");
+#endif
 		euc->buy_request_data.returning_flag = FALSE;
 
 		get_a_string(euc->buy_request_data.c_fname, 8, C_FNAME_LEN);
@@ -1534,18 +1543,22 @@ int prepare_buy_request(struct eu_context_t *euc)
  */
 int prepare_home(struct eu_context_t *euc)
 {
-	if (get_percentage() <= 0.80)
+	/* if it is the first interaction, then generate c_id */
+	if (euc->first_interaction == TRUE )
 	{
-		euc->c_id = euc->home_data.c_id = get_nu_rand(a, 1, customers);
-		if (euc->c_id < 1 || euc->c_id > customers)
+		if (get_percentage() <= 0.80)
 		{
-			LOG_ERROR_MESSAGE("invalid c_id generated %lld", euc->c_id);
-			return W_ERROR;
+			euc->c_id = euc->home_data.c_id = get_nu_rand(a, 1, customers);
+			if (euc->c_id < 1 || euc->c_id > customers)
+			{
+				LOG_ERROR_MESSAGE("invalid c_id generated %lld", euc->c_id);
+				return W_ERROR;
+			}
 		}
-	}
-	else
-	{
-		euc->home_data.c_id = UNKNOWN_CUSTOMER;
+		else
+		{
+			euc->home_data.c_id = UNKNOWN_CUSTOMER;
+		}
 	}
 
 	return W_OK;
@@ -1801,6 +1814,8 @@ void *start_eu(void *data)
 
 		/* The Home interaction is always first. */
 		euc.interaction = HOME;
+		euc.sc_id = UNKNOWN_SHOPPING_CART;
+		euc.first_interaction=TRUE;
 		/* do Home interaction, retry RETRY time if error happens */
 		do
 		{
@@ -1903,6 +1918,7 @@ void *start_eu(void *data)
 			}
 		}
 
+		euc.first_interaction=FALSE;
 		/*
 		 * Continue through the interaction mix until this user's duration
 		 * has expired and this user has completed the Home interaction.
@@ -2010,6 +2026,11 @@ void *start_eu(void *data)
 				}
 			}
 		}
+		/* user session ends*/
+#ifdef DEBUG
+		DEBUGMSG("user c_id %lld, sc_id %lld, usmd %f, user_session ended", euc.c_id, euc.sc_id, usmd);
+#endif
+
 	}
 	while (time(NULL) < stop_time);
 
