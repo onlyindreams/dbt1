@@ -97,6 +97,7 @@ int main(int argc, char *argv[])
 	int port, PoolThreads, TxnQSize, ArraySize;
 	struct sigaction sa;
 
+	setlinebuf(stdout);
 	memset(&sa, 0, sizeof(sa));
 	sa.sa_handler = &sighandler;
 	if (sigaction(SIGUSR1, &sa, NULL) == -1)
