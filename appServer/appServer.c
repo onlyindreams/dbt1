@@ -206,8 +206,9 @@ void sighandler(int signum)
 		printf("db connect thread failed, please check error.log\n");
         else if (signum==SIGINT)
 	{
-		kill(pthread_self(), SIGTERM);
                 printf("program ended by user\n");
+		popen("ps -ef|grep appServer|grep -v 'grep' |awk '{print $2}'| xargs -t -i kill -9 {}", "r");
+		exit(1);
 	}
         _exit(-1);
 }
