@@ -39,4 +39,4 @@ explain:
 	@echo "$(ODBC_OBJS)"
 
 clean:
-	rm -f odbc_test_p1 odbc_test_p2 results load_db_proc
+	rm -f odbc_test_p1 odbc_test_p2 results load_db_proc debug.log error.log ips.csv
