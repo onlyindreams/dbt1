@@ -45,6 +45,7 @@
 #define UNKNOWN_CUSTOMER 0
 #define UNKNOWN_SHOPPING_CART 0
 
+#define RETRY 3
 
 #define DATE_LEN 10 /* 'YYYY-MM-DD' */
 #define TIMESTAMP_LEN 28 /* 'YYYY-MM-DD HH:MM:SS.SSSSSS' */
