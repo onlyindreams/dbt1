@@ -7,8 +7,10 @@
  *                    Open Source Development Lab, Inc.
  *
  */
-#include "app_txn_array.h"
+
+#include <stdlib.h>
 #include <string.h>
+#include <app_txn_array.h>
 
 void init_app_txn_array(struct app_txn_array *txn_array, int ArraySize)
 {
@@ -58,5 +60,6 @@ int FreeSlot(struct app_txn_array *txn_array, int SlotID)
 	txn_array->pin[SlotID]=0;
 	bzero(&txn_array->odbc_data_array[SlotID], sizeof(union odbc_data_t));
 	pthread_mutex_unlock(&txn_array->odbc_txn_array_mutex);
+	return 1;
 }
 
