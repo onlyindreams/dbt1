@@ -142,7 +142,10 @@ double get_percentage();
 void get_a_string(char *a_string, int x, int y);
 void get_n_string(char *n_string, int x, int y);
 int get_nu_rand(int a, int x, int y);
+/*
 long long get_random(long long max);
+*/
+int get_random_int(int max);
 int log_error_message(char *filename, int line, const char *fmt, ...);
 int log_debug_message(char *filename, int line, const char *fmt, ...);
 double time_diff(struct timeval start_time, struct timeval end_time);
