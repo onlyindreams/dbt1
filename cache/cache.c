@@ -17,6 +17,7 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
+#include <ctype.h>
 #include <sys/types.h>
 #include <signal.h>
 #include <cache.h>
@@ -33,6 +34,8 @@ void *cache_thread(void *fd);
 void sighandler(int signum);
 
 pthread_mutex_t mutex_cache_server=PTHREAD_MUTEX_INITIALIZER;
+sem_t sem_warm_up;
+int sanity_check = 1;
 
 int undo_digsyl(char *search_string);
 
@@ -41,13 +44,16 @@ int main(int argc, char *argv[])
 	int mastersock, workersock;
 	struct sockaddr_in socketaddr;
 	char sname[32], uname[32], auth[32];
-	pthread_t *warm_up_thread;
+	pthread_t *warm_up_thread_id;
 	pthread_t connect_thread;
 	struct table_range *range;
 	int port, db_thread, num_items, connectioncount;
-	int addrlen, author_step, title_step;
-	int i, rec;
+	int addrlen;
+	int i, j, rec;
 	struct sigaction sa;
+	int c;
+	int warm_up_threads = 1;
+	int sem_val;
 
 	setlinebuf(stdout);
 	memset(&sa, 0, sizeof(sa));
@@ -68,23 +74,55 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	if (argc < 7)
+	if (argc < 13)
 	{
-		printf("usage: appCache <dbnodename> <username> <password> <port> <db_connection> <items>\n");
+		printf("usage: %s -d <dbnodename> -u <username> -p <password> -l <port> -c <db_connection> -i <items>\n", argv[0]);
 		return -1;
 	}
 
-	strcpy(sname, argv[1]);
-	strcpy(uname, argv[2]);
-	strcpy(auth, argv[3]);
-	port = atoi(argv[4]);
-	db_thread=atoi(argv[5]);
-	num_items=atoi(argv[6]);
-	item_count=num_items;
+	opterr = 0;
+	while ((c = getopt(argc, argv, "c:d:i:l:p:u:")) != -1)
+	{
+		switch (c)
+		{
+			case 'c':
+				db_thread=atoi(optarg);
+				break;
+			case 'd':
+				strcpy(sname, optarg);
+				break;
+			case 'i':
+				num_items=atoi(optarg);
+				item_count=num_items;
+				break;
+			case 'l':
+				port = atoi(optarg);
+				break;
+			case 'p':
+				strcpy(auth, optarg);
+				break;
+			case 'u':
+				strcpy(uname, optarg);
+				break;
+			case '?':
+				if (isprint(optopt))
+				{
+					fprintf(stderr, "Unknown option `-%c'.\n", optopt);
+				}
+				else
+				{
+					fprintf (stderr, "Unknown option character `\\x%x'.\n",
+						optopt);
+				}
+				return 1;
+			default:
+				return -1;
+		}
+	}
 	init_common();
 	
-	warm_up_thread=(pthread_t *)malloc(db_thread*sizeof(pthread_t));
-	range=(struct table_range *)malloc(db_thread*sizeof(struct table_range));
+	warm_up_thread_id=(pthread_t *)malloc(warm_up_threads*sizeof(pthread_t));
+	range=(struct table_range *)malloc(warm_up_threads*sizeof(struct table_range));
 
 	if (init_cache(num_items, sname, uname, auth) != OK)
 	{
@@ -92,27 +130,20 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 	
-	/* calculate the range of the results table that each thread can access */
-	author_step=num_items/10/db_thread;
-	title_step=num_items/5/db_thread;
-
-	range[0].author_start=0;
-	range[0].author_end=author_step-1;
-	range[0].title_start=0;
-	range[0].title_end=title_step-1;
-	for (i=0; i<db_thread; i++)
-	{
-		range[i].author_start=i*author_step+range[0].author_start;
-		range[i].author_end=i*author_step+range[0].author_end;
-		range[i].title_start=i*title_step+range[0].title_start;
-		range[i].title_end=i*title_step+range[0].title_end;
-	}	
-
 	/* create threads to fill out the results tables */
-	for (i=0; i<db_thread; i++)
+	if (sem_init(&sem_warm_up, 0, 0) != 0)
 	{
-
-		if (pthread_create (&warm_up_thread[i], NULL, warm_up_cache, (void *)&range[i]) != 0)
+		perror("sem_init");
+		return -1;
+	}
+	range[0].author_start = 0;
+	range[0].author_end = num_items / 10 - 1;
+	range[0].title_start = 0;
+	range[0].title_end = num_items / 5 - 1;
+	for (i=0; i<warm_up_threads; i++)
+	{
+		sem_post(&sem_warm_up);
+		if (pthread_create (&warm_up_thread_id[i], NULL, warm_up_cache, (void *)&range[i]) != 0)
 		{
 			printf("warm_up thread create failed");
 			return -1;
@@ -121,32 +152,56 @@ int main(int argc, char *argv[])
 	}
 
 	/* wait for all threads to finish */
-	for (i=0; i<db_thread; i++)
+	do
 	{
-		pthread_join(warm_up_thread[i], NULL);
-	}
+		sleep(2);
+		sem_getvalue(&sem_warm_up, &sem_val);
+	} while (sem_val > 0);
 
-	printf("cache warming up is done\n");
-/*
-	for (i=0;i<num_items/10; i++)
+	printf("Cache is warm.\n");
+
+	if (sanity_check == 1)
 	{
-		printf("%d items for author %d\n", author_results_table[i].record_number, i);
-		for(j=0; j<5; j++)
+		printf("Data sanity check.\n");
+		printf("Results for a_lname search:\n");
+		printf("a_id items i_r1 i_t1 i_r2 i_t2 i_r3 i_t3 i_r4 i_t4 i_r5 i_t5\n");
+
+		/* Check results for an a_lname search. */
+		for (i = 0; i < num_items / 10; i++)
 		{
-			printf("i_related %d: %lld\n", j, author_results_table[i].i_related[j]);
-			printf("i_thumbnail %d: %lld\n", j, author_results_table[i].i_thumbnail[j]);
+			printf("%4d %5d", i + 1, author_results_table[i].record_number);
+			for(j = 0; j < 5; j++)
+			{
+				printf(" %4lld %4lld", author_results_table[i].i_related[j],
+					author_results_table[i].i_thumbnail[j]);
+			}
+			printf("\n");
 		}
-	}
-*/
-	mastersock = _server_init_socket(port);
 
+		/* Check results for an i_title search. */
+		printf("Results for i_title search:\n");
+		printf("i_id items i_r1 i_t1 i_r2 i_t2 i_r3 i_t3 i_r4 i_t4 i_r5 i_t5\n");
+		for (i = 0; i < num_items / 10; i++)
+		{
+			printf("%4d %5d", i + 1, title_results_table[i].record_number);
+			for(j = 0; j < 5; j++)
+			{
+				printf(" %4lld %4lld", title_results_table[i].i_related[j],
+					title_results_table[i].i_thumbnail[j]);
+			}
+			printf("\n");
+		}
+		printf("Data sanity check complete.\n");
+	}
+
+	mastersock = _server_init_socket(port);
 	if (mastersock < 0)
 	{
 		printf("init cache server master socket failed\n");
 		return -1;
 	}
 
-        printf("The cache server is active...\n");
+	printf("The cache server is active...\n");
 
 	connectioncount=0;
 	while (1) {
@@ -220,8 +275,6 @@ void *warm_up_cache(void *fd)
 
 	/* do search_by_author*/
 	odbc_data.search_results_odbc_data.eb.search_type=SEARCH_AUTHOR;
-	printf("author_start %d\n", range->author_start);
-	printf("author_end %d\n", range->author_end);
 	for (i=range->author_start; i<=range->author_end;i++)
 	{
 		digsyl2(odbc_data.search_results_odbc_data.eb.search_string, (long long)i+1, (long long)7);
@@ -252,8 +305,6 @@ void *warm_up_cache(void *fd)
 
 	/* do search_by_title*/
 	odbc_data.search_results_odbc_data.eb.search_type=SEARCH_TITLE;
-	printf("title_start %d\n", range->title_start);
-	printf("title_end %d\n", range->title_end);
 	for (i=range->title_start; i<=range->title_end;i++)
 	{
 		digsyl2(odbc_data.search_results_odbc_data.eb.search_string, (long long)i+1, (long long)7);
@@ -282,6 +333,7 @@ void *warm_up_cache(void *fd)
 		}
 	}
 	odbc_disconnect(&odbcc);
+	sem_wait(&sem_warm_up);
 	return NULL;
 }
 
