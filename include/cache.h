@@ -1,5 +1,17 @@
-#ifndef _APP_CACHE_H
-#define _APP_CACHE_H
+/*
+ * cache.h
+ *
+ * This file is released under the terms of the Artistic License.  Please see
+ * the file LICENSE, included in this package, for details.
+ *
+ * Copyright (C) 2002 Mark Wong & Jenny Zhang &
+ *                    Open Source Development Lab, Inc.
+ *
+ * 24 January 2003
+ */
+
+#ifndef _CACHE_H_
+#define _CACHE_H_
 
 #include "common.h"
 
@@ -24,7 +36,4 @@ struct table_range {
 	int title_end;
 };
 
-
-int init_cache(int item, char *sname, char *uname, char *auth);
-void *warm_up_thread(void *fd);
-#endif
+#endif /* _CACHE_H_ */
