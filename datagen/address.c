@@ -10,13 +10,12 @@
  * TPCW v1.6
  */
 
-#define _LARGEFILES64_SOURCE
+#define _LARGEFILE64_SOURCE
 
 #include <stdio.h>
 #include <time.h>
 #include <datagen.h>
 #include <common.h>
-
 
 /* Clause 4.7.1 */
 
