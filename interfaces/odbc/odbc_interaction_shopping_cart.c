@@ -96,7 +96,7 @@ int execute_shopping_cart(struct odbc_context_t *odbcc,  union odbc_data_t *odbc
 	rc = SQLPrepare(odbcc->hstmt, STMT_SC, SQL_NTS);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
-		if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
 			return W_ERROR;
 	}
 
@@ -107,7 +107,7 @@ int execute_shopping_cart(struct odbc_context_t *odbcc,  union odbc_data_t *odbc
 		0, 0, &odbcd->shopping_cart_odbc_data.eb.c_id, 0, NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
-		if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
 			return W_ERROR;
 	}
 	rc = SQLBindParameter(odbcc->hstmt,
@@ -115,7 +115,7 @@ int execute_shopping_cart(struct odbc_context_t *odbcc,  union odbc_data_t *odbc
 		0, 0, &odbcd->shopping_cart_odbc_data.eb.sc_id, 0, NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
-		if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
 			return W_ERROR;
 	}
 	rc = SQLBindParameter(odbcc->hstmt,
@@ -123,7 +123,7 @@ int execute_shopping_cart(struct odbc_context_t *odbcc,  union odbc_data_t *odbc
 		0, 0, &odbcd->shopping_cart_odbc_data.eb.sc_size, 0, NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
-		if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
 			return W_ERROR;
 	}
 	rc = SQLBindParameter(odbcc->hstmt,
@@ -131,7 +131,7 @@ int execute_shopping_cart(struct odbc_context_t *odbcc,  union odbc_data_t *odbc
 		0, 0, &odbcd->shopping_cart_odbc_data.eb.add_flag, 0, NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
-		if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
 			return W_ERROR;
 	}
 	rc = SQLBindParameter(odbcc->hstmt,
@@ -140,7 +140,7 @@ int execute_shopping_cart(struct odbc_context_t *odbcc,  union odbc_data_t *odbc
 		0, NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
-		if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
 			return W_ERROR;
 	}
 	rc = SQLBindParameter(odbcc->hstmt,
@@ -149,7 +149,7 @@ int execute_shopping_cart(struct odbc_context_t *odbcc,  union odbc_data_t *odbc
 		0, NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
-		if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
 			return W_ERROR;
 	}
 	/*bind i_id,qty pairs*/
@@ -161,7 +161,7 @@ int execute_shopping_cart(struct odbc_context_t *odbcc,  union odbc_data_t *odbc
 		NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
-			if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
+			LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
 				return W_ERROR;
 		}
 		rc = SQLBindParameter(odbcc->hstmt, j++,
@@ -170,7 +170,7 @@ int execute_shopping_cart(struct odbc_context_t *odbcc,  union odbc_data_t *odbc
 		NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
-			if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
+			LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
 				return W_ERROR;
 		}
 	}
@@ -184,7 +184,7 @@ int execute_shopping_cart(struct odbc_context_t *odbcc,  union odbc_data_t *odbc
 			0, NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
-			if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
+			LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
 				return W_ERROR;
 		}
 		rc = SQLBindParameter(odbcc->hstmt,
@@ -193,7 +193,7 @@ int execute_shopping_cart(struct odbc_context_t *odbcc,  union odbc_data_t *odbc
 			sizeof(odbcd->shopping_cart_odbc_data.eb.scl_data[i].i_title), NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
-			if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
+			LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
 				return W_ERROR;
 		}
 		rc = SQLBindParameter(odbcc->hstmt,
@@ -202,7 +202,7 @@ int execute_shopping_cart(struct odbc_context_t *odbcc,  union odbc_data_t *odbc
 			0, NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
-			if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
+			LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
 				return W_ERROR;
 		}
 		rc = SQLBindParameter(odbcc->hstmt,
@@ -211,7 +211,7 @@ int execute_shopping_cart(struct odbc_context_t *odbcc,  union odbc_data_t *odbc
 			0, NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
-			if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
+			LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
 				return W_ERROR;
 		}
 		rc = SQLBindParameter(odbcc->hstmt,
@@ -220,7 +220,7 @@ int execute_shopping_cart(struct odbc_context_t *odbcc,  union odbc_data_t *odbc
 			sizeof(odbcd->shopping_cart_odbc_data.eb.scl_data[i].i_backing), NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
-			if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
+			LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
 				return W_ERROR;
 		}
 		rc = SQLBindParameter(odbcc->hstmt, j++,
@@ -229,7 +229,7 @@ int execute_shopping_cart(struct odbc_context_t *odbcc,  union odbc_data_t *odbc
 			NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
-			if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
+			LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
 				return W_ERROR;
 		}
 	}
@@ -242,7 +242,7 @@ int execute_shopping_cart(struct odbc_context_t *odbcc,  union odbc_data_t *odbc
 		0, NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
-			if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
+			LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
 				return W_ERROR;
 		}
 		rc = SQLBindParameter(odbcc->hstmt,
@@ -251,7 +251,7 @@ int execute_shopping_cart(struct odbc_context_t *odbcc,  union odbc_data_t *odbc
 		0, NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
-			if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
+			LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
 				return W_ERROR;
 		}
 	}

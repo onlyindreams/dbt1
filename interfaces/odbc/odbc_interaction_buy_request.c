@@ -140,8 +140,8 @@ int execute_buy_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 	rc = SQLPrepare(odbcc->hstmt, STMT_BUYREQ, SQL_NTS);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
-		if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
-			 return W_ERROR;
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+		return W_ERROR;
 	}
 
 	j = 1;
@@ -151,8 +151,9 @@ int execute_buy_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 		&odbcd->buy_request_odbc_data.eb.returning_flag, 0, NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
-		if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
-			 return W_ERROR;
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+		LOG_ERROR_MESSAGE("j is %d", j);
+		return W_ERROR;
 	}
 	rc = SQLBindParameter(odbcc->hstmt,
 		j++, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, 0, 0,
@@ -160,24 +161,27 @@ int execute_buy_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 		sizeof(odbcd->buy_request_odbc_data.eb.c_uname), NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
-		if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
-			 return W_ERROR;
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+		LOG_ERROR_MESSAGE("j is %d", j);
+		return W_ERROR;
 	}
 	rc = SQLBindParameter(odbcc->hstmt,
 		j++, SQL_PARAM_INPUT, SQL_C_ULONG, SQL_INTEGER, 0, 0,
 		&odbcd->buy_request_odbc_data.eb.sc_id, 0, NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
-		if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
-			 return W_ERROR;
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+		LOG_ERROR_MESSAGE("j is %d", j);
+		return W_ERROR;
 	}
 	rc = SQLBindParameter(odbcc->hstmt,
 		j++, SQL_PARAM_INPUT_OUTPUT, SQL_C_DOUBLE, SQL_DOUBLE, 0, 0,
 		&odbcd->buy_request_odbc_data.eb.c_discount, 0, NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
-		if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
-			 return W_ERROR;
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+		LOG_ERROR_MESSAGE("j is %d", j);
+		return W_ERROR;
 	}
 	rc = SQLBindParameter(odbcc->hstmt,
 		j++, SQL_PARAM_INPUT_OUTPUT, SQL_C_CHAR, SQL_VARCHAR, 0, 0,
@@ -185,8 +189,9 @@ int execute_buy_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 		sizeof(odbcd->buy_request_odbc_data.eb.c_fname), NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
-		if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
-			 return W_ERROR;
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+		LOG_ERROR_MESSAGE("j is %d", j);
+		return W_ERROR;
 	}
 	rc = SQLBindParameter(odbcc->hstmt,
 		j++, SQL_PARAM_INPUT_OUTPUT, SQL_C_CHAR, SQL_VARCHAR, 0, 0,
@@ -194,8 +199,9 @@ int execute_buy_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 		sizeof(odbcd->buy_request_odbc_data.eb.c_lname), NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
-		if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
-			 return W_ERROR;
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+		LOG_ERROR_MESSAGE("j is %d", j);
+		return W_ERROR;
 	}
 	rc = SQLBindParameter(odbcc->hstmt,
 		j++, SQL_PARAM_INPUT_OUTPUT, SQL_C_CHAR, SQL_VARCHAR, 0, 0,
@@ -203,8 +209,9 @@ int execute_buy_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 		sizeof(odbcd->buy_request_odbc_data.eb.address.addr_street1), NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
-		if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
-			 return W_ERROR;
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+		LOG_ERROR_MESSAGE("j is %d", j);
+		return W_ERROR;
 	}
 	rc = SQLBindParameter(odbcc->hstmt,
 		j++, SQL_PARAM_INPUT_OUTPUT, SQL_C_CHAR, SQL_VARCHAR, 0, 0,
@@ -212,8 +219,9 @@ int execute_buy_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 		sizeof(odbcd->buy_request_odbc_data.eb.address.addr_street2), NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
-		if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
-			 return W_ERROR;
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+		LOG_ERROR_MESSAGE("j is %d", j);
+		return W_ERROR;
 	}
 	rc = SQLBindParameter(odbcc->hstmt,
 		j++, SQL_PARAM_INPUT_OUTPUT, SQL_C_CHAR, SQL_VARCHAR, 0, 0,
@@ -221,7 +229,8 @@ int execute_buy_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 		sizeof(odbcd->buy_request_odbc_data.eb.address.addr_city), NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
-		if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+		LOG_ERROR_MESSAGE("j is %d", j);
 			 return W_ERROR;
 	}
 	rc = SQLBindParameter(odbcc->hstmt,
@@ -230,7 +239,8 @@ int execute_buy_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 		sizeof(odbcd->buy_request_odbc_data.eb.address.addr_state), NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
-		if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+		LOG_ERROR_MESSAGE("j is %d", j);
 			 return W_ERROR;
 	}
 	rc = SQLBindParameter(odbcc->hstmt,
@@ -239,7 +249,8 @@ int execute_buy_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 		sizeof(odbcd->buy_request_odbc_data.eb.address.addr_zip), NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
-		if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+		LOG_ERROR_MESSAGE("j is %d", j);
 			 return W_ERROR;
 	}
 	rc = SQLBindParameter(odbcc->hstmt,
@@ -248,7 +259,8 @@ int execute_buy_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 		sizeof(odbcd->buy_request_odbc_data.eb.address.co_name), NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
-		if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+		LOG_ERROR_MESSAGE("j is %d", j);
 			 return W_ERROR;
 	}
 	rc = SQLBindParameter(odbcc->hstmt,
@@ -257,7 +269,8 @@ int execute_buy_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 		sizeof(odbcd->buy_request_odbc_data.eb.c_phone), NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
-		if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+		LOG_ERROR_MESSAGE("j is %d", j);
 			 return W_ERROR;
 	}
 	rc = SQLBindParameter(odbcc->hstmt,
@@ -266,7 +279,8 @@ int execute_buy_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 		sizeof(odbcd->buy_request_odbc_data.eb.c_email), NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
-		if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+		LOG_ERROR_MESSAGE("j is %d", j);
 			 return W_ERROR;
 	}
 	rc = SQLBindParameter(odbcc->hstmt,
@@ -275,7 +289,8 @@ int execute_buy_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 		sizeof(odbcd->buy_request_odbc_data.eb.c_birthdate), NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
-		if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+		LOG_ERROR_MESSAGE("j is %d", j);
 			 return W_ERROR;
 	}
 	rc = SQLBindParameter(odbcc->hstmt,
@@ -284,7 +299,8 @@ int execute_buy_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 		sizeof(odbcd->buy_request_odbc_data.eb.c_data), NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
-		if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+		LOG_ERROR_MESSAGE("j is %d", j);
 			 return W_ERROR;
 	}
 	rc = SQLBindParameter(odbcc->hstmt,
@@ -293,7 +309,8 @@ int execute_buy_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 		sizeof(odbcd->buy_request_odbc_data.eb.c_passwd), NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
-		if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+		LOG_ERROR_MESSAGE("j is %d", j);
 			 return W_ERROR;
 	}
 	rc = SQLBindParameter(odbcc->hstmt,
@@ -301,7 +318,8 @@ int execute_buy_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 		&odbcd->buy_request_odbc_data.eb.c_id, 0, NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
-		if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+		LOG_ERROR_MESSAGE("j is %d", j);
 			 return W_ERROR;
 	}
 	rc = SQLBindParameter(odbcc->hstmt,
@@ -309,7 +327,8 @@ int execute_buy_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 		&odbcd->buy_request_odbc_data.eb.sc_sub_total, 0, NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
-		if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+		LOG_ERROR_MESSAGE("j is %d", j);
 			 return W_ERROR;
 	}
 	rc = SQLBindParameter(odbcc->hstmt,
@@ -317,7 +336,8 @@ int execute_buy_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 		&odbcd->buy_request_odbc_data.eb.sc_tax, 0, NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
-		if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+		LOG_ERROR_MESSAGE("j is %d", j);
 			 return W_ERROR;
 	}
 	rc = SQLBindParameter(odbcc->hstmt,
@@ -325,7 +345,8 @@ int execute_buy_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 		&odbcd->buy_request_odbc_data.eb.sc_ship_cost, 0, NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
-		if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+		LOG_ERROR_MESSAGE("j is %d", j);
 			 return W_ERROR;
 	}
 	rc = SQLBindParameter(odbcc->hstmt,
@@ -333,7 +354,8 @@ int execute_buy_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 		&odbcd->buy_request_odbc_data.eb.sc_total, 0, NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
-		if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+		LOG_ERROR_MESSAGE("j is %d", j);
 			 return W_ERROR;
 	}
 	rc = SQLBindParameter(odbcc->hstmt,
@@ -341,7 +363,8 @@ int execute_buy_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 		0, 0, &odbcd->buy_request_odbc_data.eb.sc_size, 0, NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
-		if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+		LOG_ERROR_MESSAGE("j is %d", j);
 			 return W_ERROR;
 	}
 	for (i=0; i<SHOPPING_CART_ITEMS_MAX; i++)
@@ -353,7 +376,8 @@ int execute_buy_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 			0, NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
-			if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
+			LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+			LOG_ERROR_MESSAGE("j is %d", j);
 				 return W_ERROR;
 		}
 		rc = SQLBindParameter(odbcc->hstmt,
@@ -362,7 +386,8 @@ int execute_buy_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 			sizeof(odbcd->buy_request_odbc_data.eb.scl_data[i].i_title), NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
-			if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
+			LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+			LOG_ERROR_MESSAGE("j is %d", j);
 				 return W_ERROR;
 		}
 		rc = SQLBindParameter(odbcc->hstmt,
@@ -371,7 +396,8 @@ int execute_buy_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 			0, NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
-			if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
+			LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+			LOG_ERROR_MESSAGE("j is %d", j);
 				 return W_ERROR;
 		}
 		rc = SQLBindParameter(odbcc->hstmt,
@@ -380,7 +406,8 @@ int execute_buy_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 			0, NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
-			if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
+			LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+			LOG_ERROR_MESSAGE("j is %d", j);
 				 return W_ERROR;
 		}
 		rc = SQLBindParameter(odbcc->hstmt,
@@ -389,7 +416,8 @@ int execute_buy_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 			sizeof(odbcd->buy_request_odbc_data.eb.scl_data[i].i_backing), NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
-			if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
+			LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+			LOG_ERROR_MESSAGE("j is %d", j);
 				 return W_ERROR;
 		}
 		rc = SQLBindParameter(odbcc->hstmt, j++,
@@ -398,7 +426,8 @@ int execute_buy_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 			NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
-			if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
+			LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+			LOG_ERROR_MESSAGE("j is %d", j);
 				 return W_ERROR;
 		}
 	}
@@ -422,6 +451,8 @@ int execute_buy_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 	{
 #ifdef DEBUG
 		printf("error rc %d\n", rc);
+		LOG_ERROR_MESSAGE("execute error rc %d", rc);
+		LOG_ERROR_MESSAGE("returning_flag %d", odbcd->buy_request_odbc_data.eb.returning_flag);
 #endif /* DEBUG */
 		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
 		return W_ERROR;
