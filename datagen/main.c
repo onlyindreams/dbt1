@@ -20,7 +20,6 @@
 #include <tpcw.h>
 #include <common.h>
 
-
 #define DELIMITER ','
 #define SEQUENCE_SQL "../scripts/sapdb/create_sequence.sql"
 
@@ -48,6 +47,7 @@ int items, ebs;
 char path[256];
 int flag_cust, flag_item, flag_author, flag_address, flag_order;
 sem_t sem;
+int multi = 0; /* multi = 1, allow parallel data generation */
 
 /* Prototypes */
 void *gen_addresses(void *data);
@@ -135,6 +135,7 @@ int main(int argc, char *argv[])
 
 	if (flag_item == 1) 
 	{
+		sem_post(&sem);
 		if (pthread_create(&t1, NULL, gen_items, NULL) != 0)
 		{
 			perror("pthread_create");
@@ -142,8 +143,15 @@ int main(int argc, char *argv[])
 		sprintf(cmd, "ln -fs %s/item.data /tmp/item.data", path);
 		popen(cmd, "r");
 	}
+	do
+	{
+		sleep(10);
+		sem_getvalue(&sem, &sem_val);
+	} while (sem_val > 0);
+
 	if (flag_cust == 1)
 	{
+		sem_post(&sem);
 		if (pthread_create(&t2, NULL, gen_customers, NULL) != 0)
 		{
 			perror("pthread_create");
@@ -151,8 +159,15 @@ int main(int argc, char *argv[])
 		sprintf(cmd, "ln -fs %s/customer.data /tmp/customer.data", path);
 		popen(cmd, "r");
 	}
+	do
+	{
+		sleep(10);
+		sem_getvalue(&sem, &sem_val);
+	} while (sem_val > 0);
+
 	if (flag_author == 1) 
 	{
+		sem_post(&sem);
 		if (pthread_create(&t3, NULL, gen_authors, NULL) != 0)
 		{
 			perror("pthread_create");
@@ -160,8 +175,15 @@ int main(int argc, char *argv[])
 		sprintf(cmd, "ln -fs %s/author.data /tmp/author.data", path);
 		popen(cmd, "r");
 	}
+	do
+	{
+		sleep(10);
+		sem_getvalue(&sem, &sem_val);
+	} while (sem_val > 0);
+
 	if (flag_address == 1)
 	{
+		sem_post(&sem);
 		if (pthread_create(&t4, NULL, gen_addresses, NULL) != 0)
 		{
 			perror("pthread_create");
@@ -169,8 +191,15 @@ int main(int argc, char *argv[])
 		sprintf(cmd, "ln -fs %s/address.data /tmp/address.data", path);
 		popen(cmd, "r");
 	}
+	do
+	{
+		sleep(10);
+		sem_getvalue(&sem, &sem_val);
+	} while (sem_val > 0);
+
 	if (flag_order == 1)
 	{
+		sem_post(&sem);
 		if (pthread_create(&t5, NULL, gen_orders, NULL) != 0)
 		{
 			perror("pthread_create");
@@ -217,7 +246,6 @@ void *gen_addresses(void *data)
 
 	srand(0);
 	printf("Generating address table data...\n");
-	sem_post(&sem);
 
 	addresses = ebs * 2880 * 2;
 
@@ -285,7 +313,6 @@ void *gen_authors(void *data)
 
 	srand(0);
 	printf("Generating author table data...\n");
-	sem_post(&sem);
 
 	author_count = items / 4;
 
@@ -363,7 +390,6 @@ void *gen_customers(void *data)
 
 	srand(0);
 	printf("Generating customer table data...\n");
-	sem_post(&sem);
 
 	customers = 2880 * ebs;
 
@@ -516,7 +542,6 @@ void *gen_items(void *data)
 
 	srand(0);
 	printf("Generating item table data...\n");
-	sem_post(&sem);
 
 	item_count = items;
 
@@ -715,7 +740,6 @@ void *gen_orders(void *data)
 
 	srand(0);
 	printf("Generating order, order_line, and cc_xacts table data...\n");
-	sem_post(&sem);
 
 	customers = ebs * 2880;
 	orders = (int) (customers * 0.9);
@@ -895,7 +919,7 @@ int process_options(int count, char **vector)
 	flag_author = 0;
 	flag_address = 0;
 	flag_order = 0;
-	while ((option = getopt (count, vector, "i:u:p:T:h")) != -1)
+	while ((option = getopt (count, vector, "i:u:p:T:h:m")) != -1)
 	{
 		switch (option)
 		{
@@ -935,6 +959,8 @@ int process_options(int count, char **vector)
 				break;
 			case 'h':
 				return 0;
+			case 'm':
+				multi = 1;
 			default:
 				return 0;
 		}
