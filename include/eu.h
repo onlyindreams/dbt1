@@ -44,6 +44,10 @@ struct eu_context_t
 	int interaction; /* Current interaction. */
 	int previous_interaction; /* The previous interaction. */
 	int previous_search_interaction;
+	/* indicate if it is the first interaction so that 'prepare_home' can
+	   decide if a new c_id need to be generated
+	 */
+	int first_interaction; 
 
 	long long c_id;
 	long long sc_id;
