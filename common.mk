@@ -1,8 +1,11 @@
 
 CC = gcc
 
-SAPDBROOT=/opt/sapdb/interfaces/odbc
-CFLAGS = -g -I$(INCLUDE_DIR) -I$(SAPDBROOT)/incl -DGET_TIME -DSEARCH_RESULTS_CACHE
+#ODBC_INCL=/usr/local/include
+#ODBC_LIB=/usr/lib/libodbc.so
+ODBC_INCL=/opt/sapdb/interfaces/odbc/incl
+ODBC_LIB=/opt/sapdb/interfaces/odbc/lib/libsqlod.so
+CFLAGS = -g -I$(INCLUDE_DIR) -I$(ODBC_INCL) -DGET_TIME -DSEARCH_RESULTS_CACHE -DAUTOCOMMIT_OFF
 
 COMMON_PRGS = $(COMMON_DIR)/common.c $(COMMON_DIR)/_socket.c
 COMMON_OBJS = $(COMMON_PRGS:.c=.so)
