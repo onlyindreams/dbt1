@@ -108,7 +108,6 @@ ELSE BEGIN
   set ship_addr_id=c_addr_id;
   SELECT addr_co_id INTO :co_id FROM dbt.address WHERE addr_id=:ship_addr_id;
 END;
-SUBTRANS BEGIN;
 INSERT INTO dbt.orders VALUES(:sc_id, :c_id, timestamp, :sc_sub_total,
   :sc_tax, :sc_total, 'SHIP', adddate(timestamp,:days), :c_addr_id,
   :ship_addr_id, 'PENDING');
@@ -123,11 +122,12 @@ WHILE $rc=0 DO BEGIN
             :c_discount, :comment);
      SELECT i_stock INTO :i_stock FROM dbt.item WHERE i_id=:scl_i_id;
      IF (i_stock-10>scl_qty) THEN
-       UPDATE dbt.item set i_stock=(:i_stock-:scl_qty) where i_id=:scl_i_id
+       set i_stock =i_stock-scl_qty
      ELSE
-       UPDATE dbt.item set i_stock=(:i_stock-:scl_qty+21) where i_id=:scl_i_id;  END;
+       set i_stock =i_stock-scl_qty+21;
+     UPDATE dbt.item set i_stock=:i_stock where i_id=:scl_i_id;
+  END;
 END;
-SUBTRANS END;
 INSERT INTO dbt.cc_xacts VALUES(:sc_id, :cc_type, :cc_num, :cc_name,
   :tmpdate, :auth_id, :sc_total, timestamp, :co_id);
 call getSCDetail(:sc_id, :num_item,
