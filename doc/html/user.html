@@ -1,0 +1,252 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=iso-8859-1">
+	<TITLE></TITLE>
+	<META NAME="GENERATOR" CONTENT="OpenOffice.org 1.0  (Linux)">
+	<META NAME="CREATED" CONTENT="20020618;13110200">
+	<META NAME="CHANGED" CONTENT="20020619;9542400">
+	<STYLE>
+	<!--
+		@page { margin-left: 3.18cm; margin-right: 3.18cm; margin-top: 2.54cm; margin-bottom: 2.54cm }
+		P { margin-bottom: 0.21cm }
+		H1 { margin-bottom: 0.21cm }
+		H1.western { font-family: "Albany", sans-serif; font-size: 16pt }
+		H1.cjk { font-size: 16pt }
+		H1.ctl { font-size: 16pt }
+		H2 { margin-bottom: 0.21cm }
+		H2.western { font-family: "Albany", sans-serif; font-size: 14pt; font-style: italic }
+		H2.cjk { font-size: 14pt; font-style: italic }
+		H2.ctl { font-size: 14pt; font-style: italic }
+		H3 { margin-bottom: 0.21cm }
+		H3.western { font-family: "Albany", sans-serif }
+	-->
+	</STYLE>
+</HEAD>
+<BODY LANG="en-US">
+<P STYLE="margin-bottom: 0cm"><BR>
+</P>
+<P STYLE="margin-bottom: 0cm"><BR>
+</P>
+<P STYLE="margin-bottom: 0cm"><BR>
+</P>
+<P STYLE="margin-bottom: 0cm"><BR>
+</P>
+<P STYLE="margin-bottom: 0cm"><BR>
+</P>
+<P STYLE="margin-bottom: 0cm"><BR>
+</P>
+<P STYLE="margin-bottom: 0cm"><BR>
+</P>
+<P STYLE="margin-bottom: 0cm"><BR>
+</P>
+<P STYLE="margin-bottom: 0cm"><BR>
+</P>
+<P STYLE="margin-bottom: 0cm"><BR>
+</P>
+<P ALIGN=CENTER STYLE="margin-top: 0.42cm; page-break-after: avoid"><FONT FACE="Albany, sans-serif"><FONT SIZE=5><B>OSDL-DBT-1</B></FONT></FONT></P>
+<P ALIGN=CENTER STYLE="margin-top: 0.42cm; page-break-after: avoid"><FONT FACE="Albany, sans-serif"><FONT SIZE=4><I>A
+Transactional e-Commerce Database Workload</I></FONT></FONT></P>
+<P ALIGN=CENTER STYLE="margin-top: 0.42cm; page-break-after: avoid"><FONT FACE="Albany, sans-serif"><FONT SIZE=4><I>User
+Manual</I></FONT></FONT></P>
+<P ALIGN=CENTER STYLE="margin-bottom: 0cm"><SDFIELD TYPE=DOCINFO SUBTYPE=CREATE FORMAT=DATE SDNUM="1033;1033;MMMM D, YYYY">June 18, 2002</SDFIELD></P>
+<P ALIGN=CENTER STYLE="margin-bottom: 0cm"><BR>
+</P>
+<DIV ID="Table of Contents1">
+	<DIV ID="Table of Contents1_Head">
+		<P STYLE="margin-top: 0.42cm; page-break-before: always; page-break-after: avoid">
+		<FONT FACE="Albany, sans-serif"><FONT SIZE=4 STYLE="font-size: 16pt"><B>Table
+		of Contents</B></FONT></FONT></P>
+	</DIV>
+	<P STYLE="margin-bottom: 0cm">1Introduction	3</P>
+	<P STYLE="margin-bottom: 0cm">2Setup	3</P>
+	<P STYLE="margin-left: 0.5cm; margin-bottom: 0cm">2.1Getting the
+	Files	3</P>
+	<P STYLE="margin-left: 1cm; margin-bottom: 0cm">2.1.1OSDL-DBT-1	3</P>
+	<P STYLE="margin-left: 1cm; margin-bottom: 0cm">2.1.2SAP DB	3</P>
+	<P STYLE="margin-left: 0.5cm; margin-bottom: 0cm">2.2Compiling the
+	Test Kit	3</P>
+	<P STYLE="margin-left: 0.5cm; margin-bottom: 0cm">2.3Building the
+	Database	3</P>
+	<P STYLE="margin-left: 1cm; margin-bottom: 0cm">2.3.1SAP DB	4</P>
+	<P STYLE="margin-left: 1cm; margin-bottom: 0cm">2.3.2Creating the
+	Database	4</P>
+	<P STYLE="margin-bottom: 0cm">3Running the Test Kit	4</P>
+</DIV>
+<P ALIGN=LEFT STYLE="margin-bottom: 0cm"><BR>
+</P>
+<H1 CLASS="western" STYLE="page-break-before: always">1Introduction</H1>
+<P>This document provides the user instructions on how to use this
+kit.</P>
+<H1 CLASS="western">2Setup</H1>
+<P>The source files for the OSDL-DBT-1 test kit and a database must
+be retrieved in order to use the kit.  The kit currently supports
+only SAP DB.</P>
+<H2 CLASS="western">2.1Getting the Files</H2>
+<P>The source code for the OSDL-DBT-1 kit and a database must be
+downloaded.</P>
+<H3 CLASS="western">2.1.1OSDL-DBT-1</H3>
+<P>Instructions on how to obtain the latest source files from the CVS
+repository for the OSDL-DBT-1 kit can be found on SourceForge at the
+following Web address:</P>
+<P>	http://sourceforge.net/cvs/?group_id=52479</P>
+<P><BR><BR>
+</P>
+<P>The latest stable version of the kit can also be found on
+SourceForge at the following Web address:</P>
+<P>	http://sourceforge.net/project/showfiles.php?group_id=52479</P>
+<H3 CLASS="western">2.1.2SAP DB</H3>
+<P>The OSDL-DBT-1 test kit was developed using SAP DB Version
+7.3.0.21.  Newer version of the database should work fine with the
+test kit.  Binary packages for Linux can be obtained from SAP at the
+following Web address:</P>
+<P>	http://www.sapdb.org/sap_db_linux.htm</P>
+<P>Source packages for Linux can be obtained from SAP at the
+following Web address:</P>
+<P>	http://www.sapdb.org/develop/dev_linux.htm</P>
+<P><BR><BR>
+</P>
+<P>Source files and the binary tgz packages contain the complete
+database package.  If rpm files are desired, the following files are
+required:</P>
+<UL>
+	<LI><P>sapdb-ind-7.3.0.21-1.i386.rpm</P>
+	<LI><P>sapdb-srv-7.3.0.21-1.i386.rpm</P>
+	<LI><P>sapdb-callif-7.3.0.21-1.i386.rpm</P>
+</UL>
+<P>The additional rpm packages can be retrieved and used with the
+test kit.</P>
+<H2 CLASS="western">2.2Compiling the Test Kit</H2>
+<P>The entire test kit can be compiled by running <I>make</I><SPAN STYLE="font-style: normal">
+in the top level directory of the source code.</SPAN></P>
+<H2 CLASS="western">2.3Building the Database</H2>
+<P>This following sections explains how to build the database
+depending on which database is used.  SAP DB is currently the only
+database supported.</P>
+<H3 CLASS="western">2.3.1SAP DB</H3>
+<P>An OpenOffice.org spreadsheet is provided to aid in sizing the
+database:</P>
+<P>	doc/sapdb_sizing.sxc</P>
+<P><BR><BR>
+</P>
+<P>Under the <I>Performance</I> tab there are two parameters that can
+be change.  A default value of 1,000 is entered for the number of
+item to create and a default value of 1 is entered for the number of
+emulated users (EUs) expected to run against the database.  The
+number of items can be changed to 10,000, 100,000, 1,000,000, or
+10,000,000.  The number of EUs can be any positive integer.</P>
+<P><BR><BR>
+</P>
+<P>The data displayed under the <I>Load</I><SPAN STYLE="font-style: normal">
+tab report the expected size of the database for the parameters
+entered to be used for the physical database layout.  The number to
+note is the total number of 8 KB unites since SAP DB uses those units
+in its configuration settings.  Keep in mind that extra space must be
+taken into consideration because the database grows during a test
+run.</SPAN></P>
+<P STYLE="font-style: normal"><BR><BR>
+</P>
+<P><SPAN STYLE="font-style: normal">A shell script,
+<I>scripts/sapdb/create_db.sh</I><SPAN STYLE="font-style: normal">,
+creates the physical database.  In that script, there are lines
+beginning with </SPAN><I>param_adddevspace</I><SPAN STYLE="font-style: normal">
+that define the devices on which the database resides.  These lines
+must be tailored fit the I/O subsystem on the system that the
+database is running on for the system devspace, log devspace, and
+user devspace.  The number defining the size of the log devspaces and
+the data devspaces are in number of 8 KB units.</SPAN></SPAN></P>
+<H3 CLASS="western">2.3.2Creating the Database</H3>
+<P>Under each database specific directory under <I>scripts/</I><SPAN STYLE="font-style: normal">
+is a file called </SPAN><I>db_setup_sample.sh</I><SPAN STYLE="font-style: normal">.
+ This script has two variables defined in it, ITEMS and EUS, which
+refer to the number of items in the database and the number of EUs to
+run.</SPAN>  These numbers should reflect the number used to size the
+database in the previous sub-section.  Executing the script generates
+the database table data, creates the physical database, creates the
+database tables, loads the database, creates indexes, loads the
+stored procedures, and backs up the database.</P>
+<H1 CLASS="western">3Running the Test Kit</H1>
+<P>The OSDL-DBT-1 test kit can be run in two ways.  The kit is
+designed to be run in a two-tier and a three-tier environment.  The
+two-tier environment involves running the driver against the database
+directly, as shown in Figure 1.  The three-tier environment involves
+running the driver against a type of transaction management
+application that sits in front of the database, as shown in Figure 2.</P>
+<P ALIGN=CENTER><IMG SRC="user_html_56d75273.gif" NAME="Frame1" ALT="Frame1" ALIGN=BOTTOM HSPACE=7 VSPACE=8></P>
+<P ALIGN=CENTER><IMG SRC="user_html_285e2625.gif" NAME="Frame2" ALT="Frame2" ALIGN=BOTTOM HSPACE=7 VSPACE=8></P>
+<P ALIGN=LEFT>The two-tier environment is not as scalable as the
+three-tier environment.</P>
+<P ALIGN=LEFT><BR><BR>
+</P>
+<P ALIGN=LEFT>The test kit also provides scripts to help collect
+processor, disk, and memory utilization in the <I>scrips/stats/</I><SPAN STYLE="font-style: normal">
+directory, </SPAN><I>cpu.sh</I><SPAN STYLE="font-style: normal">,
+</SPAN><I>io.sh</I><SPAN STYLE="font-style: normal">, and </SPAN><I>paging.sh</I><SPAN STYLE="font-style: normal">
+respectively.  Each script takes two command line arguments, in the
+following order, the sample size in seconds, and the number of
+samples to take.</SPAN></P>
+<H2 CLASS="western">3.1Two-Tier Environment</H2>
+<P>The driver program for the two-tier environment is compiled as
+<I>dbdriver_p1</I> in the <I>dbdriver</I><SPAN STYLE="font-style: normal">/
+directory.  The </SPAN><I>dbdriver_p1</I><SPAN STYLE="font-style: normal">
+program takes the following arguments, in the following order:</SPAN></P>
+<UL>
+	<LI><P STYLE="font-style: normal">servername	-	The database connect
+	string.</P>
+	<LI><P STYLE="font-style: normal">user		-	Database user name: <I>dbt</I>.</P>
+	<LI><P STYLE="font-style: normal">pass		-	Database user password:
+	<I>dbt</I>.</P>
+	<LI><P STYLE="font-style: normal">items		-	Number of items in the
+	database.</P>
+	<LI><P STYLE="font-style: normal">customers	-	Number of customers in
+	the database: eus <FONT FACE="StarMath">*</FONT> 			2880.</P>
+	<LI><P STYLE="font-style: normal">eus		-	The number of users
+	emulated.</P>
+	<LI><P STYLE="font-style: normal">eu/min		-	The number of users to
+	connect per minut.</P>
+	<LI><P STYLE="font-style: normal">think time	-	The number of seconds
+	a user spends between interactions.</P>
+	<LI><P STYLE="font-style: normal">duration		-	The length of test, in
+	seconds, after all users 			connect.</P>
+</UL>
+<H2 CLASS="western">3.2Three-Tier Environment</H2>
+<P>The driver program for the three-tier environment is compiled as
+<I>dbdriver_p2</I> in the <I>dbdriver</I><SPAN STYLE="font-style: normal">/
+directory.  The </SPAN><I>dbdriver_p2</I><SPAN STYLE="font-style: normal">
+program takes the following arguments, in the following order:</SPAN></P>
+<UL>
+	<LI><P STYLE="font-style: normal">servername	-	The address of the
+	appServer program.</P>
+	<LI><P STYLE="font-style: normal">port		-	The port the appServer
+	program is listening to.</P>
+	<LI><P STYLE="font-style: normal">items		-	Number of items in the
+	database.</P>
+	<LI><P STYLE="font-style: normal">customers	-	Number of customers in
+	the database: eus <FONT FACE="StarMath">*</FONT> 			2880.</P>
+	<LI><P STYLE="font-style: normal">eus		-	The number of users
+	emulated.</P>
+	<LI><P STYLE="font-style: normal">eu/min		-	The number of users to
+	connect per minut.</P>
+	<LI><P STYLE="font-style: normal">think time	-	The number of seconds
+	a user spends between interactions.</P>
+	<LI><P STYLE="font-style: normal">duration		-	The length of test, in
+	seconds, after all users connect.</P>
+</UL>
+<H1 CLASS="western">4Test Results</H1>
+<P>The driver program, in both its forms, records response time data
+to the file <I>mix.log</I><SPAN STYLE="font-style: normal">.  A
+program, </SPAN><I>results</I><SPAN STYLE="font-style: normal">, is
+provided in the </SPAN><I>tools/</I><SPAN STYLE="font-style: normal">
+directory, which takes the file name as a command line argument to
+analyze the file.  The </SPAN><I>results</I><SPAN STYLE="font-style: normal">
+program also assumes the output files from the </SPAN><I>cpu.sh</I><SPAN STYLE="font-style: normal">,
+</SPAN><I>io.sh</I><SPAN STYLE="font-style: normal">, and </SPAN><I>paging.sh</I><SPAN STYLE="font-style: normal">
+are in the </SPAN><I>scripts/stats/</I><SPAN STYLE="font-style: normal">
+directory relative to the </SPAN><I>tools/</I><SPAN STYLE="font-style: normal">
+directory.  The </SPAN><I>results</I><SPAN STYLE="font-style: normal">
+program displays the results of these files to the screen.</SPAN></P>
+<DIV TYPE=FOOTER>
+	<P ALIGN=CENTER STYLE="margin-top: 0.5cm; margin-bottom: 0cm"><SDFIELD TYPE=PAGE SUBTYPE=RANDOM FORMAT=PAGE>6</SDFIELD></P>
+</DIV>
+</BODY>
+</HTML>
