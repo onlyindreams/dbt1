@@ -11,13 +11,8 @@
  */
 
 #include <stdio.h>
-#ifdef PHASE1
 #include <odbc_interaction.h>
-#endif /* PHASE1 */
 
-#ifdef PHASE2
-#include <app_interaction.h>
-#endif /* PHASE2 */
 #include <sql.h>
 #include <sqlext.h>
 #include <pthread.h>
