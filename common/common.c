@@ -111,6 +111,7 @@ const char *interaction_short_name[INTERACTION_TOTAL] =
 };
 
 
+char output_path[256] = "";
 FILE *log_error;
 #ifdef DEBUG
 FILE *log_debug;
@@ -120,6 +121,7 @@ pthread_mutex_t mutex_debug_log = PTHREAD_MUTEX_INITIALIZER;
 
 int init_common()
 {
+	char path[512];
 	/* Use the same default seed so the same data is always generated
 	 * by datagen.  For the multi-threaded application, it appears that
 	 * each thread needs to seed itself.
@@ -127,7 +129,13 @@ int init_common()
 	srand(1);
 
 	/* Open a file to log errors to. */
-	log_error = fopen(ERROR_LOG_NAME, "w");
+	if (output_path[0] != '\0')
+	{
+		strcat(output_path, "/");
+	}
+	sprintf(path, "%s%s", output_path, ERROR_LOG_NAME);
+printf("%s\n", path);
+	log_error = fopen(path, "w");
 	if (log_error == NULL)
 	{
 		fprintf(stderr, "cannot open %s\n", ERROR_LOG_NAME);
@@ -135,7 +143,8 @@ int init_common()
 	}
 
 #ifdef DEBUG
-	log_debug = fopen(DEBUG_LOG_NAME, "w");
+	sprintf(path, "%s/%s", output_path, DEBUG_LOG_NAME);
+	log_debug = fopen(path, "w");
 	if (log_debug == NULL)
 	{
 		fprintf(stderr, "cannot open %s\n", DEBUG_LOG_NAME);
