@@ -71,6 +71,12 @@ int odbc_disconnect(struct odbc_context_t *odbcc)
 	SQLRETURN rc;
 
 	pthread_mutex_lock(&db_source_mutex);
+	rc = SQLFreeHandle(SQL_HANDLE_STMT, odbcc->hstmt);
+	if (rc != SQL_SUCCESS)
+	{
+	        LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+	        return W_ERROR;
+	}
 	rc = SQLDisconnect(odbcc->hdbc);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
@@ -82,12 +88,6 @@ int odbc_disconnect(struct odbc_context_t *odbcc)
 	{
 		LOG_ODBC_ERROR(SQL_HANDLE_DBC, odbcc->hdbc);
 		return W_ERROR;
-	}
-	rc = SQLFreeHandle(SQL_HANDLE_STMT, odbcc->hstmt);
-	if (rc != SQL_SUCCESS)
-	{
-	        LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
-	        return W_ERROR;
 	}
 	pthread_mutex_unlock(&db_source_mutex);
 	return W_OK;
