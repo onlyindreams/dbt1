@@ -10,12 +10,9 @@
  * 18 february 2002
  */
 
-#include <stdio.h>
-#include <odbc_interaction.h>
-
-#include <sql.h>
-#include <sqlext.h>
 #include <pthread.h>
+
+#include <odbc_interaction.h>
 
 SQLHENV henv = SQL_NULL_HENV;
 pthread_mutex_t db_source_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -25,7 +22,7 @@ SQLCHAR username[32];
 SQLCHAR authentication[32];
 
 /* Open an ODBC connection to the database. */
-int odbc_connect(struct odbc_context_t *odbcc)
+int odbc_connect(struct db_context_t *odbcc)
 {
 	SQLRETURN rc;
 
@@ -39,15 +36,13 @@ int odbc_connect(struct odbc_context_t *odbcc)
 		return W_ERROR;
 	}
 
-#ifdef AUTO_COMMIT_OFF
-	rc= SQLSetConnectAttr(odbcc->hdbc, SQL_ATTR_AUTOCOMMIT,
-		SQL_AUTOCOMMIT_OFF, NULL);
+	rc = SQLSetConnectAttr(odbcc->hdbc, SQL_ATTR_AUTOCOMMIT,
+		SQL_AUTOCOMMIT_OFF, 0);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
 		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
-		return ERROR;
+		return W_ERROR;
 	}
-#endif
 
 	/* Open connection to the database. */
 	rc = SQLConnect(odbcc->hdbc, servername, SQL_NTS,
@@ -76,7 +71,7 @@ int odbc_connect(struct odbc_context_t *odbcc)
  * Note that we create the environment handle in odbc_connect() but
  * we don't touch it here.
  */
-int odbc_disconnect(struct odbc_context_t *odbcc)
+int odbc_disconnect(struct db_context_t *odbcc)
 {
 	SQLRETURN rc;
 
