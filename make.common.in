@@ -1,19 +1,16 @@
-CC = gcc
+# make.common.in
 
 TOPDIR=@TOPDIR@
-
 INCLUDE_DIR=@TOPDIR@/include
-
-ODBC_INCL=/opt/sapdb/interfaces/odbc/incl
-ODBC_LIB=/opt/sapdb/interfaces/odbc/lib/libsqlod.so
-ODBC_DIR=$(TOPDIR)/interfaces/odbc
-
 CACHE_DIR=$(TOPDIR)/cache
 COMMON_DIR=$(TOPDIR)/common
 DBDRIVER_DIR=$(TOPDIR)/dbdriver
 INCLUDE_DIR=$(TOPDIR)/include
+ODBC_DIR=$(TOPDIR)/interfaces/odbc
 
-CFLAGS = -Wall -g -I$(INCLUDE_DIR) -I$(ODBC_INCL) -DGET_TIME -DSEARCH_RESULTS_CACHE -DAUTOCOMMIT_OFF -DLINUX
+CC = @CC@
+CFLAGS = -Wall -I$(INCLUDE_DIR) @CFLAGS@ @DEFS@ -DGET_TIME -DSEARCH_RESULTS_CACHE -DAUTOCOMMIT_OFF -DLINUX
+LDFLAGS = @LDFLAGS@ @LIBS@
 
 COMMON_PRGS = $(COMMON_DIR)/common.c $(COMMON_DIR)/_socket.c
 COMMON_OBJS = $(COMMON_PRGS:.c=.so)

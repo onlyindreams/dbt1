@@ -25,12 +25,12 @@ dbdriver_p1: $(TOPDIR)/make.common Makefile main.c eu_p1.so \
 	$(COMMON_DIR)/common.so $(ODBC_OBJS) ../cache/cache_interface.so 
 	$(CC) $(CFLAGS_P1) main.c -o dbdriver_p1 eu_p1.so \
 		../common/common.so  $(ODBC_OBJS) ../cache/cache_interface.so \
-		$(COMMON_DIR)/_socket.so $(LDFLAG)
+		$(COMMON_DIR)/_socket.so $(LDFLAGS)
 
 dbdriver_p2: $(TOPDIR)/make.common Makefile eu.c main.c tm_interface.so \
 	$(COMMON_OBJS)
 	$(CC) $(CFLAGS_P2) main.c -o dbdriver_p2 eu_p2.so \
-		$(COMMON_OBJS) tm_interface.so $(LDFLAG)
+		$(COMMON_OBJS) tm_interface.so $(LDFLAGS)
 
 clean:
 	rm -f *.so dbdriver_p1 dbdriver_p2 error.log mix.log think_time.log usmd.log

@@ -27,7 +27,6 @@ tools_exe:
 
 clean:
 	cd wgen; $(MAKE) clean
-	cd interfaces/odbc; $(MAKE) clean
 	cd common; $(MAKE) clean
 	cd interfaces/odbc; $(MAKE) clean
 	cd dbdriver; $(MAKE) clean

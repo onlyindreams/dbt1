@@ -5,16 +5,15 @@ include @TOPDIR@/make.common
 
 CFLAGS_P1 = $(CFLAGS) -DPHASE1
 CFLAGS_P2 = $(CFLAGS) -DPHASE2
-LIBS = $(ODBC_LIB) -lm
 
-all: odbc_test_p1 odbc_test_p2 results load_db_proc
+all: odbc_test_p2 results load_db_proc
 
 odbc_test_p1: $(TOPDIR)/make.common Makefile odbc_test.c ../common/common.so \
 	$(ODBC_OBJS) 
 	$(CC) $(CFLAGS_P1) odbc_test.c -o odbc_test_p1 \
 		$(COMMON_DIR)/common.so \
 		$(ODBC_OBJS) \
-		$(LIBS)
+		$(LDFLAGS)
 
 odbc_test_p2: $(TOPDIR)/make.common Makefile odbc_test.c $(COMMON_OBJS) \
 	$(DBDRIVER_DIR)/tm_interface.so \
@@ -24,16 +23,16 @@ odbc_test_p2: $(TOPDIR)/make.common Makefile odbc_test.c $(COMMON_OBJS) \
 		$(DBDRIVER_DIR)/tm_interface.so \
 		$(COMMON_OBJS) \
 		$(ODBC_OBJS) \
-		$(LIBS)
+		$(LDFLAGS)
 
 results: $(TOPDIR)/make.common Makefile results.c ../common/common.so
 	$(CC) $(CFLAGS) results.c -o results -lm ../common/common.so
 
 load_db_proc: $(TOPDIR)/make.common Makefile load_db_proc.c \
 		../interfaces/odbc/odbc_interaction.so ../common/common.so
-	$(CC) $(CFLAGS) -I$(ODBC_INCL) load_db_proc.c -o load_db_proc \
+	$(CC) $(CFLAGS) load_db_proc.c -o load_db_proc \
 		../interfaces/odbc/odbc_interaction.so ../common/common.so \
-		$(LIBS)
+		$(LDFLAGS)
 
 explain:
 	@echo "$(ODBC_OBJS)"

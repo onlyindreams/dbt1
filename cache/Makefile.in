@@ -7,7 +7,6 @@ EXE = appCache
 CACHE_PRGS = cache.c cache_interface.c
 CACHE_OBJS = $(CACHE_PRGS:.c=.so)
 
-LIBS = $(ODBC_LIB) -lm -lpthread
 OBJS = $(COMMON_OBJS) $(CACHE_OBJS) $(ODBC_DIR)/odbc_interaction.so \
 	$(ODBC_DIR)/odbc_interaction_search_results.so
 PRGS = $(COMMON_PRGS) $(CACHE_PRGS) $(ODBC_DIR)/odbc_interaction.c \
@@ -16,7 +15,7 @@ PRGS = $(COMMON_PRGS) $(CACHE_PRGS) $(ODBC_DIR)/odbc_interaction.c \
 all: $(EXE)
 
 $(EXE): $(OBJS)
-	$(CC) -o $@ $(OBJS) $(LIBS)
+	$(CC) -o $@ $(OBJS) $(LDFLAGS)
 
 clean:
 	rm -f $(EXE) *.so
