@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# create_db.sh
+# set_db_env.sh
 #
 # This file is released under the terms of the Artistic License.  Please see
 # the file LICENSE, included in this package, for details.
