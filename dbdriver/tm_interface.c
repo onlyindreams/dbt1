@@ -20,6 +20,7 @@ int receive_interaction_packet(int s, struct eu_context_t *euc)
 	void *data;
 	int length;
 	int rec;
+	int result;
 
 	/* Receive transaction type. */
 	if ( (rec=_receive(s, (void *) &euc->interaction, sizeof(euc->interaction))) == -1)
@@ -29,6 +30,20 @@ int receive_interaction_packet(int s, struct eu_context_t *euc)
 	}
 	if (rec==0) return SOCKET_CLOSE;
 	
+	/* receive if the transaction succeeds */
+	if ( (rec=_receive(s, (void *) &result, sizeof(int))) == -1)
+	{
+		LOG_ERROR_MESSAGE("cannot receive result");
+		return W_ERROR;
+	}
+	if (rec==0) return SOCKET_CLOSE;
+	
+	if (result==W_ERROR) 
+	{
+		LOG_ERROR_MESSAGE("database transaction failed");
+		return W_ERROR;
+	}
+
 	/* Receive transaction data. */
 	switch (euc->interaction)
 	{
