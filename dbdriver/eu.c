@@ -1619,6 +1619,12 @@ int prepare_product_detail(struct eu_context_t *euc)
 			euc->previous_search_interaction);
 		return W_ERROR;
 	}
+	if (euc->product_detail_data.i_id==0)
+        {
+		LOG_ERROR_MESSAGE("PD i_id is 0, previous_interaction %s, previous_search_interaction %s", interaction_short_name[euc->previous_interaction], interaction_short_name[euc->previous_search_interaction]);
+		return W_ERROR;
+        }
+
 	return W_OK;
 }
 
