@@ -11,23 +11,14 @@
  */
 
 #include <odbc_interaction_best_sellers.h>
+#include <odbc_interaction.h>
 #include <sql.h>
 #include <sqlext.h>
 
 #ifdef PHASE1
-#include <odbc_interaction.h>
-#define BEST_SELLERS_ODBC_DATA best_sellers_odbc_data
-#endif /* PHASE1 */
-
-#ifdef PHASE2
-#include <app_interaction.h>
-#define BEST_SELLERS_ODBC_DATA best_sellers_odbc_data.eb
-#endif /* PHASE2 */
-
-#ifdef PHASE1
 int copy_in_best_sellers(struct eu_context_t *euc, union odbc_data_t *odbcd)
 {
-	strcpy(odbcd->best_sellers_odbc_data.i_subject,
+	strcpy(odbcd->best_sellers_odbc_data.eb.i_subject,
 		euc->best_sellers_data.i_subject);
 
 	return W_OK;
@@ -40,22 +31,22 @@ int copy_out_best_sellers(struct eu_context_t *euc, union odbc_data_t *odbcd)
 	for (i = 0; i < PROMOTIONAL_ITEMS_MAX; i++)
 	{
 		euc->best_sellers_data.pp_data.i_related[i] =
-			odbcd->best_sellers_odbc_data.pp_data.i_related[i];
+			odbcd->best_sellers_odbc_data.eb.pp_data.i_related[i];
 		euc->best_sellers_data.pp_data.i_thumbnail[i] =
-			odbcd->best_sellers_odbc_data.pp_data.i_thumbnail[i];
+			odbcd->best_sellers_odbc_data.eb.pp_data.i_thumbnail[i];
 	}
 	euc->best_sellers_data.items =
-		odbcd->best_sellers_odbc_data.items;
-	for (i = 0; i < odbcd->best_sellers_odbc_data.items; i++)
+		odbcd->best_sellers_odbc_data.eb.items;
+	for (i = 0; i < odbcd->best_sellers_odbc_data.eb.items; i++)
 	{
 		euc->best_sellers_data.results_data[i].i_id =
-			odbcd->best_sellers_odbc_data.results_data[i].i_id;
+			odbcd->best_sellers_odbc_data.eb.results_data[i].i_id;
 		strcpy(euc->best_sellers_data.results_data[i].i_title,
-			odbcd->best_sellers_odbc_data.results_data[i].i_title);
+			odbcd->best_sellers_odbc_data.eb.results_data[i].i_title);
 		strcpy(euc->best_sellers_data.results_data[i].a_fname,
-			odbcd->best_sellers_odbc_data.results_data[i].a_fname);
+			odbcd->best_sellers_odbc_data.eb.results_data[i].a_fname);
 		strcpy(euc->best_sellers_data.results_data[i].a_lname,
-			odbcd->best_sellers_odbc_data.results_data[i].a_lname);
+			odbcd->best_sellers_odbc_data.eb.results_data[i].a_lname);
 	}
 	return W_OK;
 }
@@ -78,8 +69,8 @@ int execute_best_sellers(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 	i = 1;
 	rc = SQLBindParameter(odbcc->hstmt,
 		i++, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, 0, 0,
-		odbcd->BEST_SELLERS_ODBC_DATA.i_subject,
-		sizeof(odbcd->BEST_SELLERS_ODBC_DATA.i_subject), NULL);
+		odbcd->best_sellers_odbc_data.eb.i_subject,
+		sizeof(odbcd->best_sellers_odbc_data.eb.i_subject), NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
 		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
@@ -88,7 +79,7 @@ int execute_best_sellers(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 
 	rc = SQLBindParameter(odbcc->hstmt,
 		i++, SQL_PARAM_INPUT, SQL_C_ULONG, SQL_INTEGER, 0, 0,
-		&odbcd->BEST_SELLERS_ODBC_DATA.pp_data.i_id, 0, NULL);
+		&odbcd->best_sellers_odbc_data.eb.pp_data.i_id, 0, NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
 		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
@@ -98,7 +89,7 @@ int execute_best_sellers(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 	{
 		rc = SQLBindParameter(odbcc->hstmt,
 			i++, SQL_PARAM_OUTPUT, SQL_C_ULONG, SQL_INTEGER, 0, 0,
-			&odbcd->BEST_SELLERS_ODBC_DATA.pp_data.i_related[j], 0,
+			&odbcd->best_sellers_odbc_data.eb.pp_data.i_related[j], 0,
 			NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
@@ -107,7 +98,7 @@ int execute_best_sellers(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 		}
 		rc = SQLBindParameter(odbcc->hstmt,
 			i++, SQL_PARAM_OUTPUT, SQL_C_ULONG, SQL_INTEGER, 0, 0,
-			&odbcd->BEST_SELLERS_ODBC_DATA.pp_data.i_thumbnail[j], 0,
+			&odbcd->best_sellers_odbc_data.eb.pp_data.i_thumbnail[j], 0,
 			NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
@@ -118,7 +109,7 @@ int execute_best_sellers(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 
 	rc = SQLBindParameter(odbcc->hstmt,
 		i++, SQL_PARAM_OUTPUT, SQL_C_SSHORT, SQL_SMALLINT, 0, 0,
-		&odbcd->BEST_SELLERS_ODBC_DATA.items, 0, NULL);
+		&odbcd->best_sellers_odbc_data.eb.items, 0, NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
 		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
@@ -128,7 +119,7 @@ int execute_best_sellers(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 	{
 		rc = SQLBindParameter(odbcc->hstmt,
 			i++, SQL_PARAM_OUTPUT, SQL_C_ULONG, SQL_INTEGER, 0, 0,
-			&odbcd->BEST_SELLERS_ODBC_DATA.results_data[j].i_id, 0, NULL);
+			&odbcd->best_sellers_odbc_data.eb.results_data[j].i_id, 0, NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
 			LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
@@ -136,8 +127,8 @@ int execute_best_sellers(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 		}
 		rc = SQLBindParameter(odbcc->hstmt,
 			i++, SQL_PARAM_OUTPUT, SQL_C_CHAR, SQL_VARCHAR, 0, 0,
-			odbcd->BEST_SELLERS_ODBC_DATA.results_data[j].i_title,
-			sizeof(odbcd->BEST_SELLERS_ODBC_DATA.results_data[j].i_title),
+			odbcd->best_sellers_odbc_data.eb.results_data[j].i_title,
+			sizeof(odbcd->best_sellers_odbc_data.eb.results_data[j].i_title),
 			NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
@@ -146,8 +137,8 @@ int execute_best_sellers(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 		}
 		rc = SQLBindParameter(odbcc->hstmt,
 			i++, SQL_PARAM_OUTPUT, SQL_C_CHAR, SQL_VARCHAR, 0, 0,
-			odbcd->BEST_SELLERS_ODBC_DATA.results_data[j].a_fname,
-			sizeof(odbcd->BEST_SELLERS_ODBC_DATA.results_data[j].a_fname),
+			odbcd->best_sellers_odbc_data.eb.results_data[j].a_fname,
+			sizeof(odbcd->best_sellers_odbc_data.eb.results_data[j].a_fname),
 			NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
@@ -156,8 +147,8 @@ int execute_best_sellers(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 		}
 		rc = SQLBindParameter(odbcc->hstmt,
 			i++, SQL_PARAM_OUTPUT, SQL_C_CHAR, SQL_VARCHAR, 0, 0,
-			odbcd->BEST_SELLERS_ODBC_DATA.results_data[j].a_lname,
-			sizeof(odbcd->BEST_SELLERS_ODBC_DATA.results_data[j].a_lname),
+			odbcd->best_sellers_odbc_data.eb.results_data[j].a_lname,
+			sizeof(odbcd->best_sellers_odbc_data.eb.results_data[j].a_lname),
 			NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
@@ -167,7 +158,7 @@ int execute_best_sellers(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 	}
 
 	/* Generate random number for Promotional Processing. */
-	odbcd->BEST_SELLERS_ODBC_DATA.pp_data.i_id =
+	odbcd->best_sellers_odbc_data.eb.pp_data.i_id =
 		(UDWORD) get_random((long long) item_count) + 1;
 
 	/* Execute stored procedure. */
@@ -178,7 +169,7 @@ int execute_best_sellers(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 		return W_ERROR;
 	}
 
-	if (odbcd->BEST_SELLERS_ODBC_DATA.items < 1)
+	if (odbcd->best_sellers_odbc_data.eb.items < 1)
 	{
 		return W_ZERO_ITEMS;
 	}

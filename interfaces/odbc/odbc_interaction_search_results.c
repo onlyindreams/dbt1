@@ -11,25 +11,16 @@
  */
 
 #include <odbc_interaction_search_results.h>
+#include <odbc_interaction.h>
 #include <sql.h>
 #include <sqlext.h>
 
 #ifdef PHASE1
-#include <odbc_interaction.h>
-#define SEARCH_RESULTS_ODBC_DATA search_results_odbc_data
-#endif /* PHASE1 */
-
-#ifdef PHASE2
-#include <app_interaction.h>
-#define SEARCH_RESULTS_ODBC_DATA search_results_odbc_data.eb
-#endif /* PHASE2 */
-
-#ifdef PHASE1
 int copy_in_search_results(struct eu_context_t *euc, union odbc_data_t *odbcd)
 {
-	odbcd->search_results_odbc_data.search_type = 
+	odbcd->search_results_odbc_data.eb.search_type = 
 		euc->search_results_data.search_type;
-	strcpy(odbcd->search_results_odbc_data.search_string,
+	strcpy(odbcd->search_results_odbc_data.eb.search_string,
 		euc->search_results_data.search_string);
 	return W_OK;
 }
@@ -41,22 +32,22 @@ int copy_out_search_results(struct eu_context_t *euc, union odbc_data_t *odbcd)
 	for (i = 0; i < PROMOTIONAL_ITEMS_MAX; i++)
 	{
 		euc->search_results_data.pp_data.i_related[i] =
-			odbcd->search_results_odbc_data.pp_data.i_related[i];
+			odbcd->search_results_odbc_data.eb.pp_data.i_related[i];
 		euc->search_results_data.pp_data.i_thumbnail[i] =
-			odbcd->search_results_odbc_data.pp_data.i_thumbnail[i];
+			odbcd->search_results_odbc_data.eb.pp_data.i_thumbnail[i];
 	}
 	euc->search_results_data.items =
-		odbcd->search_results_odbc_data.items;
-	for (i = 0; i < odbcd->search_results_odbc_data.items; i++)
+		odbcd->search_results_odbc_data.eb.items;
+	for (i = 0; i < odbcd->search_results_odbc_data.eb.items; i++)
 	{
 		euc->search_results_data.results_data[i].i_id =
-			odbcd->search_results_odbc_data.results_data[i].i_id;
+			odbcd->search_results_odbc_data.eb.results_data[i].i_id;
 		strcpy(euc->search_results_data.results_data[i].i_title,
-			odbcd->search_results_odbc_data.results_data[i].i_title);
+			odbcd->search_results_odbc_data.eb.results_data[i].i_title);
 		strcpy(euc->search_results_data.results_data[i].a_fname,
-			odbcd->search_results_odbc_data.results_data[i].a_fname);
+			odbcd->search_results_odbc_data.eb.results_data[i].a_fname);
 		strcpy(euc->search_results_data.results_data[i].a_lname,
-			odbcd->search_results_odbc_data.results_data[i].a_lname);
+			odbcd->search_results_odbc_data.eb.results_data[i].a_lname);
 	}
 	return W_OK;
 }
@@ -69,7 +60,7 @@ int execute_search_results(struct odbc_context_t *odbcc,
 	int i, j;
 
 	/* Perpare statement for Search Results interaction. */
-	switch (odbcd->SEARCH_RESULTS_ODBC_DATA.search_type)
+	switch (odbcd->search_results_odbc_data.eb.search_type)
 	{
 		case SEARCH_AUTHOR:
 			rc = SQLPrepare(odbcc->hstmt, STMT_SEARCH_RESULTS_AUTHOR, SQL_NTS);
@@ -94,8 +85,8 @@ int execute_search_results(struct odbc_context_t *odbcc,
 	i = 1;
 	rc = SQLBindParameter(odbcc->hstmt,
 		i++, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, 0, 0,
-		odbcd->SEARCH_RESULTS_ODBC_DATA.search_string,
-		sizeof(odbcd->SEARCH_RESULTS_ODBC_DATA.search_string), NULL);
+		odbcd->search_results_odbc_data.eb.search_string,
+		sizeof(odbcd->search_results_odbc_data.eb.search_string), NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
 		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
@@ -104,7 +95,7 @@ int execute_search_results(struct odbc_context_t *odbcc,
 
 	rc = SQLBindParameter(odbcc->hstmt,
 		i++, SQL_PARAM_INPUT, SQL_C_ULONG, SQL_INTEGER, 0, 0,
-		&odbcd->SEARCH_RESULTS_ODBC_DATA.pp_data.i_id, 0, NULL);
+		&odbcd->search_results_odbc_data.eb.pp_data.i_id, 0, NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
 		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
@@ -114,7 +105,7 @@ int execute_search_results(struct odbc_context_t *odbcc,
 	{
 		rc = SQLBindParameter(odbcc->hstmt,
 			i++, SQL_PARAM_OUTPUT, SQL_C_ULONG, SQL_INTEGER, 0, 0,
-			&odbcd->SEARCH_RESULTS_ODBC_DATA.pp_data.i_related[j], 0,
+			&odbcd->search_results_odbc_data.eb.pp_data.i_related[j], 0,
 			NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
@@ -123,7 +114,7 @@ int execute_search_results(struct odbc_context_t *odbcc,
 		}
 		rc = SQLBindParameter(odbcc->hstmt,
 			i++, SQL_PARAM_OUTPUT, SQL_C_ULONG, SQL_INTEGER, 0, 0,
-			&odbcd->SEARCH_RESULTS_ODBC_DATA.pp_data.i_thumbnail[j], 0,
+			&odbcd->search_results_odbc_data.eb.pp_data.i_thumbnail[j], 0,
 			NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
@@ -134,7 +125,7 @@ int execute_search_results(struct odbc_context_t *odbcc,
 
 	rc = SQLBindParameter(odbcc->hstmt,
 		i++, SQL_PARAM_OUTPUT, SQL_C_SSHORT, SQL_SMALLINT, 0, 0,
-		&odbcd->SEARCH_RESULTS_ODBC_DATA.items, 0, NULL);
+		&odbcd->search_results_odbc_data.eb.items, 0, NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
 		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
@@ -144,7 +135,7 @@ int execute_search_results(struct odbc_context_t *odbcc,
 	{
 		rc = SQLBindParameter(odbcc->hstmt,
 			i++, SQL_PARAM_OUTPUT, SQL_C_ULONG, SQL_INTEGER, 0, 0,
-			&odbcd->SEARCH_RESULTS_ODBC_DATA.results_data[j].i_id, 0, NULL);
+			&odbcd->search_results_odbc_data.eb.results_data[j].i_id, 0, NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
 			LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
@@ -152,8 +143,8 @@ int execute_search_results(struct odbc_context_t *odbcc,
 		}
 		rc = SQLBindParameter(odbcc->hstmt,
 			i++, SQL_PARAM_OUTPUT, SQL_C_CHAR, SQL_VARCHAR, 0, 0,
-			odbcd->SEARCH_RESULTS_ODBC_DATA.results_data[j].i_title,
-			sizeof(odbcd->SEARCH_RESULTS_ODBC_DATA.results_data[j].i_title),
+			odbcd->search_results_odbc_data.eb.results_data[j].i_title,
+			sizeof(odbcd->search_results_odbc_data.eb.results_data[j].i_title),
 			NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
@@ -162,8 +153,8 @@ int execute_search_results(struct odbc_context_t *odbcc,
 		}
 		rc = SQLBindParameter(odbcc->hstmt,
 			i++, SQL_PARAM_OUTPUT, SQL_C_CHAR, SQL_VARCHAR, 0, 0,
-			odbcd->SEARCH_RESULTS_ODBC_DATA.results_data[j].a_fname,
-			sizeof(odbcd->SEARCH_RESULTS_ODBC_DATA.results_data[j].a_fname),
+			odbcd->search_results_odbc_data.eb.results_data[j].a_fname,
+			sizeof(odbcd->search_results_odbc_data.eb.results_data[j].a_fname),
 			NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
@@ -172,8 +163,8 @@ int execute_search_results(struct odbc_context_t *odbcc,
 		}
 		rc = SQLBindParameter(odbcc->hstmt,
 			i++, SQL_PARAM_OUTPUT, SQL_C_CHAR, SQL_VARCHAR, 0, 0,
-			odbcd->SEARCH_RESULTS_ODBC_DATA.results_data[j].a_lname,
-			sizeof(odbcd->SEARCH_RESULTS_ODBC_DATA.results_data[j].a_lname),
+			odbcd->search_results_odbc_data.eb.results_data[j].a_lname,
+			sizeof(odbcd->search_results_odbc_data.eb.results_data[j].a_lname),
 			NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
@@ -183,7 +174,7 @@ int execute_search_results(struct odbc_context_t *odbcc,
 	}
 
 	/* Generate random number for Promotional Processing. */
-	odbcd->SEARCH_RESULTS_ODBC_DATA.pp_data.i_id =
+	odbcd->search_results_odbc_data.eb.pp_data.i_id =
 		(UDWORD) get_random((long long) item_count) + 1;
 
 	/* Execute stored procedure. */

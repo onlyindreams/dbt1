@@ -12,18 +12,9 @@
 
 #include <stdio.h>
 #include <odbc_interaction_admin_request.h>
+#include <odbc_interaction.h>
 #include <sql.h>
 #include <sqlext.h>
-
-#ifdef PHASE1
-#include <odbc_interaction.h>
-#define ADMIN_REQUEST_ODBC_DATA admin_request_odbc_data
-#endif /* PHASE1 */
-
-#ifdef PHASE2
-#include <app_interaction.h>
-#define ADMIN_REQUEST_ODBC_DATA admin_request_odbc_data.eb
-#endif /* PHASE2 */
 
 #ifdef PHASE1
 int copy_in_admin_request(struct eu_context_t *euc, union odbc_data_t *odbcd)
@@ -35,7 +26,7 @@ int copy_in_admin_request(struct eu_context_t *euc, union odbc_data_t *odbcd)
 			euc->admin_request_data.i_id);
 		return W_ERROR;
 	}
-	odbcd->admin_request_odbc_data.i_id =
+	odbcd->admin_request_odbc_data.eb.i_id =
 		(UDWORD) euc->admin_request_data.i_id;
 	return W_OK;
 }
@@ -43,16 +34,16 @@ int copy_in_admin_request(struct eu_context_t *euc, union odbc_data_t *odbcd)
 int copy_out_admin_request(struct eu_context_t *euc, union odbc_data_t *odbcd)
 {
 	strcpy(euc->admin_request_data.a_fname,
-		odbcd->admin_request_odbc_data.a_fname);
+		odbcd->admin_request_odbc_data.eb.a_fname);
 	strcpy(euc->admin_request_data.a_lname,
-		odbcd->admin_request_odbc_data.a_lname);
+		odbcd->admin_request_odbc_data.eb.a_lname);
 	strcpy(euc->admin_request_data.i_title,
-		odbcd->admin_request_odbc_data.i_title);
-	euc->admin_request_data.i_srp = odbcd->admin_request_odbc_data.i_srp;
-	euc->admin_request_data.i_cost = odbcd->admin_request_odbc_data.i_cost;
-	euc->admin_request_data.i_image = odbcd->admin_request_odbc_data.i_image;
+		odbcd->admin_request_odbc_data.eb.i_title);
+	euc->admin_request_data.i_srp = odbcd->admin_request_odbc_data.eb.i_srp;
+	euc->admin_request_data.i_cost = odbcd->admin_request_odbc_data.eb.i_cost;
+	euc->admin_request_data.i_image = odbcd->admin_request_odbc_data.eb.i_image;
 	euc->admin_request_data.i_thumbnail =
-		odbcd->admin_request_odbc_data.i_thumbnail;
+		odbcd->admin_request_odbc_data.eb.i_thumbnail;
 	return W_OK;
 }
 #endif /* PHASE1*/
@@ -74,7 +65,7 @@ int execute_admin_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd
 	j = 1;
 	rc = SQLBindParameter(odbcc->hstmt,
 		j++, SQL_PARAM_INPUT, SQL_C_ULONG, SQL_INTEGER, 0, 0,
-		&odbcd->ADMIN_REQUEST_ODBC_DATA.i_id, 0, NULL);
+		&odbcd->admin_request_odbc_data.eb.i_id, 0, NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
 		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
@@ -83,7 +74,7 @@ int execute_admin_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd
 
 	rc = SQLBindParameter(odbcc->hstmt,
 		j++, SQL_PARAM_OUTPUT, SQL_C_DOUBLE, SQL_DOUBLE, 0, 0,
-		&odbcd->ADMIN_REQUEST_ODBC_DATA.i_srp, 0, NULL);
+		&odbcd->admin_request_odbc_data.eb.i_srp, 0, NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
 		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
@@ -91,7 +82,7 @@ int execute_admin_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd
 	}
 	rc = SQLBindParameter(odbcc->hstmt,
 		j++, SQL_PARAM_OUTPUT, SQL_C_DOUBLE, SQL_DOUBLE, 0, 0,
-		&odbcd->ADMIN_REQUEST_ODBC_DATA.i_cost, 0, NULL);
+		&odbcd->admin_request_odbc_data.eb.i_cost, 0, NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
 		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
@@ -99,8 +90,8 @@ int execute_admin_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd
 	}
 	rc = SQLBindParameter(odbcc->hstmt,
 		j++, SQL_PARAM_OUTPUT, SQL_C_CHAR, SQL_VARCHAR,
-		0, 0, odbcd->ADMIN_REQUEST_ODBC_DATA.i_title,
-		sizeof(odbcd->ADMIN_REQUEST_ODBC_DATA.i_title), NULL);
+		0, 0, odbcd->admin_request_odbc_data.eb.i_title,
+		sizeof(odbcd->admin_request_odbc_data.eb.i_title), NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
 		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
@@ -108,7 +99,7 @@ int execute_admin_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd
 	}
 	rc = SQLBindParameter(odbcc->hstmt,
 		j++, SQL_PARAM_OUTPUT, SQL_C_ULONG, SQL_INTEGER, 0, 0,
-		&odbcd->ADMIN_REQUEST_ODBC_DATA.i_image, 0, NULL);
+		&odbcd->admin_request_odbc_data.eb.i_image, 0, NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
 		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
@@ -116,7 +107,7 @@ int execute_admin_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd
 	}
 	rc = SQLBindParameter(odbcc->hstmt,
 		j++, SQL_PARAM_OUTPUT, SQL_C_ULONG, SQL_INTEGER, 0, 0,
-		&odbcd->ADMIN_REQUEST_ODBC_DATA.i_thumbnail, 0, NULL);
+		&odbcd->admin_request_odbc_data.eb.i_thumbnail, 0, NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
 		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
@@ -124,8 +115,8 @@ int execute_admin_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd
 	}
 	rc = SQLBindParameter(odbcc->hstmt,
 		j++, SQL_PARAM_OUTPUT, SQL_C_CHAR, SQL_VARCHAR, 0, 0,
-		odbcd->ADMIN_REQUEST_ODBC_DATA.a_fname,
-		sizeof(odbcd->ADMIN_REQUEST_ODBC_DATA.a_fname), NULL);
+		odbcd->admin_request_odbc_data.eb.a_fname,
+		sizeof(odbcd->admin_request_odbc_data.eb.a_fname), NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
 		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
@@ -133,8 +124,8 @@ int execute_admin_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd
 	}
 	rc = SQLBindParameter(odbcc->hstmt,
 		j++, SQL_PARAM_OUTPUT, SQL_C_CHAR, SQL_VARCHAR, 0, 0,
-		odbcd->ADMIN_REQUEST_ODBC_DATA.a_lname,
-		sizeof(odbcd->ADMIN_REQUEST_ODBC_DATA.a_lname), NULL);
+		odbcd->admin_request_odbc_data.eb.a_lname,
+		sizeof(odbcd->admin_request_odbc_data.eb.a_lname), NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
 		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);

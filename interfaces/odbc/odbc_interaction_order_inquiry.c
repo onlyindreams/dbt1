@@ -11,23 +11,14 @@
  */
 
 #include <odbc_interaction_order_inquiry.h>
+#include <odbc_interaction.h>
 #include <sql.h>
 #include <sqlext.h>
 
 #ifdef PHASE1
-#include <odbc_interaction.h>
-#define ORDER_INQUIRY_ODBC_DATA order_inquiry_odbc_data
-#endif /* PHASE1 */
-
-#ifdef PHASE2
-#include <app_interaction.h>
-#define ORDER_INQUIRY_ODBC_DATA order_inquiry_odbc_data.eb
-#endif /* PHASE2 */
-
-#ifdef PHASE1
 int copy_in_order_inquiry(struct eu_context_t *euc, union odbc_data_t *odbcd)
 {
-	odbcd->order_inquiry_odbc_data.c_id = euc->order_inquiry_data.c_id;
+	odbcd->order_inquiry_odbc_data.eb.c_id = euc->order_inquiry_data.c_id;
 	return W_OK;
 }
 
@@ -35,7 +26,7 @@ int copy_out_order_inquiry(struct eu_context_t *euc, union odbc_data_t *odbcd)
 {
 	int i;
 
-	strcpy(euc->order_inquiry_data.c_uname, odbcd->order_inquiry_odbc_data.c_uname);
+	strcpy(euc->order_inquiry_data.c_uname, odbcd->order_inquiry_odbc_data.eb.c_uname);
 	return W_OK;
 }
 #endif /* PHASE1*/
@@ -57,7 +48,7 @@ int execute_order_inquiry(struct odbc_context_t *odbcc, union odbc_data_t *odbcd
 	j = 1;
 	rc = SQLBindParameter(odbcc->hstmt,
 		j++, SQL_PARAM_INPUT, SQL_C_ULONG, SQL_INTEGER,
-		0, 0, &odbcd->ORDER_INQUIRY_ODBC_DATA.c_id, 0, NULL);
+		0, 0, &odbcd->order_inquiry_odbc_data.eb.c_id, 0, NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
 		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
@@ -65,8 +56,8 @@ int execute_order_inquiry(struct odbc_context_t *odbcc, union odbc_data_t *odbcd
 	}
 	rc = SQLBindParameter(odbcc->hstmt,
 		j++, SQL_PARAM_OUTPUT, SQL_C_CHAR, SQL_VARCHAR,
-		0, 0, odbcd->ORDER_INQUIRY_ODBC_DATA.c_uname,
-		sizeof(odbcd->ORDER_INQUIRY_ODBC_DATA.c_uname), NULL);
+		0, 0, odbcd->order_inquiry_odbc_data.eb.c_uname,
+		sizeof(odbcd->order_inquiry_odbc_data.eb.c_uname), NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
 		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);

@@ -10,18 +10,9 @@
  */
 
 #include <odbc_interaction_shopping_cart.h>
+#include <odbc_interaction.h>
 #include <sql.h>
 #include <sqlext.h>
-
-#ifdef PHASE1
-#include <odbc_interaction.h>
-#define SHOPPING_CART_ODBC_DATA shopping_cart_odbc_data
-#endif /* PHASE1 */
-
-#ifdef PHASE2
-#include <app_interaction.h>
-#define SHOPPING_CART_ODBC_DATA shopping_cart_odbc_data.eb
-#endif /* PHASE2 */
 
 #ifdef PHASE1
 int copy_in_shopping_cart(struct eu_context_t *euc, union odbc_data_t *odbcd)
@@ -36,16 +27,16 @@ int copy_in_shopping_cart(struct eu_context_t *euc, union odbc_data_t *odbcd)
 #endif /* DEBUG
 
 	/* Copy data in. */
-	odbcd->shopping_cart_odbc_data.c_id=euc->shopping_cart_data.c_id;
-	odbcd->shopping_cart_odbc_data.sc_id=euc->shopping_cart_data.sc_id;
-	odbcd->shopping_cart_odbc_data.sc_size=euc->shopping_cart_data.sc_size;
-	odbcd->shopping_cart_odbc_data.add_flag=euc->shopping_cart_data.add_flag;
+	odbcd->shopping_cart_odbc_data.eb.c_id=euc->shopping_cart_data.c_id;
+	odbcd->shopping_cart_odbc_data.eb.sc_id=euc->shopping_cart_data.sc_id;
+	odbcd->shopping_cart_odbc_data.eb.sc_size=euc->shopping_cart_data.sc_size;
+	odbcd->shopping_cart_odbc_data.eb.add_flag=euc->shopping_cart_data.add_flag;
 	/* if (i_id,qty) pair is empty, and add_flag=FALSE, add a random 
 		i_id to shopping cart, move to execute_shopping_cart part*/
 	/* add item to shopping_cart */
 	if ( euc->shopping_cart_data.add_flag==TRUE)
 	{
-		odbcd->shopping_cart_odbc_data.i_id
+		odbcd->shopping_cart_odbc_data.eb.i_id
 			=euc->shopping_cart_data.i_id;
 	}
 	/*refresh shopping_cart*/
@@ -54,9 +45,9 @@ int copy_in_shopping_cart(struct eu_context_t *euc, union odbc_data_t *odbcd)
 	{
 		for (i=0; i<euc->shopping_cart_data.sc_size;i++)
 		{
-		 odbcd->shopping_cart_odbc_data.sc_refresh[i].scl_i_id =
+		 odbcd->shopping_cart_odbc_data.eb.sc_refresh[i].scl_i_id =
 			euc->shopping_cart_data.sc_refresh[i].scl_i_id;
-		 odbcd->shopping_cart_odbc_data.sc_refresh[i].scl_qty =
+		 odbcd->shopping_cart_odbc_data.eb.sc_refresh[i].scl_qty =
 			euc->shopping_cart_data.sc_refresh[i].scl_qty;
 		}
 	}
@@ -67,30 +58,30 @@ int copy_out_shopping_cart(struct eu_context_t *euc, union odbc_data_t *odbcd)
 {
 	int i;
 
- 	euc->shopping_cart_data.sc_id=odbcd->shopping_cart_odbc_data.sc_id;
+ 	euc->shopping_cart_data.sc_id=odbcd->shopping_cart_odbc_data.eb.sc_id;
 	for (i=0; i< PROMOTIONAL_ITEMS_MAX; i++)
 	{
 		euc->shopping_cart_data.pp_data.i_related[i] =
-		odbcd->shopping_cart_odbc_data.pp_data.i_related[i];
+		odbcd->shopping_cart_odbc_data.eb.pp_data.i_related[i];
 		euc->shopping_cart_data.pp_data.i_thumbnail[i] =
-			odbcd->shopping_cart_odbc_data.pp_data.i_thumbnail[i];
+			odbcd->shopping_cart_odbc_data.eb.pp_data.i_thumbnail[i];
 	}
-	euc->shopping_cart_data.sc_size=odbcd->shopping_cart_odbc_data.sc_size;
+	euc->shopping_cart_data.sc_size=odbcd->shopping_cart_odbc_data.eb.sc_size;
 
-	for (i=0; i<odbcd->shopping_cart_odbc_data.sc_size; i++)
+	for (i=0; i<odbcd->shopping_cart_odbc_data.eb.sc_size; i++)
 	{
 		euc->shopping_cart_data.scl_data[i].scl_i_id =
-			odbcd->shopping_cart_odbc_data.scl_data[i].scl_i_id; 
+			odbcd->shopping_cart_odbc_data.eb.scl_data[i].scl_i_id; 
 		euc->shopping_cart_data.scl_data[i].scl_qty =
-			odbcd->shopping_cart_odbc_data.scl_data[i].scl_qty; 
+			odbcd->shopping_cart_odbc_data.eb.scl_data[i].scl_qty; 
 		euc->shopping_cart_data.scl_data[i].scl_cost =
-			odbcd->shopping_cart_odbc_data.scl_data[i].scl_cost; 
+			odbcd->shopping_cart_odbc_data.eb.scl_data[i].scl_cost; 
 		euc->shopping_cart_data.scl_data[i].scl_srp =
-			odbcd->shopping_cart_odbc_data.scl_data[i].scl_srp; 
+			odbcd->shopping_cart_odbc_data.eb.scl_data[i].scl_srp; 
 		strcpy( euc->shopping_cart_data.scl_data[i].i_title, 
-			odbcd->shopping_cart_odbc_data.scl_data[i].i_title);
+			odbcd->shopping_cart_odbc_data.eb.scl_data[i].i_title);
 		strcpy( euc->shopping_cart_data.scl_data[i].i_backing, 
-			odbcd->shopping_cart_odbc_data.scl_data[i].i_backing);
+			odbcd->shopping_cart_odbc_data.eb.scl_data[i].i_backing);
 	}
 	return W_OK;
 }
@@ -113,7 +104,7 @@ int execute_shopping_cart(struct odbc_context_t *odbcc,  union odbc_data_t *odbc
 	/* Bind variables for shopping_cart interaction. */
 	rc = SQLBindParameter(odbcc->hstmt,
 		j++, SQL_PARAM_INPUT, SQL_C_ULONG, SQL_INTEGER,
-		0, 0, &odbcd->SHOPPING_CART_ODBC_DATA.c_id, 0, NULL);
+		0, 0, &odbcd->shopping_cart_odbc_data.eb.c_id, 0, NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
 		if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
@@ -121,7 +112,7 @@ int execute_shopping_cart(struct odbc_context_t *odbcc,  union odbc_data_t *odbc
 	}
 	rc = SQLBindParameter(odbcc->hstmt,
 		j++, SQL_PARAM_INPUT_OUTPUT, SQL_C_ULONG, SQL_INTEGER,
-		0, 0, &odbcd->SHOPPING_CART_ODBC_DATA.sc_id, 0, NULL);
+		0, 0, &odbcd->shopping_cart_odbc_data.eb.sc_id, 0, NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
 		if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
@@ -129,7 +120,7 @@ int execute_shopping_cart(struct odbc_context_t *odbcc,  union odbc_data_t *odbc
 	}
 	rc = SQLBindParameter(odbcc->hstmt,
 		j++, SQL_PARAM_INPUT_OUTPUT, SQL_C_SSHORT, SQL_SMALLINT,
-		0, 0, &odbcd->SHOPPING_CART_ODBC_DATA.sc_size, 0, NULL);
+		0, 0, &odbcd->shopping_cart_odbc_data.eb.sc_size, 0, NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
 		if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
@@ -137,7 +128,7 @@ int execute_shopping_cart(struct odbc_context_t *odbcc,  union odbc_data_t *odbc
 	}
 	rc = SQLBindParameter(odbcc->hstmt,
 		j++, SQL_PARAM_INPUT, SQL_C_SSHORT, SQL_SMALLINT,
-		0, 0, &odbcd->SHOPPING_CART_ODBC_DATA.add_flag, 0, NULL);
+		0, 0, &odbcd->shopping_cart_odbc_data.eb.add_flag, 0, NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
 		if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
@@ -145,7 +136,7 @@ int execute_shopping_cart(struct odbc_context_t *odbcc,  union odbc_data_t *odbc
 	}
 	rc = SQLBindParameter(odbcc->hstmt,
 		j++, SQL_PARAM_INPUT, SQL_C_ULONG, SQL_INTEGER,
-		0, 0, &odbcd->SHOPPING_CART_ODBC_DATA.i_id,
+		0, 0, &odbcd->shopping_cart_odbc_data.eb.i_id,
 		0, NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
@@ -154,7 +145,7 @@ int execute_shopping_cart(struct odbc_context_t *odbcc,  union odbc_data_t *odbc
 	}
 	rc = SQLBindParameter(odbcc->hstmt,
 		j++, SQL_PARAM_INPUT, SQL_C_ULONG, SQL_INTEGER,
-		0, 0, &odbcd->SHOPPING_CART_ODBC_DATA.pp_data.i_id,
+		0, 0, &odbcd->shopping_cart_odbc_data.eb.pp_data.i_id,
 		0, NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
@@ -166,7 +157,7 @@ int execute_shopping_cart(struct odbc_context_t *odbcc,  union odbc_data_t *odbc
 	{
 		rc = SQLBindParameter(odbcc->hstmt, j++,
 		SQL_PARAM_INPUT, SQL_C_ULONG, SQL_INTEGER, 0,0,
-		&odbcd->SHOPPING_CART_ODBC_DATA.sc_refresh[i].scl_i_id, 0,
+		&odbcd->shopping_cart_odbc_data.eb.sc_refresh[i].scl_i_id, 0,
 		NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
@@ -175,7 +166,7 @@ int execute_shopping_cart(struct odbc_context_t *odbcc,  union odbc_data_t *odbc
 		}
 		rc = SQLBindParameter(odbcc->hstmt, j++,
 		SQL_PARAM_INPUT, SQL_C_SSHORT, SQL_SMALLINT, 0,0,
-		&odbcd->SHOPPING_CART_ODBC_DATA.sc_refresh[i].scl_qty, 0,
+		&odbcd->shopping_cart_odbc_data.eb.sc_refresh[i].scl_qty, 0,
 		NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
@@ -189,7 +180,7 @@ int execute_shopping_cart(struct odbc_context_t *odbcc,  union odbc_data_t *odbc
 		rc = SQLBindParameter(odbcc->hstmt,
 			j++, SQL_PARAM_OUTPUT, SQL_C_ULONG, SQL_INTEGER,
 			0, 0, 
-			&odbcd->SHOPPING_CART_ODBC_DATA.scl_data[i].scl_i_id,
+			&odbcd->shopping_cart_odbc_data.eb.scl_data[i].scl_i_id,
 			0, NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
@@ -198,8 +189,8 @@ int execute_shopping_cart(struct odbc_context_t *odbcc,  union odbc_data_t *odbc
 		}
 		rc = SQLBindParameter(odbcc->hstmt,
 			j++, SQL_PARAM_OUTPUT, SQL_C_CHAR, SQL_VARCHAR, 0, 0,
-			odbcd->SHOPPING_CART_ODBC_DATA.scl_data[i].i_title,
-			sizeof(odbcd->SHOPPING_CART_ODBC_DATA.scl_data[i].i_title), NULL);
+			odbcd->shopping_cart_odbc_data.eb.scl_data[i].i_title,
+			sizeof(odbcd->shopping_cart_odbc_data.eb.scl_data[i].i_title), NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
 			if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
@@ -207,7 +198,7 @@ int execute_shopping_cart(struct odbc_context_t *odbcc,  union odbc_data_t *odbc
 		}
 		rc = SQLBindParameter(odbcc->hstmt,
 			j++, SQL_PARAM_OUTPUT, SQL_C_DOUBLE, SQL_DOUBLE, 0, 0,
-			&odbcd->SHOPPING_CART_ODBC_DATA.scl_data[i].scl_cost, 
+			&odbcd->shopping_cart_odbc_data.eb.scl_data[i].scl_cost, 
 			0, NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
@@ -216,7 +207,7 @@ int execute_shopping_cart(struct odbc_context_t *odbcc,  union odbc_data_t *odbc
 		}
 		rc = SQLBindParameter(odbcc->hstmt,
 			j++, SQL_PARAM_OUTPUT, SQL_C_DOUBLE, SQL_DOUBLE, 0, 0,
-			&odbcd->SHOPPING_CART_ODBC_DATA.scl_data[i].scl_srp, 
+			&odbcd->shopping_cart_odbc_data.eb.scl_data[i].scl_srp, 
 			0, NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
@@ -225,8 +216,8 @@ int execute_shopping_cart(struct odbc_context_t *odbcc,  union odbc_data_t *odbc
 		}
 		rc = SQLBindParameter(odbcc->hstmt,
 			j++, SQL_PARAM_OUTPUT, SQL_C_CHAR, SQL_VARCHAR, 0, 0,
-			odbcd->SHOPPING_CART_ODBC_DATA.scl_data[i].i_backing,
-			sizeof(odbcd->SHOPPING_CART_ODBC_DATA.scl_data[i].i_backing), NULL);
+			odbcd->shopping_cart_odbc_data.eb.scl_data[i].i_backing,
+			sizeof(odbcd->shopping_cart_odbc_data.eb.scl_data[i].i_backing), NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
 			if (LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt) != W_OK)
@@ -234,7 +225,7 @@ int execute_shopping_cart(struct odbc_context_t *odbcc,  union odbc_data_t *odbc
 		}
 		rc = SQLBindParameter(odbcc->hstmt, j++,
 			SQL_PARAM_OUTPUT, SQL_C_SSHORT, SQL_SMALLINT, 0,0,
-			&odbcd->SHOPPING_CART_ODBC_DATA.scl_data[i].scl_qty, 0,
+			&odbcd->shopping_cart_odbc_data.eb.scl_data[i].scl_qty, 0,
 			NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
@@ -247,7 +238,7 @@ int execute_shopping_cart(struct odbc_context_t *odbcc,  union odbc_data_t *odbc
 	{
 		rc = SQLBindParameter(odbcc->hstmt,
 		j++, SQL_PARAM_OUTPUT, SQL_C_ULONG, SQL_INTEGER,
-		0, 0, &odbcd->SHOPPING_CART_ODBC_DATA.pp_data.i_related[i],
+		0, 0, &odbcd->shopping_cart_odbc_data.eb.pp_data.i_related[i],
 		0, NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
@@ -256,7 +247,7 @@ int execute_shopping_cart(struct odbc_context_t *odbcc,  union odbc_data_t *odbc
 		}
 		rc = SQLBindParameter(odbcc->hstmt,
 		j++, SQL_PARAM_OUTPUT, SQL_C_ULONG, SQL_INTEGER,
-		0, 0, &odbcd->SHOPPING_CART_ODBC_DATA.pp_data.i_thumbnail[i],
+		0, 0, &odbcd->shopping_cart_odbc_data.eb.pp_data.i_thumbnail[i],
 		0, NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
@@ -266,20 +257,20 @@ int execute_shopping_cart(struct odbc_context_t *odbcc,  union odbc_data_t *odbc
 	}
 
 	/* generate random item if add_flag==FALSE and empty (i_id, qty) pair*/
-	if (odbcd->SHOPPING_CART_ODBC_DATA.sc_size == 0 &&
-		odbcd->SHOPPING_CART_ODBC_DATA.add_flag == FALSE)
+	if (odbcd->shopping_cart_odbc_data.eb.sc_size == 0 &&
+		odbcd->shopping_cart_odbc_data.eb.add_flag == FALSE)
 	{
-		odbcd->SHOPPING_CART_ODBC_DATA.i_id =
+		odbcd->shopping_cart_odbc_data.eb.i_id =
 			(UDWORD) get_random((long long)item_count) + 1;
 #ifdef DEBUG
-	DEBUGMSG("visiting sc the first time, random i_id %d", odbcd->SHOPPING_CART_ODBC_DATA.i_id);
-	DEBUGMSG("visiting sc the first time, random i_id %d", odbcd->SHOPPING_CART_ODBC_DATA.sc_refresh[i].scl_i_id);
+	DEBUGMSG("visiting sc the first time, random i_id %d", odbcd->shopping_cart_odbc_data.eb.i_id);
+	DEBUGMSG("visiting sc the first time, random i_id %d", odbcd->shopping_cart_odbc_data.eb.sc_refresh[i].scl_i_id);
 #endif /* DEBUG */
 	}
 	/* Generate random number for Promotional Processing. */
-	odbcd->SHOPPING_CART_ODBC_DATA.pp_data.i_id= get_random(item_count)+1;
+	odbcd->shopping_cart_odbc_data.eb.pp_data.i_id= get_random(item_count)+1;
 #ifdef DEBUG
-	DEBUGMSG("pp i_id %ld\n",  odbcd->SHOPPING_CART_ODBC_DATA.pp_data.i_id);
+	DEBUGMSG("pp i_id %ld\n",  odbcd->shopping_cart_odbc_data.eb.pp_data.i_id);
 #endif
 
 	/* Execute stored procedure. */

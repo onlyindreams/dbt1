@@ -11,18 +11,9 @@
  */
 
 #include <odbc_interaction_search_request.h>
+#include <odbc_interaction.h>
 #include <sql.h>
 #include <sqlext.h>
-
-#ifdef PHASE1
-#include <odbc_interaction.h>
-#define SEARCH_REQUEST_ODBC_DATA search_request_odbc_data
-#endif /* PHASE1 */
-
-#ifdef PHASE2
-#include <app_interaction.h>
-#define SEARCH_REQUEST_ODBC_DATA search_request_odbc_data.eb
-#endif /* PHASE2 */
 
 #ifdef PHASE1
 int copy_out_search_request(struct eu_context_t *euc, union odbc_data_t *odbcd)
@@ -32,9 +23,9 @@ int copy_out_search_request(struct eu_context_t *euc, union odbc_data_t *odbcd)
 	for (i = 0; i < PROMOTIONAL_ITEMS_MAX; i++)
 	{
 		euc->search_request_data.pp_data.i_related[i] =
-			(long long) odbcd->search_request_odbc_data.pp_data.i_related[i];
+			(long long) odbcd->search_request_odbc_data.eb.pp_data.i_related[i];
 		euc->search_request_data.pp_data.i_thumbnail[i] =
-			(long long) odbcd->search_request_odbc_data.pp_data.i_thumbnail[i];
+			(long long) odbcd->search_request_odbc_data.eb.pp_data.i_thumbnail[i];
 	}
 	return W_OK;
 }
@@ -57,7 +48,7 @@ int execute_search_request(struct odbc_context_t *odbcc, union odbc_data_t *odbc
 	j = 1;
 	rc = SQLBindParameter(odbcc->hstmt,
 		j++, SQL_PARAM_INPUT, SQL_C_ULONG, SQL_INTEGER, 0, 0,
-		&odbcd->SEARCH_REQUEST_ODBC_DATA.pp_data.i_id, 0, NULL);
+		&odbcd->search_request_odbc_data.eb.pp_data.i_id, 0, NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
 		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
@@ -68,7 +59,7 @@ int execute_search_request(struct odbc_context_t *odbcc, union odbc_data_t *odbc
 	{
 		rc = SQLBindParameter(odbcc->hstmt,
 			j++, SQL_PARAM_OUTPUT, SQL_C_ULONG, SQL_INTEGER, 0, 0,
-			&odbcd->SEARCH_REQUEST_ODBC_DATA.pp_data.i_related[i], 0, NULL);
+			&odbcd->search_request_odbc_data.eb.pp_data.i_related[i], 0, NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
 			LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
@@ -76,7 +67,7 @@ int execute_search_request(struct odbc_context_t *odbcc, union odbc_data_t *odbc
 		}
 		rc = SQLBindParameter(odbcc->hstmt,
 			j++, SQL_PARAM_OUTPUT, SQL_C_ULONG, SQL_INTEGER, 0, 0,
-			&odbcd->SEARCH_REQUEST_ODBC_DATA.pp_data.i_thumbnail[i], 0, NULL);
+			&odbcd->search_request_odbc_data.eb.pp_data.i_thumbnail[i], 0, NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
 			LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
@@ -85,7 +76,7 @@ int execute_search_request(struct odbc_context_t *odbcc, union odbc_data_t *odbc
 	}
 
 	/* Generate random number for Promotional Processing. */
-	odbcd->SEARCH_REQUEST_ODBC_DATA.pp_data.i_id =
+	odbcd->search_request_odbc_data.eb.pp_data.i_id =
 		(UDWORD) get_random((long long) item_count) + 1;
 
 	/* Execute stored procedure. */
