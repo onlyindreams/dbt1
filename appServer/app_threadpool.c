@@ -63,6 +63,12 @@ extern struct app_txn_array app_shopping_cart_array;
 extern struct condition_bundle_t *queue_entry_condition;
 
 extern struct timeval txn_start_time;
+
+#ifdef SEARCH_RESULTS_CACHE
+extern char search_results_cache_host[32];
+extern int search_results_cache_port;
+#endif
+
 int init_thread_pool(int PoolThreads, int TxnQSize, char *sname, char *uname, char *auth)
 {
 	int i;
@@ -77,9 +83,9 @@ int init_thread_pool(int PoolThreads, int TxnQSize, char *sname, char *uname, ch
 	queue_entry_condition=(struct condition_bundle_t *)malloc(sizeof(struct condition_bundle_t)*TxnQSize);
 	for (i=0; i<TxnQSize; i++)
 	{
-		queue_entry_condition[i].txn_done_flag=0;
+		queue_entry_condition[i].done_flag=0;
 		pthread_mutex_init(&queue_entry_condition[i].condition_mutex, NULL);
-		pthread_cond_init(&queue_entry_condition[i].txn_done_cv, NULL);
+		pthread_cond_init(&queue_entry_condition[i].done_cv, NULL);
 	}
 
 #ifndef _SIMDB
@@ -106,6 +112,9 @@ void *DoTxn(void *fd)
 #ifdef GET_TIME
         struct timeval txn_start_time, txn_end_time;
 #endif
+#ifdef SEARCH_RESULTS_CACHE
+	int workersock;
+#endif
 
 #ifndef _SIMDB
 	struct odbc_context_t odbcc;
@@ -117,9 +126,18 @@ void *DoTxn(void *fd)
 		pthread_exit(NULL);
 	}
 #endif
-	//wait on the TxnQSem. Its value is positive when the queue is not
-	//empty, sem_wait returns. If the queue is empty, block until a job is
-	//enqueued.
+	/* on Linux we have to init seed in each thread*/
+	srand(time(NULL)+pthread_self());
+
+#ifdef SEARCH_RESULTS_CACHE
+	/* connect to search_results_cache_hsot */
+	workersock=_connect(search_results_cache_host, search_results_cache_port);
+#endif
+
+	/*wait on the TxnQSem. Its value is positive when the queue is not
+	  empty, sem_wait returns. If the queue is empty, block until a job is
+	  enqueued.
+	 */
 #ifdef DEBUG
 	DEBUGMSG("thread_id%ld: ThreadPool thread started, connect to database", pthread_self());
 #endif
@@ -262,11 +280,38 @@ void *DoTxn(void *fd)
         		if (gettimeofday(&txn_start_time, NULL)==-1)
 				LOG_ERROR_MESSAGE("gettimeofday failed");
 #endif
+#ifdef SEARCH_RESULTS_CACHE
+			/* author and title search results are cached */
+			if (app_search_results_array.odbc_data_array[TxnQItem.SlotID].search_results_odbc_data.eb.search_type!=SEARCH_SUBJECT)
+			{
+				rc = send_search_results_response(workersock, &app_search_results_array.odbc_data_array[TxnQItem.SlotID].search_results_odbc_data.eb);
+				if (rc!=W_OK)
+					LOG_ERROR_MESSAGE("send search_results to cache host failed");
+				rc = receive_search_results_request(workersock, &app_search_results_array.odbc_data_array[TxnQItem.SlotID].search_results_odbc_data.eb);
+				if (rc!=W_OK)
+					LOG_ERROR_MESSAGE("receive search_results from cache host failed");
+				if (rc==0)
+				{
+					LOG_ERROR_MESSAGE("cache host closed socket");
+					close(workersock);
+					workersock=_connect(search_results_cache_host, search_results_cache_port);
+				}
+			}
+			else 
+			{
+				rc = execute_search_results(&odbcc, &app_search_results_array.odbc_data_array[TxnQItem.SlotID]);
+				if (rc == W_ERROR)
+				{
+					LOG_ERROR_MESSAGE("execute_search_results returned error");
+				}
+			}
+#else
 			rc = execute_search_results(&odbcc, &app_search_results_array.odbc_data_array[TxnQItem.SlotID]);
 			if (rc == W_ERROR)
 			{
 				LOG_ERROR_MESSAGE("execute_search_results returned error");
 			}
+#endif //SEARCH_RESULTS_CACHE
 #ifdef GET_TIME
         		if (gettimeofday(&txn_end_time, NULL)==-1)
 				LOG_ERROR_MESSAGE("gettimeofday failed");
@@ -714,8 +759,8 @@ void fill_promo_data(struct promotional_processing_t *pp_data)
 void set_txn_done_flag(struct Queue *txn_queue, int QIndex)
 {
 	pthread_mutex_lock(&queue_entry_condition[QIndex].condition_mutex);
-	queue_entry_condition[QIndex].txn_done_flag=1;
-	pthread_cond_signal(&queue_entry_condition[QIndex].txn_done_cv);
+	queue_entry_condition[QIndex].done_flag=1;
+	pthread_cond_signal(&queue_entry_condition[QIndex].done_cv);
 	pthread_mutex_unlock(&queue_entry_condition[QIndex].condition_mutex);
         pthread_mutex_lock(&queue_mutex);
         empty_queue_item_state(txn_queue, QIndex);
