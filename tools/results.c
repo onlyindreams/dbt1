@@ -43,11 +43,11 @@ int main(int argc, char *argv[])
 	float response_time;
 	int tid;
 	time_t start_time = -1;
-	double total_response_time;
-	double ips;
+	float total_response_time;
+	float ips;
 	long long total_interaction_count = 0;
 	long long interaction_count[INTERACTION_TOTAL];
-	double interaction_response_time[INTERACTION_TOTAL];
+	float interaction_response_time[INTERACTION_TOTAL];
 
 	FILE *log_cpu;
 	FILE *log_io;
