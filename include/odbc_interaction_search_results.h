@@ -13,13 +13,10 @@
 #ifndef _ODBC_INTERACTION_SEARCH_RESULTS_H_
 #define _ODBC_INTERACTION_SEARCH_RESULTS_H_
 
+#include "odbc_interaction.h"
 #ifdef PHASE1
 #include "eu.h"
 #endif /* PHASE1 */
-
-#ifdef PHASE2
-#include "app_interaction.h"
-#endif /* PHASE2 */
 
 #define STMT_SEARCH_RESULTS_AUTHOR \
 	"CALL search_results_author(?, " \

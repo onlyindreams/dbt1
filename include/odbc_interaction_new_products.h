@@ -13,13 +13,10 @@
 #ifndef _ODBC_INTERACTION_NEW_PRODUCTS_H_
 #define _ODBC_INTERACTION_NEW_PRODUCTS_H_
 
+#include "odbc_interaction.h"
 #ifdef PHASE1
-#include <eu.h>
+#include "eu.h"
 #endif /* PHASE1 */
-
-#ifdef PHASE2
-#include "app_interaction.h"
-#endif /* PHASE2 */
 
 #define STMT_NEW_PRODUCTS \
 	"CALL new_products(?, ?, " \

@@ -12,13 +12,10 @@
 #ifndef _ODBC_INTERACTION_SHOPPING_CART_H
 #define _ODBC_INTERACTION_SHOPPING_CART_H
 
+#include "odbc_interaction.h"
 #ifdef PHASE1
 #include "eu.h"
 #endif /* PHASE1 */
-
-#ifdef PHASE2
-#include "app_interaction.h"
-#endif /* PHASE2 */
 
 #define STMT_SC  "CALL SHOPPINGCART(?,?,?,?,?,?," \
 				"?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?," \

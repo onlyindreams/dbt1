@@ -13,13 +13,10 @@
 #ifndef _ODBC_INTERACTION_HOME_H_
 #define _ODBC_INTERACTION_HOME_H_
 
+#include "odbc_interaction.h"
 #ifdef PHASE1
 #include "eu.h"
-#endif
-
-#ifdef PHASE2
-#include "app_interaction.h"
-#endif /* PHASE2 */
+#endif /* PHASE1 */
 
 #define STMT_HOME "CALL HOME(?,?,?,?,  ?,?,?,?,?,?,?,?,?,?)"
 

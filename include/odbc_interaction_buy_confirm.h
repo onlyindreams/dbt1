@@ -12,13 +12,10 @@
 #ifndef _ODBC_INTERACTION_BUY_CONFIRM_H
 #define _ODBC_INTERACTION_BUY_CONFIRM_H
 
+#include "odbc_interaction.h"
 #ifdef PHASE1
-#include <eu.h>
+#include "eu.h"
 #endif /* PHASE1 */
-
-#ifdef PHASE2
-#include "app_interaction.h"
-#endif /* PHASE2 */
 
 #define STMT_BUYCONF "CALL BUYCONFIRM(?,?,?,?,?,?,?," \
 				"?,?,?,?,?,?,?," \

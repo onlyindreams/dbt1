@@ -13,13 +13,10 @@
 #ifndef _ODBC_INTERACTION_ORDER_DISPLAY_H_
 #define _ODBC_INTERACTION_ORDER_DISPLAY_H_
 
+#include "odbc_interaction.h"
 #ifdef PHASE1
-#include <eu.h>
+#include "eu.h"
 #endif /* PHASE1 */
-
-#ifdef PHASE2
-#include "app_interaction.h"
-#endif /* PHASE */
 
 #define STMT_ORDER_DISPLAY \
 	"CALL order_display(?,?," \
