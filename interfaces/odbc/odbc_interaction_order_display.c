@@ -451,24 +451,19 @@ int execute_order_display(struct odbc_context_t *odbcc, union odbc_data_t *odbcd
 	if (rc == SQL_SUCCESS)
 	{
 		/* Commit. */
-		rc = SQLPrepare(odbcc->hstmt, COMMIT, SQL_NTS);
+		rc = SQLEndTran(SQL_HANDLE_DBC, odbcc->hdbc, SQL_COMMIT);
 	}
 	else
 	{
 		/* Rollback. */
-		rc = SQLPrepare(odbcc->hstmt, ROLLBACK, SQL_NTS);
+		rc = SQLEndTran(SQL_HANDLE_DBC, odbcc->hdbc, SQL_ROLLBACK);
 	}
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
-		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
-		return W_ERROR;
-	}
-	rc = SQLExecute(odbcc->hstmt);
-	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
-	{
-		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+		LOG_ODBC_ERROR(SQL_HANDLE_DBC, odbcc->hdbc);
 		return W_ERROR;
 	}
 #endif
+
 	return W_OK;
 }

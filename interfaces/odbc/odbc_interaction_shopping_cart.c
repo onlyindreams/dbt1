@@ -24,7 +24,7 @@ int copy_in_shopping_cart(struct eu_context_t *euc, union odbc_data_t *odbcd)
 		euc->shopping_cart_data.add_flag, 
 		euc->shopping_cart_data.sc_size,  
 		euc->shopping_cart_data.sc_id);
-#endif /* DEBUG */
+#endif /* DEBUG
 
 	/* Copy data in. */
 	odbcd->shopping_cart_odbc_data.eb.c_id=euc->shopping_cart_data.c_id;
@@ -287,22 +287,16 @@ int execute_shopping_cart(struct odbc_context_t *odbcc,  union odbc_data_t *odbc
 	if (rc == SQL_SUCCESS)
 	{
 		/* Commit. */
-		rc = SQLPrepare(odbcc->hstmt, COMMIT, SQL_NTS);
+		rc = SQLEndTran(SQL_HANDLE_DBC, odbcc->hdbc, SQL_COMMIT);
 	}
 	else
 	{
 		/* Rollback. */
-		rc = SQLPrepare(odbcc->hstmt, ROLLBACK, SQL_NTS);
+		rc = SQLEndTran(SQL_HANDLE_DBC, odbcc->hdbc, SQL_ROLLBACK);
 	}
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
-		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
-		return W_ERROR;
-	}
-	rc = SQLExecute(odbcc->hstmt);
-	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
-	{
-		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+		LOG_ODBC_ERROR(SQL_HANDLE_DBC, odbcc->hdbc);
 		return W_ERROR;
 	}
 #endif
