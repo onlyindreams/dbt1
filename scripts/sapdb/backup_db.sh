@@ -2,6 +2,7 @@
 
 echo "changing data_cache to 10000"
 _o=`cat <<EOF |  /opt/sapdb/depend/bin/dbmcli -d $SID1 -u dbm,dbm 2>&1
+db_cold
 param_startsession
 param_put DATA_CACHE 10000
 param_checkall
@@ -17,6 +18,7 @@ fi
 date
 echo "start backup"
 ./define_medium.sh
+
 _o=`cat <<EOF | /opt/sapdb/depend/bin/dbmcli -d $SID1 -u dbm,dbm 2>&1
 db_stop
 db_start
