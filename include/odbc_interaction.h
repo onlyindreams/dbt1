@@ -11,7 +11,6 @@
 #ifndef _ODBC_INTERACTION_H_
 #define _ODBC_INTERACTION_H_
 
-#include <WINDOWS.H>
 #include <sqltypes.h>
 #include <common.h>
 
@@ -409,4 +408,9 @@ int odbc_disconnect(struct odbc_context_t *odbcc);
 int odbc_error(char *filename, int lin, SQLSMALLINT handle_type,
 	SQLHANDLE handle);
 int odbc_init(char *sname, char *uname, char *auth);
+
+#ifdef AUTOCOMMIT_OFF
+#define COMMIT "COMMIT"
+#define ROLLBACK "ROLLBACK"
+#endif
 #endif /* _ODBC_INTERACTION_H_ */
