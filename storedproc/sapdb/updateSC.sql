@@ -13,7 +13,7 @@ OUT sc_tax fixed(17,2), OUT sc_ship_cost fixed(5,2),
 OUT sc_total fixed(17,2)) AS
 VAR i_cost fixed(17,2); i_id fixed(10,0); sub_total fixed(17,2); 
     scl_qty fixed(3, 0); 
-SUBTRANS BEGIN;
+BEGIN
 set sc_sub_total=0.00;
 set discount=0.00;
 set sc_tax=0.00;
@@ -37,6 +37,6 @@ set sc_ship_cost=3.00+(1.00*scl_qty);
 set sc_total=sc_sub_total+sc_ship_cost+sc_tax;
 UPDATE dbt.shopping_cart set sc_date=(timestamp), sc_sub_total=(:sc_sub_total),
 sc_tax=(:sc_tax), sc_ship_cost=(:sc_ship_cost), sc_total=(:sc_total) where sc_id=:sc_id;
-SUBTRANS END;;
+END;;
 /
 /
