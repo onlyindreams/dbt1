@@ -20,6 +20,7 @@ struct app_txn_array
 	int *pin;
 	pthread_mutex_t odbc_txn_array_mutex;
 	union odbc_data_t *odbc_data_array;
+	int *txn_result;
 #ifdef GET_TIME
 	double *db_response_time;
 #endif
