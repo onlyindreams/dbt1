@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
 	int tid;
 	time_t start_time = -1;
 	float total_response_time;
-	float ips;
+	float ips; /* bogotransactions per second */
 	long long total_interaction_count = 0;
 	long long interaction_count[INTERACTION_TOTAL];
 	float interaction_response_time[INTERACTION_TOTAL];
@@ -234,7 +234,7 @@ int main(int argc, char *argv[])
 	
 	/* Calculated the number of interactions per second. */
 	ips = (double) total_interaction_count / difftime(current_time, start_time);
-	printf("\n%0.1f interactions per second\n", ips);
+	printf("\n%0.1f bogotransactions per second\n", ips);
 
 	printf("%0.1f minute duration\n",
 		difftime(current_time, start_time) / 60.0);
