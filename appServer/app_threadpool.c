@@ -19,7 +19,6 @@
 #include "app_txn_queue.h"
 #include "app_txn_array.h"
 #include "common.h"
-#include "app_interaction.h"
 #include <odbc_interaction_admin_confirm.h>
 #include <odbc_interaction_admin_request.h>
 #include <odbc_interaction_best_sellers.h>
@@ -90,13 +89,6 @@ int init_thread_pool(int PoolThreads, int TxnQSize, char *sname, char *uname, ch
 			return FALSE;
 		}
 	}
-        if (gettimeofday(&st, NULL)==-1)
-                perror("gettimeofday failed");
-        sleep(2);
-        if (gettimeofday(&et, NULL)==-1)
-                perror("gettimeofday failed");
-        time_diff=(et.tv_sec-st.tv_sec)+(et.tv_usec-st.tv_usec)/1000000.00;
-        printf("elapsed tiem is %f\n", time_diff);
 	return TRUE;
 }
 
