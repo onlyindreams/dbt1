@@ -13,6 +13,7 @@
 
 #include <pthread.h>
 #include <stdlib.h>
+#include <string.h>
 #include <common.h>
 #include <stdarg.h>
 #include <sys/time.h>
@@ -249,7 +250,8 @@ int log_error_message(char *filename, int line, const char *fmt, ...)
 	va_start(fmtargs, fmt);
 
 	pthread_mutex_lock(&mutex_error_log);
-	fprintf(of, "%s%d\n%s:%d\n", ctime(&t), pthread_self(), filename, line);
+	fprintf(of, "%s%d\n%s:%d\n", ctime(&t), (int) pthread_self(), filename,
+		line);
 	va_start(fmtargs, fmt);
 	vfprintf(of, fmt, fmtargs);
 	va_end(fmtargs);
