@@ -14,11 +14,12 @@
 #include <time.h>
 #include <common.h>
 
-/* Previously defined in eb.c, maybe it should go in common.c? */
-const char *interaction_short_name[INTERACTION_TOTAL] =
+const char *interaction_name[INTERACTION_TOTAL] =
 {
-    "AC", "AR", "BS", "BC", "BR", "CR", "HO", "NP", "OD", "OI", "PD", "SR",
-    "SU", "SC"
+    "Admin Confirm", "Admin Request", "Best Sellers", "Buy Confirm",
+	"Buy Request", "Customer Registration", "Home", "New Products",
+	"Order Display", "Order Inquiry", "Product Detail", "Search Request",
+    "Search Results", "Shopping Cart"
 };
 
 /* Stuff to do I/O analysis, bah! */
@@ -245,10 +246,10 @@ int main(int argc, char *argv[])
 	fclose(plot_ips);
 
 	/* Calculate the actual mix of interactions. */
-	printf("interaction\t%\tavg response time (s)\n");
+	printf("Interaction                 %%  Avg. Response Time (s)\n");
 	for (i = 0; i < INTERACTION_TOTAL; i++)
 	{
-		printf("%s\t\t%2.2f\t%0.3f\n", interaction_short_name[i],
+		printf("%-21s  %6.2f  %22.3f\n", interaction_name[i],
 			(double) interaction_count[i] / (double) total_interaction_count * 100.0,
 			interaction_response_time[i] / (double) interaction_count[i]);
 	}
@@ -260,7 +261,7 @@ int main(int argc, char *argv[])
 	printf("%0.1f minute duration\n",
 		difftime(current_time, start_time) / 60.0);
 	printf("total bogotransactions %ld\n", total_interaction_count);
-	printf("error bogotransactions %d\n", error_count);
+	printf("total errors %d\n", error_count);
 	printf("\n");
 
 	return 0;

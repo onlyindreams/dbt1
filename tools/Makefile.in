@@ -26,8 +26,8 @@ odbc_test_p2: $(TOPDIR)/make.common Makefile odbc_test.c $(COMMON_OBJS) \
 		$(ODBC_OBJS) \
 		$(LIBS)
 
-results: $(TOPDIR)/make.common Makefile results.c ../include/common.h
-	$(CC) -g -I$(INCLUDE_DIR) results.c -o results -lm
+results: $(TOPDIR)/make.common Makefile results.c ../common/common.so
+	$(CC) -g -I$(INCLUDE_DIR) results.c -o results -lm ../common/common.so
 
 load_db_proc: $(TOPDIR)/make.common Makefile load_db_proc.c \
 		../interfaces/odbc/odbc_interaction.so
