@@ -31,7 +31,7 @@ IF $rc=100 THEN BEGIN
   set C_Addr_ID = AddrID.NEXTVAL;
   INSERT INTO dbt.address VALUES (:C_Addr_ID, :Addr_Street1, :Addr_Street2,  :Addr_City, :Addr_State, :Addr_Zip, :Co_ID);
 END;
-set C_ID = CustID.NEXTVAL;
+SELECT CustID.NEXTVAL into :c_id from sysdba.dual;
 CALL DigSyl(:C_ID, 0, :C_UName);
 set C_PassWD=lower(C_UName);
 set CurrentTime = timestamp;
