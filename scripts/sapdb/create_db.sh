@@ -50,17 +50,24 @@ param_rmfile
 param_startsession
 param_init
 param_put LOG_MODE SINGLE
-param_put CAT_CACHE_SUPPLY 300
-param_put DATA_CACHE 2500
-param_put MAXDATADEVSPACES 5
-param_put MAXDATAPAGES 4096000
+param_put DATA_CACHE 81920
 param_put _IDXFILE_LIST_SIZE 8192
+param_put MAXDATADEVSPACES 10
+param_put MAXDATAPAGES 40960000
+param_put MAXUSERTASKS 100
+param_put MAXCPU 2
 param_put _PACKET_SIZE 131072
 param_checkall
 param_commitsession
 param_adddevspace 1 SYS  $HOME/$SID/DBT1_SYS_001   F
-param_adddevspace 1 DATA $HOME/$SID/DBT1_DATA_001 F 81920
-param_adddevspace 1 LOG  $HOME/$SID/DBT1_LOG_001  F 8192
+param_adddevspace 1 LOG  /dev/raw/raw8  R 120000
+param_adddevspace 1 DATA /dev/raw/raw1  R 150000
+param_adddevspace 2 DATA /dev/raw/raw2  R 150000
+param_adddevspace 3 DATA /dev/raw/raw3  R 150000
+param_adddevspace 4 DATA /dev/raw/raw4  R 150000
+param_adddevspace 5 DATA /dev/raw/raw5  R 150000
+param_adddevspace 6 DATA /dev/raw/raw6  R 150000
+param_adddevspace 7 DATA /dev/raw/raw7  R 150000
 quit
 EOF`
 _test=`echo $_o | grep OK`
@@ -78,7 +85,6 @@ if [ "$_test" = "" ]; then
         echo "start $SID failed: $_o"
         exit 1
 fi
-
 
 # initialize database files
 echo "initializing $SID..."
@@ -117,11 +123,12 @@ fi
 
 echo "set backup parameters..."
 _o=`cat <<EOF | dbmcli -d $SID -u dbm,dbm 2>&1
-backup_media_put data $HOME/$SID/datasave FILE DATA 0 8 YES
-backup_media_put auto $HOME/$SID/autosave FILE AUTO
-util_connect dbm,dbm
-backup_save data
-autosave_on
+medium_put data $HOME/$SID/datasave FILE DATA 0 8 YES
+medium_put incr $HOME/$SID/incremental FILE PAGES 0 8 YES
+medium_put auto $HOME/$SID/autosave FILE AUTO
+#util_connect dbm,dbm
+#backup_save data
+#autosave_on
 quit
 EOF`
 _test=`echo $_o | grep OK`
