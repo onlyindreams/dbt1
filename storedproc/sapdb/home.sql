@@ -15,8 +15,11 @@ OUT pp_i_id3 fixed(10), OUT pp_t_id3 fixed(10),
 OUT pp_i_id4 fixed(10), OUT pp_t_id4 fixed(10),
 OUT pp_i_id5 fixed(10), OUT pp_t_id5 fixed(10)) AS
 BEGIN
+if (C_ID = 0) then begin
+  C_FName='';
+  C_LName='';
+end
+else
 SELECT c_fname, c_lname INTO :C_FName, :C_LName from dbt.customer where c_id=:C_ID;
 CALL getPromoImages(:I_ID, :pp_i_id1, :pp_t_id1, :pp_i_id2, :pp_t_id2, :pp_i_id3, :pp_t_id3, :pp_i_id4, :pp_t_id4, :pp_i_id5, :pp_t_id5);
-END;;
-/
-/
+END;
