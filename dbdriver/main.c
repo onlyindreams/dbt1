@@ -90,6 +90,12 @@ int main(int argc, char *argv[])
 	/* Initialize global variables. */
 	init_common();
 
+	/*
+	 * Calculate the stop time before the users are started and factor in
+	 * the rampup time.
+	 */
+	stop_time = time(NULL) + duration + (int) ((eus / rampuprate) * 60);
+
 	/* Start the user threads. */
 #ifdef PHASE1
 #ifdef SEARCH_RESULTS_CACHE
@@ -111,7 +117,6 @@ int main(int argc, char *argv[])
 	 * place to implement some real-time statistics reporting, if someone is so
 	 * inclined.
 	 */
-	stop_time = time(NULL) + duration + (int) ((eus / rampuprate) * 60);
 	do
 	{
 		sem_getvalue(&running_eu_count, &running_eus);
