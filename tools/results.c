@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
 	 * appropriate counters.
 	 */
 	++interaction_count[HOME];
-	interaction_response_time[HOME] += response_time;
+	interaction_response_time[HOME] += total_response_time;
 	++total_interaction_count;
 
 	previous_time = start_time;
