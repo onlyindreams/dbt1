@@ -19,14 +19,16 @@ int receive_interaction_packet(int s, struct eu_context_t *euc)
 {
 	void *data;
 	int length;
+	int rec;
 
 	/* Receive transaction type. */
-	if (_receive(s, (void *) &euc->interaction, sizeof(euc->interaction)) == -1)
+	if ( (rec=_receive(s, (void *) &euc->interaction, sizeof(euc->interaction))) == -1)
 	{
 		LOG_ERROR_MESSAGE("cannot receive interaction type");
 		return W_ERROR;
 	}
-
+	if (rec==0) return SOCKET_CLOSE;
+	
 	/* Receive transaction data. */
 	switch (euc->interaction)
 	{
@@ -83,11 +85,12 @@ int receive_interaction_packet(int s, struct eu_context_t *euc)
 			length = sizeof(struct shopping_cart_t);
 			break;
 	}
-	if (_receive(s, data, length) == -1)
+	if ( (rec=_receive(s, data, length)) == -1)
 	{
 		LOG_ERROR_MESSAGE("cannot receive interaction data");
 		return W_ERROR;
 	}
+	if (rec==0) return SOCKET_CLOSE;
 #ifdef DEBUG
 	if (euc->interaction==SHOPPING_CART)
 	DEBUGMSG("sc_id %lld", euc->shopping_cart_data.sc_id);
