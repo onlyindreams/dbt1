@@ -45,7 +45,7 @@ mkdir -p $SYS_DIR/$SID1
 
 # setup database parameters
 echo "set parameters for $SID1..."
-./set_param.sh
+./set_param.sh 0
 #devspace definition
 _o=`cat <<EOF | dbmcli -d $SID1 -u dbm,dbm 2>&1
 param_adddevspace 1 SYS  $SYS_DIR/$SID1/DBT1_SYS_001   F
