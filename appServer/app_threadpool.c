@@ -60,7 +60,8 @@ extern struct app_txn_array app_search_request_array;
 extern struct app_txn_array app_search_results_array;
 extern struct app_txn_array app_shopping_cart_array;
 
-extern pthread_mutex_t *queue_entry_mutex;
+extern struct condition_bundle_t *queue_entry_condition;
+
 extern struct timeval txn_start_time;
 int init_thread_pool(int PoolThreads, int TxnQSize, char *sname, char *uname, char *auth)
 {
@@ -73,9 +74,13 @@ int init_thread_pool(int PoolThreads, int TxnQSize, char *sname, char *uname, ch
 	if (sem_init(&TxnQSem, 0, 0) == -1) return FALSE;
 	//initialize mutex
 	pthread_mutex_init(&queue_mutex, NULL);
-	queue_entry_mutex=(pthread_mutex_t *)malloc(sizeof(pthread_mutex_t)*TxnQSize);
+	queue_entry_condition=(struct condition_bundle_t *)malloc(sizeof(struct condition_bundle_t)*TxnQSize);
 	for (i=0; i<TxnQSize; i++)
-		pthread_mutex_init(&queue_entry_mutex[i], NULL);
+	{
+		queue_entry_condition[i].txn_done_flag=0;
+		pthread_mutex_init(&queue_entry_condition[i].condition_mutex, NULL);
+		pthread_cond_init(&queue_entry_condition[i].txn_done_cv, NULL);
+	}
 
 #ifndef _SIMDB
 	odbc_init(sname, uname, auth);
@@ -176,7 +181,7 @@ void *DoTxn(void *fd)
 			app_home_array.db_response_time[TxnQItem.SlotID]=time_diff(txn_start_time, txn_end_time);
 #endif
 #endif
-			pthread_mutex_unlock(&queue_entry_mutex[QIndex]);
+			set_txn_done_flag(&TxnQ, QIndex);
 			//-- kill(TxnQItem.pid, SIGUSR1);
 			break;
 		case ADMIN_REQUEST:
@@ -208,7 +213,7 @@ void *DoTxn(void *fd)
 			app_admin_request_array.db_response_time[TxnQItem.SlotID]=time_diff(txn_start_time, txn_end_time);
 #endif
 #endif
-			pthread_mutex_unlock(&queue_entry_mutex[QIndex]);
+			set_txn_done_flag(&TxnQ, QIndex);
 			//-- kill(TxnQItem.pid, SIGUSR1);
 			break;
 		case SEARCH_REQUEST:
@@ -233,7 +238,7 @@ void *DoTxn(void *fd)
 			app_search_request_array.db_response_time[TxnQItem.SlotID]=time_diff(txn_start_time, txn_end_time);
 #endif
 #endif
-			pthread_mutex_unlock(&queue_entry_mutex[QIndex]);
+			set_txn_done_flag(&TxnQ, QIndex);
 			//--kill(TxnQItem.pid, SIGUSR1);
 			break;
 		case SEARCH_RESULTS:
@@ -268,7 +273,7 @@ void *DoTxn(void *fd)
 			app_search_results_array.db_response_time[TxnQItem.SlotID]=time_diff(txn_start_time, txn_end_time);
 #endif
 #endif
-			pthread_mutex_unlock(&queue_entry_mutex[QIndex]);
+			set_txn_done_flag(&TxnQ, QIndex);
 			//--kill(TxnQItem.pid, SIGUSR1);
 			break;
 		case BEST_SELLERS:
@@ -302,7 +307,7 @@ void *DoTxn(void *fd)
 			app_best_sellers_array.db_response_time[TxnQItem.SlotID]=time_diff(txn_start_time, txn_end_time);
 #endif
 #endif
-			pthread_mutex_unlock(&queue_entry_mutex[QIndex]);
+			set_txn_done_flag(&TxnQ, QIndex);
 			//--kill(TxnQItem.pid, SIGUSR1);
 			break;
 		case NEW_PRODUCTS:
@@ -336,7 +341,7 @@ void *DoTxn(void *fd)
 			app_new_products_array.db_response_time[TxnQItem.SlotID]=time_diff(txn_start_time, txn_end_time);
 #endif
 #endif
-			pthread_mutex_unlock(&queue_entry_mutex[QIndex]);
+			set_txn_done_flag(&TxnQ, QIndex);
 			//--kill(TxnQItem.pid, SIGUSR1);
 			break;
 		case BUY_CONFIRM:
@@ -389,7 +394,7 @@ void *DoTxn(void *fd)
 			app_buy_confirm_array.db_response_time[TxnQItem.SlotID]=time_diff(txn_start_time, txn_end_time);
 #endif
 #endif
-			pthread_mutex_unlock(&queue_entry_mutex[QIndex]);
+			set_txn_done_flag(&TxnQ, QIndex);
 			break;
 		case BUY_REQUEST:
 #ifdef DEBUG
@@ -462,7 +467,7 @@ void *DoTxn(void *fd)
 			app_buy_request_array.db_response_time[TxnQItem.SlotID]=time_diff(txn_start_time, txn_end_time);
 #endif
 #endif
-			pthread_mutex_unlock(&queue_entry_mutex[QIndex]);
+			set_txn_done_flag(&TxnQ, QIndex);
 			break;
 		case HOME:
 			//do transaction
@@ -490,7 +495,10 @@ void *DoTxn(void *fd)
 			app_home_array.db_response_time[TxnQItem.SlotID]=time_diff(txn_start_time, txn_end_time);
 #endif
 #endif
-			pthread_mutex_unlock(&queue_entry_mutex[QIndex]);
+#ifdef DEBUG
+			DEBUGMSG("thread_id%ld: HOME TXN DONE", pthread_self());
+#endif
+			set_txn_done_flag(&TxnQ, QIndex);
 			//--kill(TxnQItem.pid, SIGUSR1);
 			break;
 		case ORDER_DISPLAY:
@@ -553,7 +561,7 @@ void *DoTxn(void *fd)
 			app_order_display_array.db_response_time[TxnQItem.SlotID]=time_diff(txn_start_time, txn_end_time);
 #endif
 #endif
-			pthread_mutex_unlock(&queue_entry_mutex[QIndex]);
+			set_txn_done_flag(&TxnQ, QIndex);
 			break;
 		case ORDER_INQUIRY:
 #ifdef DEBUG
@@ -578,7 +586,7 @@ void *DoTxn(void *fd)
 			app_order_inquiry_array.db_response_time[TxnQItem.SlotID]=time_diff(txn_start_time, txn_end_time);
 #endif
 #endif
-			pthread_mutex_unlock(&queue_entry_mutex[QIndex]);
+			set_txn_done_flag(&TxnQ, QIndex);
 			break;
 		case PRODUCT_DETAIL:
 #ifdef DEBUG
@@ -617,7 +625,7 @@ void *DoTxn(void *fd)
 			app_product_detail_array.db_response_time[TxnQItem.SlotID]=time_diff(txn_start_time, txn_end_time);
 #endif
 #endif
-			pthread_mutex_unlock(&queue_entry_mutex[QIndex]);
+			set_txn_done_flag(&TxnQ, QIndex);
 			break;
 		case SHOPPING_CART:
 #ifdef DEBUG
@@ -681,7 +689,7 @@ void *DoTxn(void *fd)
 				app_shopping_cart_array.odbc_data_array[TxnQItem.SlotID].shopping_cart_odbc_data.eb.sc_id);
 			
 #endif
-			pthread_mutex_unlock(&queue_entry_mutex[QIndex]);
+			set_txn_done_flag(&TxnQ, QIndex);
 			break;
 		}
 	}
@@ -702,3 +710,14 @@ void fill_promo_data(struct promotional_processing_t *pp_data)
 	}
 }
 #endif
+
+void set_txn_done_flag(struct Queue *txn_queue, int QIndex)
+{
+	pthread_mutex_lock(&queue_entry_condition[QIndex].condition_mutex);
+	queue_entry_condition[QIndex].txn_done_flag=1;
+	pthread_cond_signal(&queue_entry_condition[QIndex].txn_done_cv);
+	pthread_mutex_unlock(&queue_entry_condition[QIndex].condition_mutex);
+        pthread_mutex_lock(&queue_mutex);
+        empty_queue_item_state(txn_queue, QIndex);
+        pthread_mutex_unlock(&queue_mutex);
+}
