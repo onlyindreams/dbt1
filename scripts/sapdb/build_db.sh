@@ -67,13 +67,13 @@ fi
 	echo
 	
 	date
-	echo "load dbproc"
-	./load_dbproc.sh
+	echo "update statistics"
+	./update_stats.sh
 	echo
 	
 	date
-	echo "update statistics"
-	./update_stats.sh
+	echo "load dbproc"
+	./load_dbproc.sh
 	echo
 	
 	echo "start to backup"
