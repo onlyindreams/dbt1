@@ -11,7 +11,7 @@
 #ifndef _APP_TXN_ARRAY_H
 #define _APP_TXN_ARRAY_H
 #include <pthread.h>
-#include "app_interaction.h"
+#include "odbc_interaction.h"
 
 
 struct app_txn_array

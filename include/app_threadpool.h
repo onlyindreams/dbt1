@@ -10,7 +10,7 @@
  */
 #ifndef _APP_THREADPOOL_H
 #define _APP_THREADPOOL_H_
-#include "app_interaction.h"
+#include "odbc_interaction.h"
 
 int init_thread_pool(int PoolThreads, int TxnQSize, char *sname, char *uname, char *auth);
 void *DoTxn(void *fd);
