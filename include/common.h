@@ -32,7 +32,8 @@
 #define SHOPPING_CART 13
 #define INTERACTION_TOTAL 14
 
-#define W_ERROR 0
+#define SOCKET_CLOSE 0
+#define W_ERROR -1
 #define W_OK 1
 #define W_ZERO_ITEMS 2
 
