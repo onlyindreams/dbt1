@@ -29,8 +29,8 @@ void gen_orders(int ebs, int items, char *path)
 	char a_string[1024];
 	int customers, orders;
 	double o_sub_total, o_tax, o_total;
-	struct tm *tm1, *tm2, *tm3;
-	time_t t1, t2, t3;
+	struct tm *tm1, *tm2;
+	time_t t1, t2;
 	int order_line_count;
 	char filename1[256];
 	char filename2[256];
@@ -80,11 +80,11 @@ void gen_orders(int ebs, int items, char *path)
 			fprintf(order_line_file, "%c", DELIMITER);
 
 			/* ol_i_id */
-			fprintf(order_line_file, "\"%d\"", get_random(items) + 1);
+			fprintf(order_line_file, "\"%d\"", (int) get_random(items) + 1);
 			fprintf(order_line_file, "%c", DELIMITER);
 
 			/* ol_qty */
-			fprintf(order_line_file, "\"%d\"", get_random(300) + 1);
+			fprintf(order_line_file, "\"%d\"", (int) get_random(300) + 1);
 			fprintf(order_line_file, "%c", DELIMITER);
 
 			/* ol_discount */
@@ -106,7 +106,7 @@ void gen_orders(int ebs, int items, char *path)
 		fprintf(orders_file, "%c", DELIMITER);
 
 		/* o_c_id */
-		fprintf(orders_file, "\"%d\"", get_random(customers) + 1);
+		fprintf(orders_file, "\"%d\"", (int) get_random(customers) + 1);
 		fprintf(orders_file, "%c", DELIMITER);
 
 		/* o_date */
@@ -148,11 +148,11 @@ void gen_orders(int ebs, int items, char *path)
 		fprintf(orders_file, "%c", DELIMITER);
 
 		/* o_bill_addr_id */
-		fprintf(orders_file, "\"%d\"", get_random(2 * customers) + 1);
+		fprintf(orders_file, "\"%d\"", (int) get_random(2 * customers) + 1);
 		fprintf(orders_file, "%c", DELIMITER);
 
 		/* o_ship_addr_id */
-		fprintf(orders_file, "\"%d\"", get_random(2 * customers) + 1);
+		fprintf(orders_file, "\"%d\"", (int) get_random(2 * customers) + 1);
 		fprintf(orders_file, "%c", DELIMITER);
 
 		/* o_status */
@@ -207,7 +207,7 @@ void gen_orders(int ebs, int items, char *path)
 		fprintf(cc_xacts_file, "%c", DELIMITER);
 
 		/* cx_co_id */
-		fprintf(cc_xacts_file, "\"%d\"", get_random(92) + 1);
+		fprintf(cc_xacts_file, "\"%d\"", (int) get_random(92) + 1);
 
 		fprintf(cc_xacts_file, "\n");
 	}
