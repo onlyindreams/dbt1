@@ -19,11 +19,12 @@
 #include <time.h>
 #include <sys/types.h>
 #include <signal.h>
-#include "cache.h"
-#include "common.h"
-#include "odbc_interaction.h"
-#include "odbc_interaction_search_results.h"
-#include "_socket.h"
+#include <cache.h>
+#include <cache_interface.h>
+#include <common.h>
+#include <odbc_interaction.h>
+#include <odbc_interaction_search_results.h>
+#include <_socket.h>
 
 struct search_results *author_results_table;
 struct search_results *title_results_table;
@@ -32,6 +33,9 @@ void *cache_thread(void *fd);
 void sighandler(int signum);
 
 pthread_mutex_t mutex_cache_server=PTHREAD_MUTEX_INITIALIZER;
+
+int undo_digsyl(char *search_string);
+
 int main(int argc, char *argv[])
 {
 	int mastersock, workersock;
@@ -42,7 +46,7 @@ int main(int argc, char *argv[])
 	struct table_range *range;
 	int port, db_thread, num_items, connectioncount;
 	int addrlen, author_step, title_step;
-	int i, j, rec;
+	int i, rec;
 	struct sigaction sa;
 
 	setlinebuf(stdout);
@@ -278,6 +282,7 @@ void *warm_up_cache(void *fd)
 		}
 	}
 	odbc_disconnect(&odbcc);
+	return NULL;
 }
 
 void *cache_thread(void *fd)
@@ -386,8 +391,8 @@ int undo_digsyl(char *search_string)
 		else if (search_string[i]=='N') digit=8;
 		else if (search_string[i]=='G')
 		{
-			if (search_string[i-1]='O') digit=1;
-			else if (search_string[i-1]='N') digit=9;
+			if (search_string[i-1]=='O') digit=1;
+			else if (search_string[i-1]=='N') digit=9;
 			else 
 			{
 				LOG_ERROR_MESSAGE("no digit for syllable %cG", search_string[i-1]);
@@ -396,8 +401,8 @@ int undo_digsyl(char *search_string)
 		}
 		else if (search_string[i]=='L')
 		{
-			if (search_string[i-1]='A') digit=2;
-			else if (search_string[i-1]='U') digit=7;
+			if (search_string[i-1]=='A') digit=2;
+			else if (search_string[i-1]=='U') digit=7;
 			else 
 			{
 				LOG_ERROR_MESSAGE("no digit for syllable %cL", search_string[i-1]);
@@ -406,8 +411,8 @@ int undo_digsyl(char *search_string)
 		}
 		else if (search_string[i]=='E')
 		{
-			if (search_string[i-1]='R') digit=4;
-			else if (search_string[i-1]='S') digit=5;
+			if (search_string[i-1]=='R') digit=4;
+			else if (search_string[i-1]=='S') digit=5;
 			else 
 			{
 				LOG_ERROR_MESSAGE("no digit for syllable %cE", search_string[i-1]);
