@@ -125,9 +125,9 @@ void *DoTxn(void *fd)
 
 #ifndef _SIMDB
 	/* This should be buried under a generic database initialization call. */
-	struct odbc_context_t odbcc;
+	struct db_context_t dbc;
 	/* connect to database */
-	rc = odbc_connect(&odbcc);
+	rc = odbc_connect(&dbc);
 	if (rc == W_ERROR)
 	{
 		LOG_ERROR_MESSAGE("odbc_connect error\n");
@@ -269,7 +269,7 @@ void *DoTxn(void *fd)
 		else
 		{
 			data->txn_result[TxnQItem.SlotID]  =
-				process_interaction(TxnQItem.TxnType, &odbcc,
+				process_interaction(TxnQItem.TxnType, &dbc,
 				&data->data_array[TxnQItem.SlotID]);
 		}
 #ifdef GET_TIME
