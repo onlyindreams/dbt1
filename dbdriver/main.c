@@ -7,13 +7,16 @@
  * Copyright (C) 2002 Mark Wong & Jenny Zhang &
  *                    Open Source Development Lab, Inc.
  *
- * 30 janurary 2002
+ * 30 January 2002
  */
 
-#include <stdlib.h>
-#include <unistd.h>
 #include <semaphore.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <ctype.h>
 #include <time.h>
+
 #include <common.h>
 #include <eu.h>
 
@@ -37,7 +40,12 @@ int main(int argc, char *argv[])
 #endif /* PHASE1 */
 #ifdef PHASE2
 	int port;
+	int c;
 #endif /* PHASE2 */
+/*
+	int i;
+	int sem_val;
+*/
 
 
 #ifdef PHASE1
@@ -59,15 +67,14 @@ int main(int argc, char *argv[])
 #endif /* PHASE1 */
 
 #ifdef PHASE2
-	if (argc != 9)
+	if (argc < 17)
 	{
-		printf("usage: %s <servername> <port> <items> <customers> <eus> <eus/min> <think time> <duration>\n",
+		printf("usage: %s -d <servername> -p <port> -i <items> -c <customers> -u <eus> -r <eus/min> -t <think time> -l <duration>\n",
 			argv[0]);
 		return -1;
 	}
 #endif /* PHASE2 */
 
-	strcpy(sname, argv[1]);
 
 #ifdef PHASE1
 	strcpy(uname, argv[2]);
@@ -84,15 +91,56 @@ int main(int argc, char *argv[])
 #endif
 #endif /* PHASE1 */
 
-#ifdef PHASE2
-	port = atoi(argv[2]);
-	item_count = atoi(argv[3]);
-	customers = atoi(argv[4]);
-	eus = atoi(argv[5]);
-	rampuprate = atoi(argv[6]);
-	think_time = atof(argv[7]);
-	duration = atoi(argv[8]);
-#endif /* PHASE2 */
+	opterr = 0;
+	while ((c = getopt(argc, argv, "a:c:d:i:l:o:p:r:t:u:")) != -1)
+	{
+		switch (c)
+		{
+			case 'a':
+				altered = 1;
+			case 'c':
+				customers = atoi(optarg);
+				break;
+			case 'd':
+				strcpy(sname, optarg);
+				break;
+			case 'i':
+				item_count = atoi(optarg);
+				break;
+			case 'l':
+				duration = atoi(optarg);
+				break;
+			case 'o':
+				strcpy(output_path, optarg);
+				break;
+			case 'p':
+				port = atoi(optarg);
+				break;
+			case 'r':
+				rampuprate = atoi(optarg);
+				break;
+			case 't':
+				think_time = atof(optarg);
+				break;
+			case 'u':
+				eus = atoi(optarg);
+				break;
+			case '?':
+				if (isprint(optopt))
+				{
+					fprintf(stderr, "Unknown option `-%c'.\n", optopt);
+				}
+				else
+				{
+					fprintf (stderr, "Unknown option character `\\x%x'.\n",
+						optopt);
+				}
+				return 1;
+			default:
+				printf("usage: %s <filename>\n", argv[0]);
+				return 1;
+		}
+	}
 
 	/* Initialize global variables. */
 	init_common();
@@ -127,11 +175,27 @@ int main(int argc, char *argv[])
 	mark_logs(RUN_START);
 	do
 	{
+/*
+		for (i = 0; i < INTERACTION_TOTAL; i++)
+		{
+			printf("%s ", interaction_short_name[i]);
+		}
+		printf("\n");
+		for (i = 0; i < INTERACTION_TOTAL; i++)
+		{
+			sem_getvalue(&running_interactions[i], &sem_val);
+			printf("%2d ", sem_val);
+		}
+		printf("\n");
+*/
+
 		sem_getvalue(&running_eu_count, &running_eus);
 		sleep(1);
 	}
 	while (time(NULL) <= stop_time);
-//	mark_logs(RUN_END);
+/*
+	mark_logs(RUN_END);
+*/
 
 	return 0;
 }
