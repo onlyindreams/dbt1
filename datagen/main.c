@@ -12,8 +12,10 @@
 #define _LARGEFILE64_SOURCE
 
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <tpcw.h>
+#include <common.h>
 #include <datagen.h>
 
 
@@ -42,6 +44,9 @@ int items, ebs;
 char path[256];
 int flag_cust, flag_item, flag_author, flag_address, flag_order;
 
+/* Prototype from wgen/text.c */
+void load_dists(void);
+
 int main(int argc, char *argv[])
 {
 	FILE *sequence_sql;
@@ -62,11 +67,11 @@ int main(int argc, char *argv[])
 		&& items != 10000000)
 	{
 		printf("%d is an invalid item scale factor:\n", items);
-		printf("\t1000\n", items);
-		printf("\t10000\n", items);
-		printf("\t100000\n", items);
-		printf("\t1000000\n", items);
-		printf("\t10000000\n", items);
+		printf("\t1000\n");
+		printf("\t10000\n");
+		printf("\t100000\n");
+		printf("\t1000000\n");
+		printf("\t10000000\n");
 		return 2;
 	}
 
