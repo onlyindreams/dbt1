@@ -170,7 +170,7 @@ int main(int argc, char *argv[])
 	if (mastersock < 0)
 	{
 		LOG_ERROR_MESSAGE("init server master socket failed\n");
-		perror("init server master socket failed");
+		printf("init server master socket failed");
 		return -1;
 	}
 
@@ -182,7 +182,7 @@ int main(int argc, char *argv[])
 		workersock = accept(mastersock, (struct sockaddr *)&socketaddr, (socklen_t *)&addrlen);
 		if (workersock < 0) {
 			LOG_ERROR_MESSAGE("accept couldn't open worker socket, errno %d", errno);
-			perror("accept failed");
+			printf("accept failed");
 			return -1;
 		}
 
