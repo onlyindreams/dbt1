@@ -1722,8 +1722,7 @@ void *start_eu(void *data)
 			}
 		}
 		while (rc != W_OK);
-		response_time =
-			(double) (rt1.tv_sec - rt0.tv_sec) + (double) (rt1.tv_usec - rt0.tv_usec) / 1000000.0;
+		response_time = time_diff(rt0, rt1);
 
 		/* Log the response time and the interaction that was just executed. */
 		pthread_mutex_lock(&mutex_mix_log);
