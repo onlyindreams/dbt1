@@ -20,11 +20,12 @@
 #include <semaphore.h>
 #include <unistd.h>
 #include <signal.h>
-#include "_socket.h"
-#include "common.h"
-#include "app_txn_array.h"
-#include "app_txn_queue.h"
-#include "app_threadpool.h"
+#include <_socket.h>
+#include <common.h>
+#include <app_interface.h>
+#include <app_txn_array.h>
+#include <app_txn_queue.h>
+#include <app_threadpool.h>
 
 void *DoConnection(void *fd);
 void sighandler(int signum);
@@ -89,8 +90,6 @@ int main(int argc, char *argv[])
 	int mastersock, workersock;
 	struct sockaddr_in socketaddr;
 	int addrlen;
-	char buffer[1024];
-	char size[100];
 	char sname[32], uname[32], auth[32];
 	pthread_t ConnThread;
 	int rec;
@@ -218,8 +217,6 @@ void *DoConnection(void *fd)
 {
 	int *sf;
 	int workersock;
-	char buffer[1024];
-	char size[100];
 	int QIndex;
 	struct QItem TxnQItem;
 	int rec;
