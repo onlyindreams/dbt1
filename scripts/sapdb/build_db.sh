@@ -1,16 +1,16 @@
 #!/bin/sh
-#this script is used to build the database
-# ./build_db.sh -g <items> <eus> will generate data and build the database
-# ./build_db.sh will load the database from previously generated data files
+#this script can be used to build the database
 
 if [ $# -ne 0 ] # Script invoked with command-line args
 then
 	getopts "g" Option
 	if [ $Option != "g" ]
 		then echo "usage: $0 -g <items> <eus>" 
+		exit
 	else
 		if [ $# -ne 3 ]
 			then echo "usage: $0 -g <items> <eus>" 
+			exit
 		else
 			ITEMS=$2
 			EUS=$3	
@@ -20,10 +20,11 @@ then
 	cd ../../datagen
 	date
 	./datagen $ITEMS $EUS
-	echo "data files are generated"
+	echo "data file is generated"
 	date
+	cd -
 else
-	echo "build the database without generating the data files"
+	echo "build the database without generating the data file"
 fi
 	echo "drop db"
 	./drop_db.sh
@@ -44,25 +45,29 @@ fi
 	./load_db.sh
 	echo
 	
-	echo "starting to create indexes"
+	echo "start to create index"
 	date
 	
-	echo "creating indexes"
+	echo "create indexes"
 	./create_indexes.sh
 	echo
 	
-	echo "starting to create keys"
+	echo "start to create keys"
 	date
 	
-	echo "creating keys"
+	echo "create keys"
 	./create_keys.sh
 	echo
 	
-	echo "loading stored procedures"
+	echo "create sequences"
+	./create_sequences.sh
+	echo
+	
+	echo "load dbproc"
 	./load_dbproc.sh
 	echo
 	
-	echo "starting to backup database"
+	echo "start to backup"
 	date
 	
 	echo "backup"
