@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
 	FILE *plot_ips;
 	time_t current_time;
 	char interaction[3];
-	double response_time;
+	float response_time;
 	int tid;
 	time_t start_time = -1;
 	double total_response_time;
