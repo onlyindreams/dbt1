@@ -23,7 +23,7 @@ $(EXE): $(OBJS)
 	$(CC) -o $@ $(OBJS) $(LIBS)
 
 %.so:%.c
-	$(CC) -c -shared -fpic $(CFLAGS) -o $@ $<
+	$(CC) -c -shared -fpic $(CFLAGS) -DSEARCH_RESULTS_CACHE -o $@ $<
 
 $(COMMON_OBJS):$(COMMON_PRGS)
 	cd $(COMMON_DIR); $(MAKE)
@@ -41,7 +41,6 @@ $(EXE): \
 	../common.mk \
 	Makefile \
 	$(OBJS) \
-	$(INCLUDE_DIR)/app_interaction.h \
 	$(INCLUDE_DIR)/common.h \
 	$(INCLUDE_DIR)/eu.h \
 	$(INCLUDE_DIR)/odbc_interaction.h \
@@ -54,7 +53,6 @@ $(EXE): \
 $(APPOBJS): \
 	../common.mk \
 	Makefile \
-	$(INCLUDE_DIR)/app_interaction.h \
 	$(INCLUDE_DIR)/common.h \
 	$(INCLUDE_DIR)/eu.h \
 	$(INCLUDE_DIR)/odbc_interaction.h \
