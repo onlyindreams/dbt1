@@ -24,7 +24,7 @@ int copy_in_shopping_cart(struct eu_context_t *euc, union odbc_data_t *odbcd)
 		euc->shopping_cart_data.add_flag, 
 		euc->shopping_cart_data.sc_size,  
 		euc->shopping_cart_data.sc_id);
-#endif /* DEBUG
+#endif /* DEBUG */
 
 	/* Copy data in. */
 	odbcd->shopping_cart_odbc_data.eb.c_id=euc->shopping_cart_data.c_id;
