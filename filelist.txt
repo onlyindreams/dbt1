@@ -1,4 +1,5 @@
 appServer		middle tier application server.
+cache			middle tier cache server.
 common			Functions described in the specification that can be shared.
 common.mk		Makefile include file.
 datagen			The database data generator.
