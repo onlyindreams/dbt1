@@ -3,9 +3,10 @@
 -- This file is released under the terms of the Artistic License.  Please see
 -- the file LICENSE, included in this package, for details.
 --
--- Copyright (C) 2002 Mark Wong & Jenny Zhang &
---                    Open Source Development Lab, Inc.
--- Copyright (C) 2003 Satoshi Nagayasu
+-- Copyright (C) 2002 Open Source Development Lab, Inc.
+-- History:
+-- Feb 2001: Created by Mark Wong & Jenny Zhang
+-- June 2003: Rewritten for PostgreSQL by NAGAYASU Satoshi 
 --
 -- SELECT * FROM getCustInfo('OG') l(c_id numeric(10), c_passwd varchar(20), c_fname varchar(15), c_lname varchar(15), addr_street1 varchar(40), addr_street2 varchar(40), addr_city varchar(30), addr_state varchar(20), addr_zip varchar(10), co_name varchar(50), c_phone varchar(16), c_email varchar(50), c_data varchar(500), c_birthdate date, c_discount numeric(5,2));
 --

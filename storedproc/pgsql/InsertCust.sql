@@ -1,71 +1,83 @@
-/*
- *
- * This file is released under the terms of the Artistic License.  Please see
- * the file LICENSE, included in this package, for details.
- *
- * Copyright (C) 2002 Mark Wong & Jenny Zhang &
- *                    Open Source Development Lab, Inc.
- * Contributors : Virginie Megy & Thierry Missimilly
- *		  Bull, Linux Competence Center
- *
- */
-CREATE FUNCTION InsertCust(varchar(50), varchar(40), varchar(40),
-			varchar(30), varchar(20), varchar(10),
-			varchar(15), varchar(15), varchar(16),
-			varchar(50), varchar(500),numeric(10,0), numeric(5,2),
-			char(8)) RETURNS NUMERIC(10,0) AS '
+--
+--
+-- This file is released under the terms of the Artistic License.  Please see
+-- the file LICENSE, included in this package, for details.
+--
+-- Copyright (C) 2002 Open Source Development Lab, Inc.
+-- History:
+-- Feb 2001: Created by Mark Wong & Jenny Zhang
+-- Apr 2003: Rewritten for PostgreSQL by Virginie Megy & Thierry Missimilly
+--                Bull, Linux Competence Center
+-- June 2003: Rewritten by NAGAYASU Satoshi to return records
+--
+CREATE OR REPLACE FUNCTION InsertCust ( varchar(50), varchar(40), varchar(40), varchar(30), varchar(20), varchar(10), varchar(15), varchar(15), varchar(16), varchar(50), varchar(500), numeric(10,0), numeric(5,2), char(8) ) RETURNS numeric(10,0) AS '
+  DECLARE
+    Co_Name ALIAS FOR $1;
+    Addr_Street1 ALIAS FOR $2;
+    Addr_Street2 ALIAS FOR $3;
+    Addr_City ALIAS FOR $4;
+    Addr_State ALIAS FOR $5;
+    Addr_Zip ALIAS FOR $6;
+    C_FName ALIAS FOR $7;
+    C_LName ALIAS FOR $8;
+    C_Phone ALIAS FOR $9;
+    C_Email ALIAS FOR $10;
+    C_Data ALIAS FOR $11;
+    SC_ID ALIAS FOR $12;
+    C_Discount ALIAS FOR $13;
+    C_BirthDate ALIAS FOR $14;
 
-DECLARE
+    C_Addr_ID numeric(10,0);
+    Co_ID smallint;
+    C_UName char(20);
+    C_PassWD char(20);
+    CurrentTime timestamp;
+    C_Expire timestamp;
+    CurrentDate date;
+    tmpdate date;
+  BEGIN
+	SELECT INTO Co_ID co_id FROM country WHERE co_name=Co_Name;
+    SELECT INTO C_Addr_ID addr_id  FROM address
+     WHERE addr_co_id=Co_ID AND addr_zip=Addr_Zip AND
+           addr_state=Addr_State AND addr_city=Addr_City AND
+           addr_street1=Addr_Street1 AND addr_street2=Addr_Street2;
+    IF NOT FOUND THEN
+      C_Addr_ID = nextval(''AddrID'');
+      INSERT INTO address VALUES (C_Addr_ID, Addr_Street1, Addr_Street2, Addr_City, Addr_State, Addr_Zip, Co_ID);
+    END IF;
+  END;
+' LANGUAGE 'plpgsql';
 
-	Country_Name alias for $1;
-	Addresse_Street1 alias for $2;
-	Addresse_Street2 alias for $3;
-	Addresse_City alias for $4;
-	Addresse_State alias for $5;
-	Addresse_Zip alias for $6;
-	Cust_FName alias for $7;
-	Cust_LName alias for $8;
-	Cust_Phone alias for $9;
-	Cust_Email alias for $10;
-	Cust_Data alias for $11;
-	Shopcart_ID alias for $12;
-	Cust_Discount alias for $13;
-	Cust_BirthDate alias for $14;
-	Cust_ID numeric(10,0);
+-- SELECT CustID.NEXTVAL into :c_id from sysdba.dual;
+-- CALL DigSyl(:C_ID, 0, :C_UName);
+-- set C_PassWD=lower(C_UName);
+-- set CurrentTime = timestamp;
+-- set CurrentDate = date;
+-- set C_Expire = addtime(CurrentTime, '00020000');
+-- set tmpdate=C_BirthDate;
+-- INSERT INTO dbt.customer(c_id, c_uname,c_passwd,c_fname,c_lname,c_addr_id,
+--   c_phone,c_email,c_since,c_last_visit,c_login,c_expiration,c_discount,
+--   c_balance, c_ytd_pmt, c_birthdate, c_data) values(:C_ID, :C_UName, :C_PassWD,
+--   :C_FName, :C_LName, :C_Addr_ID, :C_Phone, :C_Email, :CurrentDate,
+--   :CurrentDate, :CurrentTime, :C_Expire, :C_Discount, 0.00, 0.00,
+--   :tmpdate, :C_Data);
 
-	Cust_Addr_ID numeric(10,0);
-	Country_ID smallint;
-	Cust_UName char(20);
-	Cust_PassWD char(20);
-      	CurrentTime timestamp;
-	Cust_Expire timestamp;
-	CurrentDate date;
-	tmpdate date;
 
-BEGIN
-SELECT co_id INTO Country_ID FROM country WHERE co_name=Country_Name;
-SELECT addr_id INTO Cust_Addr_ID FROM address
- WHERE addr_co_id=Country_ID AND addr_zip=Addresse_Zip AND
-       addr_state=Addresse_State AND addr_city=Addresse_City AND
-       addr_street1=Addresse_Street1 AND addr_street2=Addresse_Street2;
-IF FOUND THEN
-  Cust_Addr_ID := nextval(''addrid'');
-  INSERT INTO address VALUES (Cust_Addr_ID, Addresse_Street1, Addresse_Street2, Addresse_City, Addresse_State, Addresse_Zip, Country_ID);
-END If;
-Cust_id := nextval(''custid'');
-Cust_UName := DigSyl(Cust_id,0);
-Cust_PassWD:=lower(Cust_UName);
-CurrentTime := ''now'';
-CurrentDate := current_date;
--- Change Cust_Expire := CurrentTime + ''00020000'' by using addTime() function;
-Cust_Expire := ''tomorrow'';
-tmpdate:= Cust_BirthDate;
-INSERT INTO customer(c_id, c_uname,c_passwd,c_fname,c_lname,c_addr_id,
-  c_phone,c_email,c_since,c_last_visit,c_login,c_expiration,c_discount,
-  c_balance, c_ytd_pmt, c_birthdate, c_data) values(Cust_ID, Cust_UName, Cust_PassWD,
-  Cust_FName, Cust_LName, Cust_Addr_ID, Cust_Phone, Cust_Email, CurrentDate,
-  CurrentDate, CurrentTime, Cust_Expire, Cust_Discount, 0.00, 0.00,
-  tmpdate, Cust_Data);
-RETURN Cust_id;
-END;
-'LANGUAGE 'plpgsql'
+-- 
+-- Usage:
+-- 
+-- SELECT InsertCust(  Co_Name varchar(50),
+--  Addr_Street1 varchar(40),
+--  Addr_Street2 varchar(40),
+--  Addr_City varchar(30),
+--  Addr_State varchar(20),
+--  Addr_Zip varchar(10),
+--  C_FName varchar(15),
+--  C_LName varchar(15),
+--  C_Phone varchar(16),
+--  C_Email varchar(50),
+--  C_Data varchar(500),
+--  SC_ID numeric(10,0),
+--  C_Discount fixed(5,2),
+--  C_BirthDate char(8) );
+

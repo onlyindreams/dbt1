@@ -3,9 +3,10 @@
 -- This file is released under the terms of the Artistic License.  Please see
 -- the file LICENSE, included in this package, for details.
 --
--- Copyright (C) 2002 Mark Wong & Jenny Zhang &
---                    Open Source Development Lab, Inc.
--- Copyright (C) 2003 Satoshi Nagayasu
+-- Copyright (C) 2002 Open Source Development Lab, Inc.
+-- History:
+-- Feb 2001: Created by Mark Wong & Jenny Zhang
+-- June 2003: Rewritten by NAGAYASU Satoshi for PostgreSQL
 --
 --
 CREATE OR REPLACE FUNCTION admin_request ( NUMERIC(10) ) RETURNS SETOF RECORD AS '

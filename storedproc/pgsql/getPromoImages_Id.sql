@@ -3,9 +3,10 @@
  * This file is released under the terms of the Artistic License.  Please see
  * the file LICENSE, included in this package, for details.
  *
- * Copyright (C) 2002 Mark Wong & Jenny Zhang &
- *                    Open Source Development Lab, Inc.
- * Contributors : Virginie Megy & Thierry Missimilly
+ * Copyright (C) 2002 Open Source Development Lab, Inc.
+ * History:
+ * Feb 2002: Original version created by Mark Wong & Jenny Zhang 
+ * Apr 2003: Rewritten for PostgreSQL by Virginie Megy & Thierry Missimilly
  *		  Bull, Linux Competence Center
  *
  */
