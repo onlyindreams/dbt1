@@ -134,7 +134,6 @@ int init_common()
 		strcat(output_path, "/");
 	}
 	sprintf(path, "%s%s", output_path, ERROR_LOG_NAME);
-printf("%s\n", path);
 	log_error = fopen(path, "w");
 	if (log_error == NULL)
 	{
