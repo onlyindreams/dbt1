@@ -3,7 +3,7 @@
 #note: if DATA_CACHE is too big, it should be reduced before backup
 #otherwise we get I/O error
 #echo "changing data_cache to 10000"
-#_o=`cat <<EOF |  /opt/sapdb/depend/bin/dbmcli -d $SID -u dbm,dbm 2>&1
+#_o=`cat <<EOF |  /opt/sapdb/depend/bin/dbmcli -d $SID1 -u dbm,dbm 2>&1
 #param_startsession
 #param_put DATA_CACHE 10000
 #param_checkall
@@ -17,7 +17,7 @@
 #fi
 
 echo "restore db"
-_o=`cat <<EOF | dbmcli -d DBT1 -u dbm,dbm 2>&1
+_o=`cat <<EOF | dbmcli -d $SID1 -u dbm,dbm 2>&1
 db_stop
 db_cold
 util_connect dbm,dbm
@@ -35,7 +35,7 @@ if [ "$_test" = "" ]; then
 fi
 
 #echo "changing data_cache back to 262144"
-#_o=`cat <<EOF |  /opt/sapdb/depend/bin/dbmcli -d $SID -u dbm,dbm 2>&1
+#_o=`cat <<EOF |  /opt/sapdb/depend/bin/dbmcli -d $SID1 -u dbm,dbm 2>&1
 #param_startsession
 #param_put DATA_CACHE 262144
 #param_put _IDXFILE_LIST_SIZE 8192
