@@ -2,7 +2,7 @@
 CC = gcc
 
 SAPDBROOT=/opt/sapdb/interfaces/odbc
-CFLAGS = -g -I$(INCLUDE_DIR) -I$(SAPDBROOT)/incl -DDEBUG -DGET_TIME
+CFLAGS = -g -I$(INCLUDE_DIR) -I$(SAPDBROOT)/incl -DGET_TIME -DSEARCH_RESULTS_CACHE
 
 COMMON_PRGS = $(COMMON_DIR)/common.c $(COMMON_DIR)/_socket.c
 COMMON_OBJS = $(COMMON_PRGS:.c=.so)
