@@ -23,22 +23,22 @@ int receive_interaction_packet(int s, struct eu_context_t *euc)
 	int result;
 
 	/* Receive transaction type. */
-	if ( (rec=_receive(s, (void *) &euc->interaction, sizeof(euc->interaction))) == -1)
+	if ((rec = _receive(s, (void *) &euc->interaction, sizeof(euc->interaction))) == -1)
 	{
 		LOG_ERROR_MESSAGE("cannot receive interaction type");
 		return W_ERROR;
 	}
-	if (rec==0) return SOCKET_CLOSE;
+	if (rec == 0) return SOCKET_CLOSE;
 	
 	/* receive if the transaction succeeds */
-	if ( (rec=_receive(s, (void *) &result, sizeof(int))) == -1)
+	if ((rec = _receive(s, (void *) &result, sizeof(int))) == -1)
 	{
 		LOG_ERROR_MESSAGE("cannot receive result");
 		return W_ERROR;
 	}
-	if (rec==0) return SOCKET_CLOSE;
+	if (rec == 0) return SOCKET_CLOSE;
 	
-	if (result==W_ERROR) 
+	if (result == W_ERROR) 
 	{
 		LOG_ERROR_MESSAGE("database transaction failed");
 		return W_ERROR;
@@ -100,16 +100,12 @@ int receive_interaction_packet(int s, struct eu_context_t *euc)
 			length = sizeof(struct shopping_cart_t);
 			break;
 	}
-	if ( (rec=_receive(s, data, length)) == -1)
+	if ((rec = _receive(s, data, length)) == -1)
 	{
 		LOG_ERROR_MESSAGE("cannot receive interaction data");
 		return W_ERROR;
 	}
-	if (rec==0) return SOCKET_CLOSE;
-#ifdef DEBUG
-	if (euc->interaction==SHOPPING_CART)
-	DEBUGMSG("sc_id %lld", euc->shopping_cart_data.sc_id);
-#endif
+	if (rec == 0) return SOCKET_CLOSE;
 
 	return OK;
 }
