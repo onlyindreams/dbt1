@@ -11,9 +11,9 @@
 CREATE DBPROC order_display(IN c_uname VARCHAR(20), IN c_passwd VARCHAR(20),
 OUT c_fname VARCHAR(15), OUT c_lname VARCHAR(15),
 OUT c_phone VARCHAR(16), OUT c_email VARCHAR(50), 
-OUT o_id FIXED(10), OUT o_date char(20),
+OUT o_id FIXED(10), OUT o_date char(26),
 OUT o_sub_total FIXED(17, 2), OUT o_tax FIXED(17, 2), OUT o_total FIXED(17, 2),
-OUT o_ship_type VARCHAR(10), OUT o_ship_date char(20),
+OUT o_ship_type VARCHAR(10), OUT o_ship_date char(26),
 OUT o_status VARCHAR(15),  OUT cx_type varchar(10), OUT cx_auth_id varchar(15),
 OUT bill_addr_street1 VARCHAR(40), OUT bill_addr_street2 VARCHAR(40),
 OUT bill_addr_city VARCHAR(30), OUT bill_addr_state VARCHAR(20),
@@ -101,17 +101,37 @@ OUT ol_comments19 VARCHAR(100),
 OUT i_id20 FIXED(10), OUT i_title20 VARCHAR(60),
 OUT i_publisher20 VARCHAR(60), OUT i_cost20 FIXED(17, 2),
 OUT ol_qty20 FIXED(3), OUT ol_discount20 FIXED(17, 2),
-OUT ol_comments20 VARCHAR(100),
-OUT retcode fixed(1,0)) AS
+OUT ol_comments20 VARCHAR(100)) AS
   VAR c_id FIXED(10); o_bill_addr_id FIXED(10);
       o_ship_addr_id FIXED(10); tmptimestamp1 TIMESTAMP; 
       tmptimestamp2 TIMESTAMP;
 BEGIN
+  c_fname='';
+  c_lname='';
+  c_phone='';
+  c_email='';
   o_id=0;
   o_date='';
-  o_sub_total=0;
-  o_tax=0;
-  o_total=0;
+  o_sub_total=0.00;
+  o_tax=0.00;
+  o_total=0.00;
+  o_ship_type='';
+  o_ship_date='';
+  o_status='';
+  cx_type='';
+  cx_auth_id='';
+  bill_addr_street1='';
+  bill_addr_street2='';
+  bill_addr_city='';
+  bill_addr_state='';
+  bill_addr_zip='';
+  bill_co_name='';
+  ship_addr_street1='';
+  ship_addr_street2='';
+  ship_addr_city='';
+  ship_addr_state='';
+  ship_addr_zip='';
+  ship_co_name='';
   num_item=0;
   CALL initOrderItems( 
       :i_id1, :i_title1, :i_publisher1, :i_cost1, :ol_qty1, :ol_discount1, :ol_comments1,
@@ -135,24 +155,20 @@ BEGIN
        :i_id19, :i_title19, :i_publisher19, :i_cost19, :ol_qty19, :ol_discount19, :ol_comments19,
        :i_id20, :i_title20, :i_publisher20, :i_cost20, :ol_qty20, :ol_discount20, :ol_comments20);
   SELECT c_id, c_fname, c_lname, c_phone, c_email
+  INTO :c_id, :c_fname, :c_lname, :c_phone, :c_email
   FROM dbt.customer
   WHERE c_uname = :c_uname
     AND c_passwd = :c_passwd;
-  IF $rc = 0 THEN
-    BEGIN
-      FETCH INTO :c_id, :c_fname, :c_lname, :c_phone, :c_email;
-      SELECT o_id, o_date, o_sub_total, o_tax, o_total, o_ship_type,
-        o_ship_date, o_status, o_bill_addr_id, o_ship_addr_id
+      SELECT o_id, CHAR(o_date,ISO), o_sub_total, o_tax, o_total, o_ship_type,
+        CHAR(o_ship_date,ISO), o_status, o_bill_addr_id, o_ship_addr_id
         FROM dbt.orders
         WHERE o_c_id = :c_id
         ORDER BY o_date DESC;
       IF $rc = 0 THEN
       BEGIN
-        FETCH INTO :o_id, :tmptimestamp1, :o_sub_total, :o_tax,
-                   :o_total, :o_ship_type, :tmptimestamp2, :o_status,
+        FETCH INTO :o_id, :o_date, :o_sub_total, :o_tax,
+                   :o_total, :o_ship_type, :o_ship_date, :o_status,
                    :o_bill_addr_id, :o_ship_addr_id;
-        set o_date=tmptimestamp1;
-        set o_ship_date=tmptimestamp2;
         SELECT cx_type, cx_auth_id
           FROM dbt.cc_xacts
           WHERE cx_o_id = :o_id;
@@ -190,10 +206,6 @@ BEGIN
        :i_id18, :i_title18, :i_publisher18, :i_cost18, :ol_qty18, :ol_discount18, :ol_comments18,
        :i_id19, :i_title19, :i_publisher19, :i_cost19, :ol_qty19, :ol_discount19, :ol_comments19,
        :i_id20, :i_title20, :i_publisher20, :i_cost20, :ol_qty20, :ol_discount20, :ol_comments20);
-        set retcode=1;
-      end
-      else retcode=2;
-    end
-  else retcode=3;
+      end;
 END;
 ;
