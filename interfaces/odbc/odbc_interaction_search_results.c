@@ -112,6 +112,9 @@ int execute_search_results(struct odbc_context_t *odbcc,
 			LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
 			return W_ERROR;
 		}
+	}
+	for (j = 0; j < PROMOTIONAL_ITEMS_MAX; j++)
+	{
 		rc = SQLBindParameter(odbcc->hstmt,
 			i++, SQL_PARAM_OUTPUT, SQL_C_ULONG, SQL_INTEGER, 0, 0,
 			&odbcd->search_results_odbc_data.eb.pp_data.i_thumbnail[j], 0,
