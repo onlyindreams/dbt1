@@ -27,34 +27,53 @@ then
 else
 	echo "build the database without generating the data file"
 fi
+	date
 	echo "drop db"
 	./drop_db.sh
 	echo
 	
+	date
 	echo "create db"
 	./create_db.sh
 	echo
 	
+	date
 	echo "create tables"
 	./create_tables.sh
 	echo
 	
-	echo "start to load db"
 	date
-	
 	echo "load db"
 	./load_db.sh
 	echo
+
+	echo "backup so that we can add foreign key"
+	./backup_db.sh
+	echo
 	
-	echo "start to create index"
 	date
-	
+	echo "create foreign key"
+	./create_fk.sh
+	echo
+
+	date
 	echo "create indexes"
 	./create_indexes.sh
 	echo
 	
+	date
+	echo "create prejoined tables for large database"
+	./add_aux_structure.sh
+	echo
+	
+	date
 	echo "load dbproc"
 	./load_dbproc.sh
+	echo
+	
+	date
+	echo "update statistics"
+	./update_stats.sh
 	echo
 	
 	echo "start to backup"
