@@ -14,11 +14,13 @@ LIBS = $(SAPDBROOT)/lib/libsqlod.so -lm -lpthread
 
 all: eu_p1.so eu_p2.so tm_interface.so dbdriver_p1 dbdriver_p2
 
-dbdriver_p1: Makefile main.c ../include/eu.h eu_p1.so ../common/common.so \
-	$(ODBC_OBJS) ../common.mk
+dbdriver_p1: Makefile main.c $(INCLUDE_DIR)/eu.h eu_p1.so \
+	$(COMMON_DIR)/common.so $(ODBC_OBJS) ../common.mk \
+	$(INCLUDE_DIR)/cache.h ../cache/cache_interface.so \
+	$(INCLUDE_DIR)/_socket.h
 	$(CC) $(CFLAGS_P1) main.c -o dbdriver_p1 eu_p1.so \
-		../common/common.so  $(ODBC_OBJS) \
-		$(LIBS)
+		../common/common.so  $(ODBC_OBJS) ../cache/cache_interface.so \
+		$(COMMON_DIR)/_socket.so $(LIBS)
 
 eu_p1.so: Makefile eu.c ../include/eu.h ../include/common.h ../common.mk
 	$(CC) -c $(CFLAGS_P1) eu.c -o eu_p1.so
