@@ -8,6 +8,7 @@
  *
  */
 
+#include <unistd.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <signal.h>
@@ -17,10 +18,11 @@
 #include <pthread.h>
 #include <string.h>
 #include <errno.h>
-#include "app_threadpool.h"
-#include "app_txn_queue.h"
-#include "app_txn_array.h"
-#include "common.h"
+#include <app_threadpool.h>
+#include <app_txn_queue.h>
+#include <app_txn_array.h>
+#include <common.h>
+#include <_socket.h>
 #include <odbc_interaction_admin_confirm.h>
 #include <odbc_interaction_admin_request.h>
 #include <odbc_interaction_best_sellers.h>
@@ -32,7 +34,9 @@
 #include <odbc_interaction_order_inquiry.h>
 #include <odbc_interaction_product_detail.h>
 #include <odbc_interaction_shopping_cart.h>
+#include <odbc_interaction_search_request.h>
 #include <odbc_interaction_search_results.h>
+#include <cache_interface.h>
 #include <sql.h>
 #include <sqlext.h>
 
@@ -75,8 +79,6 @@ int init_thread_pool(int PoolThreads, int TxnQSize, char *sname, char *uname, ch
 {
 	int i;
 	pthread_t ThreadID;
-        struct timeval st, et;
-        double time_diff;
 
 	//create semaphore with initial value 0, and local to current process
 	if (sem_init(&TxnQSem, 0, 0) == -1) return FALSE;
@@ -113,7 +115,6 @@ void *DoTxn(void *fd)
 	int rc;
 	struct QItem TxnQItem;
 	int QIndex;
-	int i;
 #ifdef GET_TIME
         struct timeval txn_start_time, txn_end_time;
 #endif
