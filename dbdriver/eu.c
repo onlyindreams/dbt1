@@ -417,7 +417,9 @@ int do_interaction(struct eu_context_t *euc)
 	}
 
 	if (euc->interaction == SHOPPING_CART) 
+	{
 		euc->sc_id = euc->shopping_cart_data.sc_id;
+	}
 	else if (euc->interaction == BUY_REQUEST) 
 		euc->c_id = euc->buy_request_data.c_id;
 	/* reset sc_id after buy_confirm */
@@ -692,6 +694,7 @@ int dump_interaction_output(struct eu_context_t *euc)
  */
 int dump_interaction_data(struct eu_context_t *euc)
 {
+	int i;
 	LOG_ERROR_MESSAGE(
 		"dumping %s interaction data\n"
 		"c_id %lld\n"
@@ -868,6 +871,17 @@ int dump_interaction_data(struct eu_context_t *euc)
 				euc->search_results_data.search_string);
 			break;
 		case SHOPPING_CART:
+			LOG_ERROR_MESSAGE(
+				"add_flag %d\n"
+				"sc_size %d",
+				euc->shopping_cart_data.add_flag,
+				euc->shopping_cart_data.sc_size);
+			for (i=0;i<euc->shopping_cart_data.sc_size; i++)
+			{
+				LOG_ERROR_MESSAGE("i_id %lld\n"
+						  "i_qty %d",
+						euc->shopping_cart_data.scl_data[i].scl_i_id, euc->shopping_cart_data.scl_data[i].scl_qty);
+			}
 			break;
 		default:
 			LOG_ERROR_MESSAGE("unknown interaction %d", euc->interaction);
@@ -1699,6 +1713,11 @@ int prepare_search_results(struct eu_context_t *euc)
  */
 int prepare_shopping_cart(struct eu_context_t *euc)
 {
+	int random_pairs;
+	int *update_flag;
+	int update_index;
+	int update_done;
+
 	euc->shopping_cart_data.sc_id = euc->sc_id;
 	euc->shopping_cart_data.c_id = euc->c_id;
 
@@ -1710,6 +1729,7 @@ int prepare_shopping_cart(struct eu_context_t *euc)
 	{
 		/* Generally, a user goes to the shopping cart to view it. */
 		euc->shopping_cart_data.add_flag = FALSE;
+		euc->shopping_cart_data.sc_size = 0;
 	}
 	else if (euc->previous_interaction == SHOPPING_CART)
 	{
@@ -1722,14 +1742,38 @@ int prepare_shopping_cart(struct eu_context_t *euc)
 		 */
 		euc->shopping_cart_data.add_flag = FALSE;
 
-		/*
-		 * Basing the new scl_qty on Clause 4.7.1 for ol_qty but I'm not sure
-		 * if this is correct...
-		 */
-		for (i = 0; i < euc->shopping_cart_data.sc_size; i++)
+		/* clause 2.4.5.1 if there is only one (i_id, qty) pair, qty is 
+		   a random number between 1 and 10 */
+		if (euc->shopping_cart_data.sc_size==1)
+			euc->shopping_cart_data.scl_data[0].scl_qty=get_random(10)+1;
+		/* else select a random number between 1 and one less than the 
+		   number of pairs.
+		   for each selected pair, the qty is set to a random number 
+		   between 0 and 10 */
+		else 
 		{
-			euc->shopping_cart_data.scl_data[i].scl_qty = get_random(301);
-		}
+			update_flag = (int *)malloc(sizeof(int)*euc->shopping_cart_data.sc_size);
+			for (i=0;i<euc->shopping_cart_data.sc_size; i++)
+				update_flag[i]=0;
+			update_done=0;
+
+			random_pairs=get_random(euc->shopping_cart_data.sc_size-1)+1;
+			for (i=0; i<random_pairs; i++)
+			{
+				while (update_done == 0)
+				{
+					update_index=get_random(euc->shopping_cart_data.sc_size);
+					if (update_flag[update_index] == 0)
+					{
+						euc->shopping_cart_data.scl_data[update_index].scl_qty=get_random(11);
+						update_flag[update_index]=1;
+						update_done=1;
+					}
+				}
+				update_done=0;
+			}
+			free(update_flag);
+		}	
 	}
 	else
 	{
@@ -1814,6 +1858,7 @@ void *start_eu(void *data)
 
 		/* The Home interaction is always first. */
 		euc.interaction = HOME;
+		euc.previous_interaction = HOME;
 		euc.sc_id = UNKNOWN_SHOPPING_CART;
 		euc.first_interaction=TRUE;
 		/* do Home interaction, retry RETRY time if error happens */
