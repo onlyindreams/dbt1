@@ -44,9 +44,8 @@ int main(int argc, char *argv[])
 	int addrlen, author_step, title_step;
 	int i, j, rec;
 	struct sigaction sa;
-	char output_buffer[256];
 
-	setvbuf(stdout, output_buffer, _IOLBF, 256);
+	setlinebuf(stdout);
 	memset(&sa, 0, sizeof(sa));
 	sa.sa_handler = &sighandler;
 	if (sigaction(SIGUSR1, &sa, NULL) == -1)
