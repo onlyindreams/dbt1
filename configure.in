@@ -32,4 +32,4 @@ AC_CHECK_FUNCS(gettimeofday mktime socket strdup)
 TOPDIR=`pwd`
 AC_SUBST(TOPDIR)
 
-AC_OUTPUT(make.common Makefile cache/Makefile common/Makefile dbdriver/Makefile wgen/Makefile interfaces/odbc/Makefile appServer/Makefile tools/Makefile datagen/Makefile)
+AC_OUTPUT(make.common Makefile cache/Makefile common/Makefile dbdriver/Makefile wgen/Makefile interfaces/Makefile interfaces/odbc/Makefile appServer/Makefile tools/Makefile datagen/Makefile)
