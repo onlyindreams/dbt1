@@ -10,7 +10,7 @@ INCLUDE_DIR=../include
 
 CFLAGS_P1 = $(CFLAGS) -DPHASE1
 CFLAGS_P2 = $(CFLAGS) -DPHASE2
-LIBS = $(SAPDBROOT)/lib/libsqlod.so -lm
+LIBS = $(ODBC_LIB) -lm
 
 all: odbc_test_p1 odbc_test_p2 results load_db_proc
 
@@ -36,9 +36,9 @@ results: Makefile results.c ../include/common.h
 
 load_db_proc: Makefile load_db_proc.c ../include/odbc_interaction.h \
 		../interfaces/odbc/odbc_interaction.so ../include/common.h
-	$(CC) -g -I../include -I$(SAPDBROOT)/incl load_db_proc.c -o load_db_proc \
+	$(CC) -g -I../include -I$(ODBC_INCL) load_db_proc.c -o load_db_proc \
 		../interfaces/odbc/odbc_interaction.so ../common/common.so \
-		$(SAPDBROOT)/lib/libsqlod.so -lm
+		$(LIBS)
 
 $(COMMON_OBJS):$(COMMON_PRGS)
 	cd $(COMMON_DIR); $(MAKE)

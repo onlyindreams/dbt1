@@ -10,7 +10,7 @@ ODBC_DIR=../interfaces/odbc
 CFLAGS_P1 = $(CFLAGS) -DPHASE1
 CFLAGS_P2 = $(CFLAGS) -DPHASE2
 
-LIBS = $(SAPDBROOT)/lib/libsqlod.so -lm -lpthread
+LIBS = $(ODBC_LIB) -lm -lpthread
 
 all: eu_p1.so eu_p2.so tm_interface.so dbdriver_p1 dbdriver_p2
 
