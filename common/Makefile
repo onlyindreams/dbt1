@@ -3,7 +3,10 @@
 
 include ../common.mk
 
-all: common.o _socket.o
+COMMON_DIR=../common
+INCLUDE_DIR=../include
+
+all: $(COMMON_OBJS)
 
 %.o:%.c
 	$(CC) -c $(CFLAGS) -o $@ $<
