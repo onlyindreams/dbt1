@@ -8,18 +8,19 @@ then
 		then echo "usage: $0 -g <items> <eus>" 
 		exit
 	else
-		if [ $# -ne 3 ]
-			then echo "usage: $0 -g <items> <eus>" 
+		if [ $# -ne 7 ]
+			then echo "usage: $0 -g -i <items> -u <eus> -p <path>" 
 			exit
 		else
-			ITEMS=$2
-			EUS=$3	
+			ITEMS=$3
+			EUS=$5	
+			PATH=$7
 		fi
 	fi
 	echo "Generating data... $ITEMS item and $EUS eu"
 	cd ../../datagen
 	date
-	./datagen $ITEMS $EUS
+	./datagen -i $ITEMS -u $EUS -p $PATH
 	echo "data file is generated"
 	date
 	cd -
