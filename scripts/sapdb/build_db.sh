@@ -5,22 +5,23 @@ if [ $# -ne 0 ] # Script invoked with command-line args
 then
 	getopts "g" Option
 	if [ $Option != "g" ]
-		then echo "usage: $0 -g -i <items> -u <eus> -p <path>" 
+		then echo "usage: $0 -g -d <rdbms> -i <items> -u <eus> -p <path>" 
 		exit
 	else
-		if [ $# -ne 7 ]
-			then echo "usage: $0 -g -i <items> -u <eus> -p <path>" 
+		if [ $# -ne 9 ]
+			then echo "usage: $0 -g -d <rdbms> -i <items> -u <eus> -p <path>" 
 			exit
 		else
-			ITEMS=$3
-			EUS=$5	
-			DATA_PATH=$7
+			RDBMS=$3
+			ITEMS=$5
+			EUS=$7	
+			DATA_PATH=$9
 		fi
 	fi
 	echo "Generating data... $ITEMS item and $EUS eu"
 	cd ../../datagen
 	date
-	./datagen -i $ITEMS -u $EUS -p $DATA_PATH
+	./datagen -d $RDBMS -i $ITEMS -u $EUS -p $DATA_PATH
 	echo "data file is generated"
 	date
 	cd -
