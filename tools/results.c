@@ -10,9 +10,11 @@
  * 9 april 2002
  */
 
+#include <unistd.h>
 #include <stdio.h>
 #include <time.h>
 #include <string.h>
+#include <ctype.h>
 #include <common.h>
 
 const char *interaction_name[INTERACTION_TOTAL] =
@@ -38,7 +40,8 @@ int main(int argc, char *argv[])
 	long long total_interaction_count = 0;
 	long long interaction_count[INTERACTION_TOTAL];
 	float interaction_response_time[INTERACTION_TOTAL];
-	int error_count,rc;
+	int error_count, rc;
+	char mix_filename[256];
 
 	time_t previous_time;
 	int elapsed_time = 0;
@@ -46,19 +49,46 @@ int main(int argc, char *argv[])
 
 	char marker[128];
 
-	error_count = 0;
-	previous_time=0;
+	int c;
 
-	if (argc != 2)
+	if (argc != 3)
 	{
-		printf("usage: %s <filename>\n", argv[0]);
+		printf("usage: %s -f <filename>\n", argv[0]);
 		return 1;
 	}
 
-	log_mix = fopen(argv[1], "r");
+	error_count = 0;
+	previous_time=0;
+
+	opterr = 0;
+	while ((c = getopt(argc, argv, "f:")) != -1)
+	{
+		switch (c)
+		{
+			case 'f':
+				strcpy(mix_filename, optarg);
+				break;
+			case '?':
+				if (isprint(optopt))
+				{
+					fprintf(stderr, "Unknown option `-%c'.\n", optopt);
+				}
+				else
+				{
+					fprintf (stderr, "Unknown option character `\\x%x'.\n",
+						optopt);	
+				}
+				return 1;
+			default:
+				printf("usage: %s <filename>\n", argv[0]);
+				return 1;
+		}
+	}
+
+	log_mix = fopen(mix_filename, "r");
 	if (log_mix == NULL)
 	{
-		printf("cannot open %s for reading\n", argv[1]);
+		printf("cannot open %s for reading\n", mix_filename);
 		return 2;
 	}
 
