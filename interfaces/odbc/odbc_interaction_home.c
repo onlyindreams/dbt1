@@ -11,38 +11,8 @@
  */
 
 #include <odbc_interaction_home.h>
-#include <odbc_interaction.h>
-#include <sql.h>
-#include <sqlext.h>
 
-#ifdef PHASE1
-int copy_in_home(struct eu_context_t *euc, union odbc_data_t *odbcd)
-{
-	odbcd->home_odbc_data.eb.c_id = (UDWORD) euc->home_data.c_id;
-	return OK;
-}
-
-int copy_out_home(struct eu_context_t *euc, union odbc_data_t *odbcd)
-{
-	int i;
-
-	if (odbcd->home_odbc_data.eb.c_id != UNKNOWN_CUSTOMER)
-	{
-		strcpy(euc->home_data.c_fname, odbcd->home_odbc_data.eb.c_fname);
-		strcpy(euc->home_data.c_lname, odbcd->home_odbc_data.eb.c_lname);
-	}
-	for (i = 0; i < PROMOTIONAL_ITEMS_MAX; i++)
-	{
-		euc->home_data.pp_data.i_related[i] =
-			odbcd->home_odbc_data.eb.pp_data.i_related[i];
-		euc->home_data.pp_data.i_thumbnail[i] =
-			odbcd->home_odbc_data.eb.pp_data.i_thumbnail[i];
-	}
-	return OK;
-}
-#endif /* PHASE1*/
-
-int execute_home(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
+int execute_home(struct db_context_t *odbcc, struct home_t *data)
 {
 	SQLRETURN rc;
 	int i, j;
@@ -59,7 +29,7 @@ int execute_home(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 	j = 1;
 	rc = SQLBindParameter(odbcc->hstmt,
 		j++, SQL_PARAM_INPUT, SQL_C_ULONG, SQL_INTEGER, 0, 0,
-		&odbcd->home_odbc_data.eb.c_id, 0, NULL);
+		&data->c_id, 0, NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
 		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
@@ -67,7 +37,7 @@ int execute_home(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 	}
 	rc = SQLBindParameter(odbcc->hstmt,
 		j++, SQL_PARAM_INPUT, SQL_C_ULONG, SQL_INTEGER, 0, 0,
-		&odbcd->home_odbc_data.eb.pp_data.i_id, 0, NULL);
+		&data->pp_data.i_id, 0, NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
 		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
@@ -76,8 +46,7 @@ int execute_home(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 
 	rc = SQLBindParameter(odbcc->hstmt,
 		j++, SQL_PARAM_OUTPUT, SQL_C_CHAR, SQL_VARCHAR, 0, 0,
-		odbcd->home_odbc_data.eb.c_fname,
-		sizeof(odbcd->home_odbc_data.eb.c_fname), NULL);
+		data->c_fname, sizeof(data->c_fname), NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
 		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
@@ -85,8 +54,7 @@ int execute_home(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 	}
 	rc = SQLBindParameter(odbcc->hstmt,
 		j++, SQL_PARAM_OUTPUT, SQL_C_CHAR, SQL_VARCHAR, 0, 0,
-		odbcd->home_odbc_data.eb.c_lname,
-		sizeof(odbcd->home_odbc_data.eb.c_lname), NULL);
+		data->c_lname, sizeof(data->c_lname), NULL);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
 		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
@@ -96,7 +64,7 @@ int execute_home(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 	{
 		rc = SQLBindParameter(odbcc->hstmt,
 			j++, SQL_PARAM_OUTPUT, SQL_C_ULONG, SQL_INTEGER, 0, 0,
-			&odbcd->home_odbc_data.eb.pp_data.i_related[i], 0, NULL);
+			&data->pp_data.i_related[i], 0, NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
 			LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
@@ -104,7 +72,7 @@ int execute_home(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 		}
 		rc = SQLBindParameter(odbcc->hstmt,
 			j++, SQL_PARAM_OUTPUT, SQL_C_ULONG, SQL_INTEGER, 0, 0,
-			&odbcd->home_odbc_data.eb.pp_data.i_thumbnail[i], 0, NULL);
+			&data->pp_data.i_thumbnail[i], 0, NULL);
 		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 		{
 			LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
@@ -113,36 +81,15 @@ int execute_home(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 	}
 
 	/* Generate random number for Promotional Processing. */
-	odbcd->home_odbc_data.eb.pp_data.i_id =
-		(UDWORD) get_random((long long) item_count) + 1;
+	data->pp_data.i_id = (UDWORD) get_random((long long) item_count) + 1;
 
 	/* Execute stored procedure. */
 	rc = SQLExecute(odbcc->hstmt);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
 		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
-#ifndef AUTOCOMMIT_OFF
-		return W_ERROR;
-#endif
-	}
-
-#ifdef AUTOCOMMIT_OFF
-	if (rc == SQL_SUCCESS)
-	{
-		/* Commit. */
-		rc = SQLEndTran(SQL_HANDLE_DBC, odbcc->hdbc, SQL_COMMIT);
-	}
-	else
-	{
-		/* Rollback. */
-		rc = SQLEndTran(SQL_HANDLE_DBC, odbcc->hdbc, SQL_ROLLBACK);
-	}
-	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
-	{
-		LOG_ODBC_ERROR(SQL_HANDLE_DBC, odbcc->hdbc);
 		return W_ERROR;
 	}
-#endif
 
 	return OK;
 }
