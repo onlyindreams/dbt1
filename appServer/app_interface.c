@@ -195,6 +195,7 @@ int send_transaction_packet(int s, struct QItem TxnQItem)
 	void *data;
 	int length;
 	int interaction;
+	int result;
 
 	interaction=TxnQItem.TxnType;
 	if (_send(s, &interaction, sizeof(int)) == -1)
@@ -205,66 +206,117 @@ int send_transaction_packet(int s, struct QItem TxnQItem)
 	switch (interaction)
 	{
 		case ADMIN_CONFIRM:
-			data = &(app_admin_confirm_array.odbc_data_array[TxnQItem.SlotID].admin_confirm_odbc_data.eb);
-			length = sizeof(struct admin_confirm_t);
-			break;
+			result = app_admin_confirm_array.txn_result[TxnQItem.SlotID];
+				break;
 		case ADMIN_REQUEST:
-			data = &(app_admin_request_array.odbc_data_array[TxnQItem.SlotID].admin_request_odbc_data.eb);
-			length = sizeof(struct admin_request_t);
+			result = app_admin_request_array.txn_result[TxnQItem.SlotID];
 			break;
 		case BEST_SELLERS:
-			data = &(app_best_sellers_array.odbc_data_array[TxnQItem.SlotID].best_sellers_odbc_data.eb);
-			length = sizeof(struct best_sellers_t);
+			result = app_best_sellers_array.txn_result[TxnQItem.SlotID];
 			break;
 		case BUY_CONFIRM:
-			data = &(app_buy_confirm_array.odbc_data_array[TxnQItem.SlotID].buy_confirm_odbc_data.eb);
-			length = sizeof(struct buy_confirm_t);
+			result = app_buy_confirm_array.txn_result[TxnQItem.SlotID];
 			break;
 		case BUY_REQUEST:
-			data = &(app_buy_request_array.odbc_data_array[TxnQItem.SlotID].buy_request_odbc_data.eb);
-			length = sizeof(struct buy_request_t);
+			result = app_buy_request_array.txn_result[TxnQItem.SlotID];
 			break;
 		case HOME:
-#ifdef DEBUG
-			DEBUGMSG("thread_id%d: send pkg txntype %d, slot %d", pthread_self(), TxnQItem.TxnType, TxnQItem.SlotID);
-			DEBUGMSG("thread_id%d: c_fname:%s, c_lname:%s", pthread_self(), app_home_array.odbc_data_array[TxnQItem.SlotID].home_odbc_data.eb.c_fname, app_home_array.odbc_data_array[TxnQItem.SlotID].home_odbc_data.eb.c_lname);
-#endif
-			data = &(app_home_array.odbc_data_array[TxnQItem.SlotID].home_odbc_data.eb);
-			length = sizeof(struct home_t);
+			result = app_home_array.txn_result[TxnQItem.SlotID];
 			break; 
 		case NEW_PRODUCTS:
-			data = &(app_new_products_array.odbc_data_array[TxnQItem.SlotID].new_products_odbc_data.eb);
-			length = sizeof(struct new_products_t);
+			result = app_new_products_array.txn_result[TxnQItem.SlotID];
 			break;
 		case ORDER_DISPLAY:
-			data = &(app_order_display_array.odbc_data_array[TxnQItem.SlotID].order_display_odbc_data.eb);
-			length = sizeof(struct order_display_t);
+			result = app_order_display_array.txn_result[TxnQItem.SlotID];
 			break;
 		case ORDER_INQUIRY:
-			data = &(app_order_inquiry_array.odbc_data_array[TxnQItem.SlotID].order_inquiry_odbc_data.eb);
-			length = sizeof(struct order_inquiry_t);
+			result = app_order_inquiry_array.txn_result[TxnQItem.SlotID];
 			break;
 		case PRODUCT_DETAIL:
-			data = &(app_product_detail_array.odbc_data_array[TxnQItem.SlotID].product_detail_odbc_data.eb);
-			length = sizeof(struct product_detail_t);
+			result = app_product_detail_array.txn_result[TxnQItem.SlotID];
 			break;
 		case SEARCH_REQUEST:
-			data = &(app_search_request_array.odbc_data_array[TxnQItem.SlotID].search_request_odbc_data.eb);
-			length = sizeof(struct search_request_t);
+			result = app_search_request_array.txn_result[TxnQItem.SlotID];
 			break;
 		case SEARCH_RESULTS:
-			data = &(app_search_results_array.odbc_data_array[TxnQItem.SlotID].search_results_odbc_data.eb);
-			length = sizeof(struct search_results_t);
+			result = app_search_results_array.txn_result[TxnQItem.SlotID];
 			break;
 		case SHOPPING_CART:
-			data = &(app_shopping_cart_array.odbc_data_array[TxnQItem.SlotID].shopping_cart_odbc_data.eb);
-			length = sizeof(struct shopping_cart_t);
+			result = app_shopping_cart_array.txn_result[TxnQItem.SlotID];
 			break;
 	}
-	if (_send(s, data, length) == -1)
+	if (_send(s, &result, sizeof(int)) == -1)
 	{
-		LOG_ERROR_MESSAGE("cannot send interaction data, errno %d", errno);
+		LOG_ERROR_MESSAGE("cannot send interaction result");
 		return W_ERROR;
+	}
+	
+	if (result==W_OK)
+	{
+		switch (interaction)
+		{
+			case ADMIN_CONFIRM:
+				data = &(app_admin_confirm_array.odbc_data_array[TxnQItem.SlotID].admin_confirm_odbc_data.eb);
+				length = sizeof(struct admin_confirm_t);
+				break;
+			case ADMIN_REQUEST:
+				data = &(app_admin_request_array.odbc_data_array[TxnQItem.SlotID].admin_request_odbc_data.eb);
+				length = sizeof(struct admin_request_t);
+				break;
+			case BEST_SELLERS:
+				data = &(app_best_sellers_array.odbc_data_array[TxnQItem.SlotID].best_sellers_odbc_data.eb);
+				length = sizeof(struct best_sellers_t);
+				break;
+			case BUY_CONFIRM:
+				data = &(app_buy_confirm_array.odbc_data_array[TxnQItem.SlotID].buy_confirm_odbc_data.eb);
+				length = sizeof(struct buy_confirm_t);
+				break;
+			case BUY_REQUEST:
+				data = &(app_buy_request_array.odbc_data_array[TxnQItem.SlotID].buy_request_odbc_data.eb);
+				length = sizeof(struct buy_request_t);
+				break;
+			case HOME:
+	#ifdef DEBUG
+				DEBUGMSG("thread_id%d: send pkg txntype %d, slot %d", pthread_self(), TxnQItem.TxnType, TxnQItem.SlotID);
+				DEBUGMSG("thread_id%d: c_fname:%s, c_lname:%s", pthread_self(), app_home_array.odbc_data_array[TxnQItem.SlotID].home_odbc_data.eb.c_fname, app_home_array.odbc_data_array[TxnQItem.SlotID].home_odbc_data.eb.c_lname);
+	#endif
+				data = &(app_home_array.odbc_data_array[TxnQItem.SlotID].home_odbc_data.eb);
+				length = sizeof(struct home_t);
+				break; 
+			case NEW_PRODUCTS:
+				data = &(app_new_products_array.odbc_data_array[TxnQItem.SlotID].new_products_odbc_data.eb);
+				length = sizeof(struct new_products_t);
+				break;
+			case ORDER_DISPLAY:
+				data = &(app_order_display_array.odbc_data_array[TxnQItem.SlotID].order_display_odbc_data.eb);
+				length = sizeof(struct order_display_t);
+				break;
+			case ORDER_INQUIRY:
+				data = &(app_order_inquiry_array.odbc_data_array[TxnQItem.SlotID].order_inquiry_odbc_data.eb);
+				length = sizeof(struct order_inquiry_t);
+				break;
+			case PRODUCT_DETAIL:
+				data = &(app_product_detail_array.odbc_data_array[TxnQItem.SlotID].product_detail_odbc_data.eb);
+				length = sizeof(struct product_detail_t);
+				break;
+			case SEARCH_REQUEST:
+				data = &(app_search_request_array.odbc_data_array[TxnQItem.SlotID].search_request_odbc_data.eb);
+				length = sizeof(struct search_request_t);
+				break;
+			case SEARCH_RESULTS:
+				data = &(app_search_results_array.odbc_data_array[TxnQItem.SlotID].search_results_odbc_data.eb);
+				length = sizeof(struct search_results_t);
+				break;
+			case SHOPPING_CART:
+				data = &(app_shopping_cart_array.odbc_data_array[TxnQItem.SlotID].shopping_cart_odbc_data.eb);
+				length = sizeof(struct shopping_cart_t);
+				break;
+		}
+		if (_send(s, data, length) == -1)
+		{
+			LOG_ERROR_MESSAGE("cannot send interaction data, errno %d", errno);
+			return W_ERROR;
+		}
 	}
 
 	/* free slot */
