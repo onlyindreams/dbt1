@@ -28,6 +28,7 @@ if [ $1 -eq 0 ]; then
 fi
 if [ $1 -eq 1 ]; then
 	_o=`cat <<EOF | dbmcli -d $SID1 -u dbm,dbm 2>&1
+	db_cold
 	param_startsession
 	param_put LOG_MODE DEMO
 	param_put DATA_CACHE 262144
