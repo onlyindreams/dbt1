@@ -807,15 +807,15 @@ int main(int argc, char *argv[])
 		{
 			case '0':
 				euc.search_results_data.search_type = SEARCH_AUTHOR;
-				strcpy(euc.search_results_data.search_string, "BA");
+				strcpy(euc.search_results_data.search_string, argv[parameter_number+2]);
 				break;
 			case '1':
 				euc.search_results_data.search_type = SEARCH_SUBJECT;
-				strcpy(euc.search_results_data.search_string, "ARTS");
+				strcpy(euc.search_results_data.search_string, argv[parameter_number+2]);
 				break;
 			case '2':
 				euc.search_results_data.search_type = SEARCH_TITLE;
-				strcpy(euc.search_results_data.search_string, "BA");
+				strcpy(euc.search_results_data.search_string, argv[parameter_number+2]);
 				break;
 			default:
 				return 10;
