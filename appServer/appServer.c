@@ -77,6 +77,12 @@ const char *interaction_short_name[INTERACTION_TOTAL] =
 };
 #endif
 
+#ifdef SEARCH_RESULTS_CACHE
+char search_results_cache_host[32];
+int search_results_cache_port;
+#endif
+
+pthread_mutex_t mutex_app_server=PTHREAD_MUTEX_INITIALIZER;
 
 int main(int argc, char *argv[]) 
 {
@@ -90,10 +96,13 @@ int main(int argc, char *argv[])
 	int rec;
 	int port, PoolThreads, TxnQSize, ArraySize;
 
-	if (argc < 8)
+	if (argc < 9)
 	{
-		printf("usage: appServer <dbnodename> <username> <password> <port> <db_connection> <transaction queue size> <transaction array size>\n");
-		//printf("example: ./appServer 9999 10 50 20\n");
+#ifdef SEARCH_RESULTS_CACHE
+		printf("usage: appServer <dbnodename> <username> <password> <port> <db_connection> <transaction queue size> <transaction array size> <items> <search_results_cache_host> <search_results_cache_port>\n");
+#else
+		printf("usage: appServer <dbnodename> <username> <password> <port> <db_connection> <transaction queue size> <transaction array size> <items>\n");
+#endif
 		return -1;
 	}
 	
@@ -104,6 +113,11 @@ int main(int argc, char *argv[])
 	PoolThreads=atoi(argv[5]);
 	TxnQSize=atoi(argv[6]);
 	ArraySize=atoi(argv[7]);
+	item_count=atoi(argv[8]);
+#ifdef SEARCH_RESULTS_CACHE
+	strcpy(search_results_cache_host, argv[9]);
+	search_results_cache_port=atoi(argv[10]);
+#endif
 	init_common();
 	/* create the threadpool. */
 	if (!init_thread_pool(PoolThreads, TxnQSize, sname, uname, auth))
@@ -148,13 +162,14 @@ int main(int argc, char *argv[])
 
 	while (1) {
 		addrlen = sizeof(socketaddr);
+		pthread_mutex_lock(&mutex_app_server);
 		workersock = accept(mastersock, (struct sockaddr *)&socketaddr, (socklen_t *)&addrlen);
 		if (workersock < 0) {
 			LOG_ERROR_MESSAGE("accept couldn't open worker socket, errno %d", errno);
 		}
 
 		connectioncount++;
-		printf("%s, you are user %d\n", WELCOME, connectioncount);
+		printf("%d users logged in\n", connectioncount);
 		if ((rec=pthread_create(&ConnThread, NULL, DoConnection, &workersock)) != 0)    
 		{
 			LOG_ERROR_MESSAGE("pthread_create failed, rec=%d", rec);
@@ -184,6 +199,7 @@ void *DoConnection(void *fd)
 	
 	sf = (int *)(fd);
 	workersock = *sf;
+	pthread_mutex_unlock(&mutex_app_server);
 #ifdef DEBUG
 	DEBUGMSG("pthread_id%ld: DoConnection: got connection", pthread_self());
 #endif
@@ -232,9 +248,9 @@ void *DoConnection(void *fd)
 		DEBUGMSG("pthread_id%ld: wait for txn done...", pthread_self());
 #endif
 		pthread_mutex_lock(&queue_entry_condition[QIndex].condition_mutex);
-		while (!queue_entry_condition[QIndex].txn_done_flag)
-			pthread_cond_wait(&queue_entry_condition[QIndex].txn_done_cv, &queue_entry_condition[QIndex].condition_mutex);
-		queue_entry_condition[QIndex].txn_done_flag=0;
+		while (!queue_entry_condition[QIndex].done_flag)
+			pthread_cond_wait(&queue_entry_condition[QIndex].done_cv, &queue_entry_condition[QIndex].condition_mutex);
+		queue_entry_condition[QIndex].done_flag=0;
 		pthread_mutex_unlock(&queue_entry_condition[QIndex].condition_mutex);
 			
 #ifdef DEBUG
