@@ -493,7 +493,7 @@ void *cache_thread(void *fd)
 		
 		/* look up the results*/
 		index=undo_digsyl(search_results.search_string) - 1;
-		if (index==-1)
+		if (index < 0)
 		{
 			LOG_ERROR_MESSAGE("undo_digsyl failed");
 			close(workersock);
