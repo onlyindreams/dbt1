@@ -27,11 +27,11 @@ odbc_test_p2: $(TOPDIR)/make.common Makefile odbc_test.c $(COMMON_OBJS) \
 		$(LIBS)
 
 results: $(TOPDIR)/make.common Makefile results.c ../common/common.so
-	$(CC) -g -I$(INCLUDE_DIR) results.c -o results -lm ../common/common.so
+	$(CC) $(CFLAGS) results.c -o results -lm ../common/common.so
 
 load_db_proc: $(TOPDIR)/make.common Makefile load_db_proc.c \
-		../interfaces/odbc/odbc_interaction.so
-	$(CC) -g -I$(INCLUDE_DIR) -I$(ODBC_INCL) load_db_proc.c -o load_db_proc \
+		../interfaces/odbc/odbc_interaction.so ../common/common.so
+	$(CC) $(CFLAGS) -I$(ODBC_INCL) load_db_proc.c -o load_db_proc \
 		../interfaces/odbc/odbc_interaction.so ../common/common.so \
 		$(LIBS)
 
