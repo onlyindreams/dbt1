@@ -1,3 +1,228 @@
+2002-10-03 16:22  jztpcw
+
+	* tools/results.c: changed checking fscanf return value so that
+	results can handle the mix.log with/without START mark
+
+2002-10-03 15:23  jztpcw
+
+	* storedproc/sapdb/DigSyl.sql: added copy right info
+
+2002-10-03 15:22  jztpcw
+
+	* storedproc/sapdb/buyconfirm.sql: remove subtrans; instead of
+	using the expression (:i_stock-:scl_qty+21) in the update, evaluate
+	the expression first to work around SAPDB bug
+
+2002-10-03 14:49  jztpcw
+
+	* storedproc/sapdb/shoppingcart.sql: call updateSCSubtotal if
+	shopping_cart_line is changed.	Do not call addToSC if sc_id is
+	known and add_flag=0 and itemcount=0 to reduce access to item table
+
+2002-10-02 13:38  jztpcw
+
+	* storedproc/sapdb/DigSyl.sql: fixed 1 bug: changed
+	SUBSTR('BAOGALRIRESEATILINNG' to SUBSTR('BAOGALRIRESEATULINNG'
+
+2002-10-02 13:34  jztpcw
+
+	* storedproc/sapdb/updateSC.sql: remove subtrans; instead of using
+	the expression (:i_stock-:scl_qty+21) in the update, evaluate the
+	expression first to work around SAPDB bug
+
+2002-10-02 13:29  jztpcw
+
+	* storedproc/sapdb/addToSC.sql: removed subtrans;changed stop to
+	return; fixed 1 bug by moving updateSCSubtotal to shopping_cart.sql
+
+2002-10-02 11:15  jztpcw
+
+	* dbdriver/eu.c: fixed 2 bugs in prepare_shopping_cart:added
+	euc->shopping_cart_data.sc_size = 0 if customer visit
+	shopping_cart; fixed generating refresh list for shopping cart
+
+2002-09-06 14:26  jztpcw
+
+	* scripts/sapdb/build_db.sh: fixed a bug which stops building db
+	after generating data files if -g is used
+
+2002-09-06 09:19  jztpcw
+
+	* doc/user.sxw: revised to reflect the current state of the kit:
+	added how to run with multiple drivers and appServers, usage of
+	several new scripts, and guideline of getting consistent results
+
+2002-09-06 09:14  jztpcw
+
+	* doc/: architecture.sxw, maintenance.sxw, tpc.sxw: added osdl and
+	copyright label
+
+2002-08-28 14:15  jztpcw
+
+	* scripts/stats/analyze_BT.sh: the script to cat multiple dbdriver
+	mix.log and run results on it
+
+2002-08-28 14:12  jztpcw
+
+	* scripts/stats/dbdriver.config: a sample dbdriver configuraton
+	file
+
+2002-08-28 13:49  jztpcw
+
+	* scripts/stats/run_dbt1.sh: uncomment rm /tmp/*.log
+
+2002-08-28 13:31  jztpcw
+
+	* scripts/sapdb/db_setup_sample.sh: this file is replace by
+	build_db.sh
+
+2002-08-28 13:30  jztpcw
+
+	* scripts/sapdb/monitor.sh: redirect monitor data to different
+	files
+
+2002-08-28 13:29  jztpcw
+
+	* scripts/sapdb/build_db.sh: now accept command line argument '-g'
+	to generate datafile before loading the database
+
+2002-08-28 13:26  jztpcw
+
+	* scripts/run_test_sample.sh: this file is replaced by
+	stats/run_dbt1.sh
+
+2002-08-28 13:25  jztpcw
+
+	* scripts/stats/dbt1.config: a sample dbt1 run config file which is
+	read by run_dbt1.sh
+
+2002-08-28 13:23  jztpcw
+
+	* scripts/stats/run_dbt1.sh: a script to start the dbt1 run,
+	collect data and analyze results
+
+2002-08-28 13:20  jztpcw
+
+	* scripts/stats/collect_data.sh: added command line parameter check
+
+2002-08-28 13:12  jztpcw
+
+	* tools/results.c: removed reading START mark since it is handled
+	by a script, exclude failed interaction from total_interaction
+	count
+
+2002-08-28 13:07  jztpcw
+
+	* dbdriver/main.c: removed generating END mark to mix.log
+
+2002-08-28 13:05  jztpcw
+
+	* dbdriver/eu.c: in struct eu_context_t, added a flag
+	first_interaction to make 'prepare_home' generate new c_id only for
+	first interaction of a user session, set sc_id to
+	UNKNOWN_SHOPPING_CART after buy_confirm
+
+2002-08-28 13:03  jztpcw
+
+	* include/eu.h: in struct eu_context_t, added a flag
+	first_interaction to make 'prepare_home' generate new c_id only for
+	first interaction of a user session
+
+2002-08-20 13:13  fimath
+
+	* tools/results.c: Fixed some mispellings in variable names.  Fixed
+	the calculation of elapsed time for the ips.csv file.
+
+2002-08-20 11:08  olmsteab
+
+	* datagen/: address.c, author.c, customer.c, item.c, main.c,
+	orders.c: updated the files to use fopen64 instead of fopen so that
+	data files greater than 2GB could be created.
+
+2002-08-16 10:23  jztpcw
+
+	* appServer/appServer.c: changed the message to 'The server is
+	active...'
+
+2002-08-16 10:21  jztpcw
+
+	* cache/cache.c: added signal handle for SIGSEGV to catch memory
+	violation
+
+2002-08-15 14:31  jztpcw
+
+	* appServer/appServer.c: change perror to printf so that the STP
+	script can catch it
+
+2002-08-15 13:53  jztpcw
+
+	* cache/cache.c: change perror to printf so that the STP script can
+	catch it
+
+2002-08-15 12:18  jztpcw
+
+	* appServer/appServer.c: set stdout buffer to line buffer so that
+	the output is flushed to file line by line
+
+2002-08-15 12:17  jztpcw
+
+	* cache/cache.c: use setlinebuf instead of setvbuf
+
+2002-08-15 10:12  jztpcw
+
+	* cache/cache.c: set stdout buffer to line buffer so that the
+	output is flushed to file line by line
+
+2002-08-05 09:22  fimath
+
+	* dbdriver/eu.c, dbdriver/main.c, include/common.h, include/eu.h,
+	tools/results.c: Incorporated changes to mark the begining and end
+	time of the run in the log files and made the appropriate changes
+	in the results calculations.
+
+2002-08-02 09:21  jztpcw
+
+	* scripts/sapdb/build_db.sh: scripts to build database
+
+2002-08-02 09:20  jztpcw
+
+	* scripts/sapdb/recover_db.sh: script to restore database
+
+2002-07-30 10:33  jztpcw
+
+	* filelist.txt: added cache directory
+
+2002-07-30 10:29  jztpcw
+
+	* CVSROOT/loginfo: configured login to call syncmail when
+	committing changes
+
+2002-07-30 10:26  jztpcw
+
+	* scripts/stats/collect_data.sh: added description at the beginning
+	of mcache* files
+
+2002-07-30 10:18  jztpcw
+
+	* CVSROOT/syncmail: syncmail script
+
+2002-07-30 10:11  jztpcw
+
+	* CVSROOT/checkoutlist: added syncmail
+
+2002-07-29 11:26  jztpcw
+
+	* cache/cache.c: disconnect from database when warm_up is done
+
+2002-07-29 11:25  jztpcw
+
+	* interfaces/odbc/odbc_interaction.c: odbc_disconnect() frees
+	resource in a wrong order
+
+2002-07-29 09:49  jztpcw
+
+	* ChangeLog: generated for release 1.1.3
+
 2002-07-25 09:49  jztpcw
 
 	* tools/results.c: added changes lost in v1.6, removed calculating
@@ -733,4 +958,10 @@
 	wgen/main.c, wgen/makefile.suite, wgen/rnd.c, wgen/rnd.h,
 	wgen/text.c, wgen/tpcw.001, wgen/tpcw.c, wgen/tpcw.dsp,
 	wgen/tpcw.dsw, wgen/tpcw.h: Initial release.
+
+2002-04-30 07:11  root
+
+	* CVSROOT/: checkoutlist, commitinfo, config, cvswrappers,
+	editinfo, loginfo, modules, notify, rcsinfo, taginfo, verifymsg:
+	initial checkin
 

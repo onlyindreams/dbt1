@@ -23,10 +23,10 @@ $(EXE): $(OBJS)
 	$(CC) -o $@ $(OBJS) $(LIBS)
 
 %.so:%.c
-	$(CC) -c $(CFLAGS) -o $@ $<
+	$(CC) -c -shared -fpic $(CFLAGS) -o $@ $<
 
 $(COMMON_OBJS):$(COMMON_PRGS)
-	cd $(COMMON_DIR); $(make)
+	cd $(COMMON_DIR); $(MAKE)
 
 $(ODBC_OBJS): $(ODBC_PRGS)
 	cd $(ODBC_DIR); $(MAKE)
