@@ -1,4 +1,5 @@
-/* tm_interface.c
+/*
+ * cache_interface.c
  *
  * This file is released under the terms of the Artistic License.  Please see
  * the file LICENSE, included in this package, for details.
@@ -11,20 +12,21 @@
 
 #include "cache_interface.h"
 
-int receive_search_results(int s, struct search_results_t *search_results_request)
+int receive_search_results(int s, struct search_results_t
+	*search_results_request)
 {
 	int length;
 	int rec;
 
 	/* Receive search_results request data. */
-	length=sizeof(struct search_results_t);
+	length = sizeof(struct search_results_t);
 
-	if ((rec=_receive(s, search_results_request, length)) == -1)
+	if ((rec = _receive(s, search_results_request, length)) == -1)
 	{
 		LOG_ERROR_MESSAGE("cannot receive search results request");
 		return W_ERROR;
 	}
-	if (rec==0)
+	if (rec == 0)
 	{
 		return SOCKET_CLOSE;
 	}
@@ -32,11 +34,12 @@ int receive_search_results(int s, struct search_results_t *search_results_reques
 	return OK;
 }
 
-int send_search_results(int s,  struct search_results_t *search_results_response)
+int send_search_results(int s, 
+	struct search_results_t *search_results_response)
 {
 	int length;
 
-	length=sizeof(struct search_results_t);
+	length = sizeof(struct search_results_t);
 	if (_send(s, search_results_response, length) == -1)
 	{
 		LOG_ERROR_MESSAGE("cannot send search_results, errno %d", errno);
