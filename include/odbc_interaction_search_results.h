@@ -13,10 +13,7 @@
 #ifndef _ODBC_INTERACTION_SEARCH_RESULTS_H_
 #define _ODBC_INTERACTION_SEARCH_RESULTS_H_
 
-#include "odbc_interaction.h"
-#ifdef PHASE1
-#include "eu.h"
-#endif /* PHASE1 */
+#include <odbc_interaction.h>
 
 #define STMT_SEARCH_RESULTS_AUTHOR \
 	"CALL search_results_author(?, " \
@@ -189,11 +186,7 @@
 	"?, ?, ?, ?, " \
 	"?, ?, ?, ?)"
 
-#ifdef PHASE1
-int copy_in_search_results(struct eu_context_t *euc, union odbc_data_t *odbcd);
-int copy_out_search_results(struct eu_context_t *euc, union odbc_data_t *odbcd);
-#endif /* PHASE1 */
-
-int execute_search_results(struct odbc_context_t *odbcc, union odbc_data_t *odbcd);
+int execute_search_results(struct db_context_t *odbcc,
+	struct search_results_t *data);
 
 #endif /* _ODBC_INTERACTION_SEARCH_RESULTS_H_ */

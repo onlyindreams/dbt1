@@ -13,21 +13,13 @@
 #ifndef _ODBC_INTERACTION_ADMIN_CONFIRM_H_
 #define _ODBC_INTERACTION_ADMIN_CONFIRM_H_
 
-#include "odbc_interaction.h"
-#ifdef PHASE1
-#include "eu.h"
-#endif /* PHASE1 */
+#include <odbc_interaction.h>
 
 #define STMT_ADMIN_CONFIRM \
 	"CALL admin_confirm(?, ?, ?, ?, ?, ?, ?, ?, " \
 	"?, ?, ?, ?, ?, ?, ?, ?)"
 
-#ifdef PHASE1
-int copy_in_admin_confirm(struct eu_context_t *euc, union odbc_data_t *odbcd);
-int copy_out_admin_confirm(struct eu_context_t *euc, union odbc_data_t *odbcd);
-#endif /* PHASE1 */
-
-int execute_admin_confirm(struct odbc_context_t *odbcc,
-	union odbc_data_t *odbcd);
+int execute_admin_confirm(struct db_context_t *odbcc,
+    struct admin_confirm_t *data);
 
 #endif /* _ODBC_INTERACTION_ADMIN_CONFIRM_H_ */

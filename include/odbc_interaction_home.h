@@ -13,18 +13,10 @@
 #ifndef _ODBC_INTERACTION_HOME_H_
 #define _ODBC_INTERACTION_HOME_H_
 
-#include "odbc_interaction.h"
-#ifdef PHASE1
-#include "eu.h"
-#endif /* PHASE1 */
+#include <odbc_interaction.h>
 
 #define STMT_HOME "CALL HOME(?,?,?,?,  ?,?,?,?,?,?,?,?,?,?)"
 
-#ifdef PHASE1
-int copy_in_home(struct eu_context_t *euc, union odbc_data_t *odbcd);
-int copy_out_home(struct eu_context_t *euc, union odbc_data_t *odbcd);
-#endif /* PHASE1 */
-
-int execute_home(struct odbc_context_t *odbcc, union odbc_data_t *odbcd);
+int execute_home(struct db_context_t *odbcc, struct home_t *data);
 
 #endif /* _ODBC_INTERACTION_HOME_H_ */

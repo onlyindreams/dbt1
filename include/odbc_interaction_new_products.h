@@ -13,10 +13,7 @@
 #ifndef _ODBC_INTERACTION_NEW_PRODUCTS_H_
 #define _ODBC_INTERACTION_NEW_PRODUCTS_H_
 
-#include "odbc_interaction.h"
-#ifdef PHASE1
-#include "eu.h"
-#endif /* PHASE1 */
+#include <odbc_interaction.h>
 
 #define STMT_NEW_PRODUCTS \
 	"CALL new_products(?, ?, " \
@@ -74,12 +71,7 @@
 	"?, ?, ?, ?, " \
 	"?, ?, ?, ?)"
 
-#ifdef PHASE1
-int copy_in_new_products(struct eu_context_t *euc, union odbc_data_t *odbcd);
-int copy_out_new_products(struct eu_context_t *euc, union odbc_data_t *odbcd);
-#endif /* PHASE1 */
-
-int execute_new_products(struct odbc_context_t *odbcc,
-	union odbc_data_t *odbcd);
+int execute_new_products(struct db_context_t *odbcc,
+	struct new_products_t *data);
 
 #endif /* _ODBC_INTERACTION_NEW_PRODUCTS_H_ */

@@ -12,10 +12,7 @@
 #ifndef _ODBC_INTERACTION_SHOPPING_CART_H
 #define _ODBC_INTERACTION_SHOPPING_CART_H
 
-#include "odbc_interaction.h"
-#ifdef PHASE1
-#include "eu.h"
-#endif /* PHASE1 */
+#include <odbc_interaction.h>
 
 #define STMT_SC  "CALL SHOPPING_CART(?,?,?,?,?,?," \
 				"?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?," \
@@ -41,12 +38,8 @@
 				"?,?,?,?,?,?," \
 				"?,?,?,?,?,?," \
 				"?,?,?,?,?,?)"
-#ifdef PHASE1
-int copy_in_shopping_cart(struct eu_context_t *euc, union odbc_data_t *odbcd);
-int copy_out_shopping_cart(struct eu_context_t *euc, union odbc_data_t *odbcd);
-#endif /* PHASE1 */
 
-int execute_shopping_cart(struct odbc_context_t *odbcc,
-	union odbc_data_t *odbcd);
+int execute_shopping_cart(struct db_context_t *odbcc,
+	struct shopping_cart_t *data);
 
 #endif /* _ODBC_INTERACTION_SHOPPING_CART_H */

@@ -13,10 +13,7 @@
 #ifndef _ODBC_INTERACTION_ORDER_DISPLAY_H_
 #define _ODBC_INTERACTION_ORDER_DISPLAY_H_
 
-#include "odbc_interaction.h"
-#ifdef PHASE1
-#include "eu.h"
-#endif /* PHASE1 */
+#include <odbc_interaction.h>
 
 #define STMT_ORDER_DISPLAY \
 	"CALL order_display(?,?," \
@@ -47,11 +44,7 @@
 	"?,?,?,?,?,?,?," \
 	"?,?,?,?,?,?,?)"
 
-#ifdef PHASE1
-int copy_in_order_display(struct eu_context_t *euc, union odbc_data_t *odbcd);
-int copy_out_order_display(struct eu_context_t *euc, union odbc_data_t *odbcd);
-#endif /* PHASE1 */
-
-int execute_order_display(struct odbc_context_t *odbcc, union odbc_data_t *odbcd);
+int execute_order_display(struct db_context_t *odbcc,
+	struct order_display_t *data);
 
 #endif /* _ODBC_INTERACTION_ORDER_DISPLAY_H_ */

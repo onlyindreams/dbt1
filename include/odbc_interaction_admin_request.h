@@ -13,18 +13,11 @@
 #ifndef _ODBC_INTERACTION_ADMIN_REQUEST_H_
 #define _ODBC_INTERACTION_ADMIN_REQUEST_H_
 
-#include "odbc_interaction.h"
-#ifdef PHASE1
-#include "eu.h"
-#endif /* PHASE1 */
+#include <odbc_interaction.h>
 
 #define STMT_ADMIN_REQUEST "CALL admin_request(?, ?, ?, ?, ?, ?, ?, ?)"
 
-#ifdef PHASE1
-int copy_in_admin_request(struct eu_context_t *euc, union odbc_data_t *odbcd);
-int copy_out_admin_request(struct eu_context_t *euc, union odbc_data_t *odbcd);
-#endif /* PHASE1 */
-
-int execute_admin_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd);
+int execute_admin_request(struct db_context_t *odbcc,
+	struct admin_request_t *data);
 
 #endif /* _ODBC_INTERACTION_ADMIN_REQUEST_H_ */
