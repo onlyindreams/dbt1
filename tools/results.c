@@ -12,6 +12,7 @@
 
 #include <stdio.h>
 #include <time.h>
+#include <string.h>
 #include <common.h>
 
 const char *interaction_name[INTERACTION_TOTAL] =
@@ -21,18 +22,6 @@ const char *interaction_name[INTERACTION_TOTAL] =
 	"Order Display", "Order Inquiry", "Product Detail", "Search Request",
     "Search Results", "Shopping Cart"
 };
-
-/* Stuff to do I/O analysis, bah! */
-struct io_dev_node_t
-{
-	char name[32];
-	int count;
-	float rrqms, wrqms, rs, ws, rsecs, wsecs, avgrqsz, avgqusz, await, svctm,
-		util;
-	struct io_dev_node_t *next;
-};
-struct io_dev_node_t *io_dev_head;
-struct io_dev_node_t *io_dev_cur;
 
 int main(int argc, char *argv[])
 {
@@ -50,11 +39,6 @@ int main(int argc, char *argv[])
 	long long interaction_count[INTERACTION_TOTAL];
 	float interaction_response_time[INTERACTION_TOTAL];
 	int error_count,rc;
-
-	FILE *log_cpu;
-	FILE *log_io;
-	FILE *log_paging;
-	int count;
 
 	time_t previous_time;
 	int elapsed_time = 0;
@@ -104,9 +88,9 @@ int main(int argc, char *argv[])
 	/* Keep reading the file until we hit the end. */
 	while (1)
 	{
-		rc=fscanf(log_mix, "%d,%c%c,%f,%d", &current_time, 
+		rc = fscanf(log_mix, "%d,%c%c,%f,%d", (int *) &current_time,
 			&interaction[0], &interaction[1], &response_time, &tid);
-		if (rc==5)
+		if (rc == 5)
 		{
 			if (start_time == -1)
 			{
@@ -224,14 +208,14 @@ int main(int argc, char *argv[])
 			}
 		}
 		/* if START mark is in mix.log, use START time as start_time */
-		else if (rc==3 && (strcmp(interaction, "ST") == 0) )
+		else if (rc == 3 && (strcmp(interaction, "ST") == 0) )
 		{
 			/* finish reading this line */
 			fscanf(log_mix, "%s", marker);
 			start_time = current_time;
-			/*reset everything */
+			/* reset everything */
 			total_response_time = 0;
-			total_interaction_count=0;
+			total_interaction_count = 0;
 			for (i = 0; i < INTERACTION_TOTAL; i++)
 			{
 				interaction_count[i] = 0;
@@ -260,7 +244,7 @@ int main(int argc, char *argv[])
 
 	printf("%0.1f minute duration\n",
 		difftime(current_time, start_time) / 60.0);
-	printf("total bogotransactions %ld\n", total_interaction_count);
+	printf("total bogotransactions %ld\n", (long) total_interaction_count);
 	printf("total errors %d\n", error_count);
 	printf("\n");
 
