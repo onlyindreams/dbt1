@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
 
 	time_t previous_time;
 	int elapsed_time = 0;
-	int current_interaction_count = 0;
+	int current_interation_count = 0;
 
 	char marker[128];
 
@@ -99,14 +99,6 @@ int main(int argc, char *argv[])
 	 */
 	interaction[2] = '\0';
 
-	while (fscanf(log_mix, "%s", marker))
-	{
-		if (strcmp(marker, RUN_START) == 0)
-		{
-			break;
-		}
-	}
-
 	/* Keep reading the file until we hit the end. */
 	while (fscanf(log_mix, "%d,%c%c,%f,%d", &current_time, &interaction[0],
 		&interaction[1], &response_time, &tid) == 5)
@@ -120,106 +112,110 @@ int main(int argc, char *argv[])
 		 * Note that we're factoring in Customer Registration even though
 		 * it isn't a database interaction.
 		 */
-		total_response_time += response_time;
-		++total_interaction_count;
-		if (strcmp(interaction, interaction_short_name[ADMIN_CONFIRM]) == 0)
+		/* only count the successful interactions */
+		if (strcmp(interaction, "ER") != 0)
 		{
-			++interaction_count[ADMIN_CONFIRM];
-			interaction_response_time[ADMIN_CONFIRM] += response_time;
-		}
-		else if (strcmp(interaction,
-			interaction_short_name[ADMIN_REQUEST]) == 0)
-		{
-			++interaction_count[ADMIN_REQUEST];
-			interaction_response_time[ADMIN_REQUEST] += response_time;
-		}
-		else if (strcmp(interaction,
-			interaction_short_name[BEST_SELLERS]) == 0)
-		{
-			++interaction_count[BEST_SELLERS];
-			interaction_response_time[BEST_SELLERS] += response_time;
-		}
-		else if (strcmp(interaction,
-			interaction_short_name[BUY_CONFIRM]) == 0)
-		{
-			++interaction_count[BUY_CONFIRM];
-			interaction_response_time[BUY_CONFIRM] += response_time;
-		}
-		else if (strcmp(interaction, interaction_short_name[BUY_REQUEST]) == 0)
-		{
-			++interaction_count[BUY_REQUEST];
-			interaction_response_time[BUY_REQUEST] += response_time;
-		}
-		else if (strcmp(interaction,
-			interaction_short_name[CUSTOMER_REGISTRATION]) == 0)
-		{
-			++interaction_count[CUSTOMER_REGISTRATION];
-			interaction_response_time[CUSTOMER_REGISTRATION] += response_time;
-		}
-		else if (strcmp(interaction, interaction_short_name[HOME]) == 0)
-		{
-			++interaction_count[HOME];
-			interaction_response_time[HOME] += response_time;
-		}
-		else if (strcmp(interaction, interaction_short_name[NEW_PRODUCTS]) == 0)
-		{
-			++interaction_count[NEW_PRODUCTS];
-			interaction_response_time[NEW_PRODUCTS] += response_time;
-		}
-		else if (strcmp(interaction,
-			interaction_short_name[ORDER_DISPLAY]) == 0)
-		{
-			++interaction_count[ORDER_DISPLAY];
-			interaction_response_time[ORDER_DISPLAY] += response_time;
-		}
-		else if (strcmp(interaction,
-			interaction_short_name[ORDER_INQUIRY]) == 0)
-		{
-			++interaction_count[ORDER_INQUIRY];
-			interaction_response_time[ORDER_INQUIRY] += response_time;
-		}
-		else if (strcmp(interaction,
-			interaction_short_name[PRODUCT_DETAIL]) == 0)
-		{
-			++interaction_count[PRODUCT_DETAIL];
-			interaction_response_time[PRODUCT_DETAIL] += response_time;
-		}
-		else if (strcmp(interaction,
-			interaction_short_name[SEARCH_REQUEST]) == 0)
-		{
-			++interaction_count[SEARCH_REQUEST];
-			interaction_response_time[SEARCH_REQUEST] += response_time;
-		}
-		else if (strcmp(interaction,
-			interaction_short_name[SEARCH_RESULTS]) == 0)
-		{
-			++interaction_count[SEARCH_RESULTS];
-			interaction_response_time[SEARCH_RESULTS] += response_time;
-		}
-		else if (strcmp(interaction,
-			interaction_short_name[SHOPPING_CART]) == 0)
-		{
-			++interaction_count[SHOPPING_CART];
-			interaction_response_time[SHOPPING_CART] += response_time;
-		}
-		else if (strcmp(interaction, "ER") == 0)
-		{
-			++error_count;
-		}
+			total_response_time += response_time;
+			++total_interaction_count;
+			if (strcmp(interaction, interaction_short_name[ADMIN_CONFIRM]) == 0)
+			{
+				++interaction_count[ADMIN_CONFIRM];
+				interaction_response_time[ADMIN_CONFIRM] += response_time;
+			}
+			else if (strcmp(interaction,
+				interaction_short_name[ADMIN_REQUEST]) == 0)
+			{
+				++interaction_count[ADMIN_REQUEST];
+				interaction_response_time[ADMIN_REQUEST] += response_time;
+			}
+			else if (strcmp(interaction,
+				interaction_short_name[BEST_SELLERS]) == 0)
+			{
+				++interaction_count[BEST_SELLERS];
+				interaction_response_time[BEST_SELLERS] += response_time;
+			}
+			else if (strcmp(interaction,
+				interaction_short_name[BUY_CONFIRM]) == 0)
+			{
+				++interaction_count[BUY_CONFIRM];
+				interaction_response_time[BUY_CONFIRM] += response_time;
+			}
+			else if (strcmp(interaction, interaction_short_name[BUY_REQUEST]) == 0)
+			{
+				++interaction_count[BUY_REQUEST];
+				interaction_response_time[BUY_REQUEST] += response_time;
+			}
+			else if (strcmp(interaction,
+				interaction_short_name[CUSTOMER_REGISTRATION]) == 0)
+			{
+				++interaction_count[CUSTOMER_REGISTRATION];
+				interaction_response_time[CUSTOMER_REGISTRATION] += response_time;
+			}
+			else if (strcmp(interaction, interaction_short_name[HOME]) == 0)
+			{
+				++interaction_count[HOME];
+				interaction_response_time[HOME] += response_time;
+			}
+			else if (strcmp(interaction, interaction_short_name[NEW_PRODUCTS]) == 0)
+			{
+				++interaction_count[NEW_PRODUCTS];
+				interaction_response_time[NEW_PRODUCTS] += response_time;
+			}
+			else if (strcmp(interaction,
+				interaction_short_name[ORDER_DISPLAY]) == 0)
+			{
+				++interaction_count[ORDER_DISPLAY];
+				interaction_response_time[ORDER_DISPLAY] += response_time;
+			}
+			else if (strcmp(interaction,
+				interaction_short_name[ORDER_INQUIRY]) == 0)
+			{
+				++interaction_count[ORDER_INQUIRY];
+				interaction_response_time[ORDER_INQUIRY] += response_time;
+			}
+			else if (strcmp(interaction,
+				interaction_short_name[PRODUCT_DETAIL]) == 0)
+			{
+				++interaction_count[PRODUCT_DETAIL];
+				interaction_response_time[PRODUCT_DETAIL] += response_time;
+			}
+			else if (strcmp(interaction,
+				interaction_short_name[SEARCH_REQUEST]) == 0)
+			{
+				++interaction_count[SEARCH_REQUEST];
+				interaction_response_time[SEARCH_REQUEST] += response_time;
+			}
+			else if (strcmp(interaction,
+				interaction_short_name[SEARCH_RESULTS]) == 0)
+			{
+				++interaction_count[SEARCH_RESULTS];
+				interaction_response_time[SEARCH_RESULTS] += response_time;
+			}
+			else if (strcmp(interaction,
+				interaction_short_name[SHOPPING_CART]) == 0)
+			{
+				++interaction_count[SHOPPING_CART];
+				interaction_response_time[SHOPPING_CART] += response_time;
+			}
 
-		/* Output data to graph for interactions per second. */
-		if (current_time <= previous_time + 30)
-		{
-			++current_interaction_count;
+			/* Output data to graph for interactions per second. */
+			if (current_time <= previous_time + 30)
+			{
+				++current_interation_count;
+			}
+			else
+			{
+				fprintf(plot_ips, "%d,%f\n", elapsed_time,
+					(double) current_interation_count / 30.0);
+				++elapsed_time;
+	
+				previous_time = current_time;
+				current_interation_count = 1;
+			}
 		}
 		else
 		{
-			fprintf(plot_ips, "%d,%f\n", elapsed_time,
-				(double) current_interaction_count / 30.0);
-			elapsed_time += 30;
-
-			previous_time = current_time;
-			current_interaction_count = 1;
+			++error_count;
 		}
 	}
 	fclose(log_mix);
