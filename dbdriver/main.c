@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
 		sleep(1);
 	}
 	while (time(NULL) <= stop_time);
-	mark_logs(RUN_END);
+//	mark_logs(RUN_END);
 
 	return 0;
 }
