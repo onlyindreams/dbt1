@@ -17,8 +17,8 @@
 
 int receive_interaction_packet(int s, struct eu_context_t *euc)
 {
-	void *data;
-	int length;
+	void *data = NULL;
+	int length = 0;
 	int rec;
 	int result;
 
@@ -116,8 +116,8 @@ int receive_interaction_packet(int s, struct eu_context_t *euc)
 
 int send_interaction_packet(int s, struct eu_context_t *euc)
 {
-	void *data;
-	int length;
+	void *data = NULL;
+	int length = 0;
 
 	switch (euc->interaction)
 	{
