@@ -52,17 +52,6 @@ fi
 	./create_indexes.sh
 	echo
 	
-	echo "start to create keys"
-	date
-	
-	echo "create keys"
-	./create_keys.sh
-	echo
-	
-	echo "create sequences"
-	./create_sequences.sh
-	echo
-	
 	echo "load dbproc"
 	./load_dbproc.sh
 	echo
