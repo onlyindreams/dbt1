@@ -24,8 +24,6 @@ int copy_in_order_inquiry(struct eu_context_t *euc, union odbc_data_t *odbcd)
 
 int copy_out_order_inquiry(struct eu_context_t *euc, union odbc_data_t *odbcd)
 {
-	int i;
-
 	strcpy(euc->order_inquiry_data.c_uname, odbcd->order_inquiry_odbc_data.eb.c_uname);
 	return W_OK;
 }
@@ -34,7 +32,7 @@ int copy_out_order_inquiry(struct eu_context_t *euc, union odbc_data_t *odbcd)
 int execute_order_inquiry(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 {
 	SQLRETURN rc;
-	int i, j;
+	int j;
 
 	/* Perpare statement for Order Inquiry interaction. */
 	rc = SQLPrepare(odbcc->hstmt, STMT_ORDER_INQUIRY, SQL_NTS);
