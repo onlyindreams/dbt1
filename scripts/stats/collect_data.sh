@@ -1,8 +1,16 @@
+#!/bin/sh
+if [ $# -ne 4 ]; then
+	echo "Usage: ./collect_data.sh <interval> <count> <cpus> <result_dir>"
+	exit
+fi
+
 INTERVAL=$1
 COUNT=$2
 CPUS=$3
 RESULTS_PATH=$4
 RUN_DURATION=$(($INTERVAL * $COUNT))
+
+rm -rf run.sar.data
 
 echo "sapdb cache info before run" > $RESULTS_PATH/mcache_prerun.out.txt
 /opt/sapdb/depend/bin/dbmcli -s -d DBT1 -u dba,dba -uSQL dbt,dbt "sql_execute select * from monitor_caches" >> $RESULTS_PATH/mcache_prerun.out.txt
@@ -15,9 +23,11 @@ sar -u -U ALL -d -B -r -q -W -o run.sar.data $1 $2 &
 sh ./io.sh $1 $2 $RESULTS_PATH &
 sh ./runtop.sh $1 $2 $RESULTS_PATH &
 
+clearprof
 echo "sleep for $RUN_DURATION seconds..."
 sleep $RUN_DURATION
 
+getprof
 echo "cpu is $CPUS"
 echo "Cpu Statistics (sar -u ) ">$RESULTS_PATH/all.cpu.txt
 echo `uname -a `>>$RESULTS_PATH/all.cpu.txt
@@ -80,4 +90,4 @@ sar -W -f ./run.sar.data | tee -a $RESULTS_PATH/swap.txt | awk '{ if (NR>2) { if
 
 #../../tools/results ../../dbdriver/mix.log > $RESULTS_PATH/BT
 echo "sapdb cache info after run" > $RESULTS_PATH/mcache_postrun.out.txt
-/opt/sapdb/depend/bin/dbmcli -s -d DBT1 -u dba,dba -uSQL dbt,dbt "sql_execute select * from monitor_caches" >> $RESULTS_PATH/mcache_postrun.out.txt
+/opt/sapdb/depend/bin/dbmcli -s -d DBT1 -u dba,dba -uSQL dbt,dbt "sql_execute select * from monitor_caches" > $RESULTS_PATH/mcache_postrun.out.txt
