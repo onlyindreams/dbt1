@@ -9,8 +9,8 @@
  * 10 january 2001
  */
 
-#include <pthread.h>
 #include <stdlib.h>
+#include <time.h>
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
@@ -43,14 +43,13 @@ int items, ebs;
 /* directory where the datafile will be put */
 char path[256];
 int flag_cust, flag_item, flag_author, flag_address, flag_order;
-int multi = 0; /* multi = 1, allow parallel data generation */
 
 /* Prototypes */
-void *gen_addresses(void *data);
-void *gen_authors(void *data);
-void *gen_customers(void *data);
-void *gen_items(void *data);
-void *gen_orders(void *data);
+void gen_addresses();
+void gen_authors();
+void gen_customers();
+void gen_items();
+void gen_orders();
 int process_options(int count, char **vector);
 void usage();
 /* Prototype for wgen/text.c since it doesn't provide one for us. */
@@ -62,7 +61,6 @@ int main(int argc, char *argv[])
 	FILE *p;
 	char pwd[256];
 	char cmd[256];
-	pthread_t t1, t2, t3, t4, t5;
 
 	path[0] = '\0';
 
@@ -124,66 +122,35 @@ int main(int argc, char *argv[])
 
 	if (flag_item == 1) 
 	{
-		if (pthread_create(&t1, NULL, gen_items, NULL) != 0)
-		{
-			perror("pthread_create");
-		}
+		gen_items();
 		sprintf(cmd, "ln -fs %s/item.data /tmp/item.data", path);
 		popen(cmd, "r");
-		if (multi == 0)
-		{
-			pthread_join(t1, NULL);
-		}
 	}
 
 	if (flag_cust == 1)
 	{
-		if (pthread_create(&t2, NULL, gen_customers, NULL) != 0)
-		{
-			perror("pthread_create");
-		}
+		gen_customers();
 		sprintf(cmd, "ln -fs %s/customer.data /tmp/customer.data", path);
 		popen(cmd, "r");
-		if (multi == 0)
-		{
-			pthread_join(t2, NULL);
-		}
 	}
 
 	if (flag_author == 1) 
 	{
-		if (pthread_create(&t3, NULL, gen_authors, NULL) != 0)
-		{
-			perror("pthread_create");
-		}
+		gen_authors();
 		sprintf(cmd, "ln -fs %s/author.data /tmp/author.data", path);
 		popen(cmd, "r");
-		if (multi == 0)
-		{
-			pthread_join(t3, NULL);
-		}
 	}
 
 	if (flag_address == 1)
 	{
-		if (pthread_create(&t4, NULL, gen_addresses, NULL) != 0)
-		{
-			perror("pthread_create");
-		}
+		gen_addresses();
 		sprintf(cmd, "ln -fs %s/address.data /tmp/address.data", path);
 		popen(cmd, "r");
-		if (multi == 0)
-		{
-			pthread_join(t4, NULL);
-		}
 	}
 
 	if (flag_order == 1)
 	{
-		if (pthread_create(&t5, NULL, gen_orders, NULL) != 0)
-		{
-			perror("pthread_create");
-		}
+		gen_orders();
 		sprintf(cmd, "ln -fs %s/orders.data /tmp/orders.data", path);
 		popen(cmd, "r");
 		sprintf(cmd, "ln -fs %s/order_line.data /tmp/order_line.data",
@@ -191,19 +158,6 @@ int main(int argc, char *argv[])
 		popen(cmd, "r");
 		sprintf(cmd, "ln -fs %s/cc_xacts.data /tmp/cc_xacts.data", path);
 		popen(cmd, "r");
-		if (multi == 0)
-		{
-			pthread_join(t5, NULL);
-		}
-	}
-
-	if (multi == 1)
-	{
-		pthread_join(t1, NULL);
-		pthread_join(t2, NULL);
-		pthread_join(t3, NULL);
-		pthread_join(t4, NULL);
-		pthread_join(t5, NULL);
 	}
 
 	sprintf(cmd, "ln -fs %s/country.data /tmp/country.data", pwd);
@@ -214,7 +168,7 @@ int main(int argc, char *argv[])
 }
 
 /* Clause 4.7.1 */
-void *gen_addresses(void *data)
+void gen_addresses()
 {
 	int i;
 	FILE *output = stdout;
@@ -227,14 +181,13 @@ void *gen_addresses(void *data)
 	if (output == NULL)
 	{
 		fprintf(stderr, "cannot open address.data\n");
-		return NULL;
+		return;
 	}
 
 	srand(0);
 	printf("Generating address table data...\n");
 
 	addresses = ebs * 2880 * 2;
-
 	for (i = 0; i < addresses; i++)
 	{
 		/* addr_id */
@@ -267,7 +220,7 @@ void *gen_addresses(void *data)
 		fprintf(output, "%c", DELIMITER);
 
 		/* addr_co_id */
-		fprintf(output, "\"%d\"", (int) get_random(CO_ID_MAX) + 1);
+		fprintf(output, "\"%d\"", get_random_int(CO_ID_MAX) + 1);
 
 		fprintf(output, "\n");
 	}
@@ -275,11 +228,11 @@ void *gen_addresses(void *data)
 	fflush(output);
 	fclose(output);
 	printf("Finished address table data.\n");
-	return NULL;
+	return;
 }
 
 /* Clause 4.7.1 */
-void *gen_authors(void *data)
+void gen_authors()
 {
 	int i;
 	FILE *output = stdout;
@@ -293,7 +246,7 @@ void *gen_authors(void *data)
 	if (output == NULL)
 	{
 		fprintf(stderr, "cannot open author.data\n");
-		return NULL;
+		return;
 	}
 
 	srand(0);
@@ -348,11 +301,11 @@ void *gen_authors(void *data)
 	fflush(output);
 	fclose(output);
 	printf("Finished author table data.\n");
-	return NULL;
+	return;
 }
 
 /* Clause 4.7.1 */
-void *gen_customers(void *data)
+void gen_customers()
 {
 	int i, j;
 	int customers;
@@ -369,7 +322,7 @@ void *gen_customers(void *data)
 	if (output == NULL)
 	{
 		fprintf(stderr, "cannot open customer.data\n");
-		return NULL;
+		return;
 	}
 
 	srand(0);
@@ -411,7 +364,7 @@ void *gen_customers(void *data)
 		fprintf(output, "%c", DELIMITER);
 
 		/* c_addr_id */
-		fprintf(output, "\"%d\"", (int) get_random(2 * customers) + 1);
+		fprintf(output, "\"%d\"", get_random_int(2 * customers) + 1);
 		fprintf(output, "%c", DELIMITER);
 
 		/* c_phone */
@@ -427,14 +380,14 @@ void *gen_customers(void *data)
 
 		/* c_since */
 		time(&t2);
-		t1 = t2 - (86400 + get_random(63072000));
+		t1 = t2 - (86400 + get_random_int(63072000));
 		tm1 = localtime(&t1);
 		fprintf(output, "\"%04d%02d%02d\"", tm1->tm_year + 1900,
 			tm1->tm_mon + 1, tm1->tm_mday);
 		fprintf(output, "%c", DELIMITER);
 
 		/* c_last_visit */
-		t3 = t1 + get_random(5270400);
+		t3 = t1 + get_random_int(5270400);
 		if (t3 > t2)
 		{
 			t3 = t2;
@@ -449,20 +402,21 @@ void *gen_customers(void *data)
 		 * populated. Note that the milliseconds are not calculated. */
 		tm2 = localtime(&t2);
 		fprintf(output, "\"%04d%02d%02d%02d%02d%02d000000\"",
-			tm2->tm_year + 1900, tm2->tm_mon + 1, tm2->tm_mday, tm2->tm_hour,
-			tm2->tm_min, tm2->tm_sec);
+			tm2->tm_year + 1900, tm2->tm_mon + 1, tm2->tm_mday,
+			tm2->tm_hour, tm2->tm_min, tm2->tm_sec);
 		fprintf(output, "%c", DELIMITER);
 
 		/* c_expiration */
 		t2 += 7200;
 		tm2 = localtime(&t2);
 		fprintf(output, "\"%04d%02d%02d%02d%02d%02d000000\"",
-			tm2->tm_year + 1900, tm2->tm_mon + 1, tm2->tm_mday, tm2->tm_hour,
-			tm2->tm_min, tm2->tm_sec);
+			tm2->tm_year + 1900, tm2->tm_mon + 1, tm2->tm_mday,
+			tm2->tm_hour, tm2->tm_min, tm2->tm_sec);
 		fprintf(output, "%c", DELIMITER);
 
 		/* c_discount */
-		fprintf(output, "\"%0.2f\"", (double) get_random(51) / 100.0);
+		fprintf(output, "\"%0.2f\"",
+			(double) get_random_int(51) / 100.0);
 		fprintf(output, "%c", DELIMITER);
 
 		/* c_balance */
@@ -470,7 +424,8 @@ void *gen_customers(void *data)
 		fprintf(output, "%c", DELIMITER);
 
 		/* c_ytd_pmt */
-		fprintf(output, "\"%0.2f\"", (double) get_random(100000) / 100.0);
+		fprintf(output, "\"%0.2f\"",
+			(double) get_random_int(100000) / 100.0);
 		fprintf(output, "%c", DELIMITER);
 
 		/* c_birthdate */
@@ -500,11 +455,11 @@ void *gen_customers(void *data)
 	fflush(output);
 	fclose(output);
 	printf("Finished customer table data.\n");
-	return NULL;
+	return;
 }
 
 /* Clause 4.7.1 */
-void *gen_items(void *data)
+void gen_items()
 {
 	int i;
 	FILE *output = stdout;
@@ -520,7 +475,7 @@ void *gen_items(void *data)
 	if (output == NULL)
 	{
 		fprintf(stderr, "cannot open item.txt");
-		return NULL;
+		return;
 	}
 
 	srand(0);
@@ -546,7 +501,8 @@ void *gen_items(void *data)
 		}
 		else
 		{
-			fprintf(output, "\"%d\"", (int) get_random(items / 4) + 1);
+			fprintf(output, "\"%d\"",
+				get_random_int(items / 4) + 1);
 		}
 		fprintf(output, "%c", DELIMITER);
 
@@ -572,7 +528,8 @@ void *gen_items(void *data)
 		fprintf(output, "%c", DELIMITER);
 
 		/* i_subject */
-		fprintf(output, "\"%s\"", i_subject[(int) get_random(I_SUBJECT_MAX)]);
+		fprintf(output, "\"%s\"",
+			i_subject[get_random_int(I_SUBJECT_MAX)]);
 		fprintf(output, "%c", DELIMITER);
 
 		/* i_desc */
@@ -581,14 +538,14 @@ void *gen_items(void *data)
 		fprintf(output, "%c", DELIMITER);
 
 		/* i_related1 */
-		i1 = get_random(items) + 1;
+		i1 = get_random_int(items) + 1;
 		fprintf(output, "\"%d\"", i1);
 		fprintf(output, "%c", DELIMITER);
 
 		/* i_related2 */
 		do
 		{
-			i2 = get_random(items) + 1;
+			i2 = get_random_int(items) + 1;
 		}
 		while (i2 == i1);
 		fprintf(output, "\"%d\"", i2);
@@ -597,7 +554,7 @@ void *gen_items(void *data)
 		/* i_related3 */
 		do
 		{
-			i3 = get_random(items) + 1;
+			i3 = get_random_int(items) + 1;
 		}
 		while (i3 == i1 || i3 == i2);
 		fprintf(output, "\"%d\"", i3);
@@ -606,7 +563,7 @@ void *gen_items(void *data)
 		/* i_related4 */
 		do
 		{
-			i4 = get_random(items) + 1;
+			i4 = get_random_int(items) + 1;
 		}
 		while (i4 == i1 || i4 == i2 || i4 == i3);
 		fprintf(output, "\"%d\"", i4);
@@ -615,7 +572,7 @@ void *gen_items(void *data)
 		/* i_related5 */
 		do
 		{
-			i5 = get_random(items) + 1;
+			i5 = get_random_int(items) + 1;
 		}
 		while (i5 == i1 || i5 == i2 || i5 == i3 || i5 == i4);
 		fprintf(output, "\"%d\"", i5);
@@ -630,26 +587,28 @@ void *gen_items(void *data)
 		fprintf(output, "%c", DELIMITER);
 
 		/* i_srp */
-		srp = (get_random(999900) + 100.0) / 100;
+		srp = (get_random_int(999900) + 100.0) / 100;
 		fprintf(output, "\"%0.2f\"", srp);
 		fprintf(output, "%c", DELIMITER);
 
 		/* i_cost */
 		fprintf(output, "\"%0.2f\"",
-			(1.0 - ((double) get_random(6) / 10.0)) * srp);
+			(1.0 - ((double) get_random_int(6) / 10.0)) * srp);
 		fprintf(output, "%c", DELIMITER);
 
 		/* i_avail */
-		/* 86400 is the number of seconds in a day, and 2505600 is the number of
-		 * seconds in 29 days. */
-		t3 += 86400 + (time_t) get_random(2505601);
+		/*
+		 * 86400 is the number of seconds in a day, and 2505600 is the
+		 * number ofseconds in 29 days.
+		 */
+		t3 += 86400 + (time_t) get_random_int(2505601);
 		tm3 = localtime(&t3);
 		fprintf(output, "\"%04d%02d%02d\"", tm3->tm_year + 1900,
 			tm3->tm_mon + 1, tm3->tm_mday);
 		fprintf(output, "%c", DELIMITER);
 
 		/* i_stock */
-		fprintf(output, "\"%d\"", (int) get_random(21) + 10);
+		fprintf(output, "\"%d\"", get_random_int(21) + 10);
 		fprintf(output, "%c", DELIMITER);
 
 		/* i_isbn */
@@ -658,17 +617,18 @@ void *gen_items(void *data)
 		fprintf(output, "%c", DELIMITER);
 
 		/* i_page */
-		fprintf(output, "\"%d\"", (int) get_random(9980) + 20);
+		fprintf(output, "\"%d\"", get_random_int(9980) + 20);
 		fprintf(output, "%c", DELIMITER);
 
 		/* i_backing */
-		fprintf(output, "\"%s\"", i_backing[get_random(I_BACKING_MAX)]);
+		fprintf(output, "\"%s\"",
+			i_backing[get_random_int(I_BACKING_MAX)]);
 		fprintf(output, "%c", DELIMITER);
 
 		/* i_dimensions */
 		/* Clause 4.6.2.17 */
 		fprintf(output, "\"%0.2fx%0.2fx%0.2f\"",
-			(double) (get_random(9999) + 1) / 100.0, (double) (get_random(9999) + 1) / 100.0, (double) (get_random(9999) + 1) / 100.0);
+			(double) (get_random_int(9999) + 1) / 100.0, (double) (get_random_int(9999) + 1) / 100.0, (double) (get_random_int(9999) + 1) / 100.0);
 
 		fprintf(output, "\n");
 	}
@@ -676,11 +636,11 @@ void *gen_items(void *data)
 	fflush(output);
 	fclose(output);
 	printf("Finished item table data.\n");
-	return NULL;
+	return;
 }
 
 /* Clause 4.7.1 */
-void *gen_orders(void *data)
+void gen_orders()
 {
 	int i, j;
 	FILE *orders_file = stdout;
@@ -701,7 +661,7 @@ void *gen_orders(void *data)
 	if (orders_file == NULL)
 	{
 		fprintf(stderr, "cannot open orders.data\n");
-		return NULL;
+		return;
 	}
 
 	sprintf(filename2, "%s/order_line.data", path);
@@ -709,7 +669,7 @@ void *gen_orders(void *data)
 	if (order_line_file == NULL)
 	{
 		fprintf(stderr, "cannot open order_line.data\n");
-		return NULL;
+		return;
 	}
 
 	sprintf(filename3, "%s/cc_xacts.data", path);
@@ -717,7 +677,7 @@ void *gen_orders(void *data)
 	if (cc_xacts_file == NULL)
 	{
 		fprintf(stderr, "cannot open cc_xacts.data\n");
-		return NULL;
+		return;
 	}
 
 	srand(0);
@@ -731,7 +691,7 @@ void *gen_orders(void *data)
 
 		/* Order Line */
 
-		order_line_count = get_random(5) + 1;
+		order_line_count = get_random_int(5) + 1;
 		for (j = 0; j < order_line_count; j++)
 		{
 			/* ol_id */
@@ -743,16 +703,18 @@ void *gen_orders(void *data)
 			fprintf(order_line_file, "%c", DELIMITER);
 
 			/* ol_i_id */
-			fprintf(order_line_file, "\"%d\"", (int) get_random(items) + 1);
+			fprintf(order_line_file, "\"%d\"",
+				get_random_int(items) + 1);
 			fprintf(order_line_file, "%c", DELIMITER);
 
 			/* ol_qty */
-			fprintf(order_line_file, "\"%d\"", (int) get_random(300) + 1);
+			fprintf(order_line_file, "\"%d\"",
+				get_random_int(300) + 1);
 			fprintf(order_line_file, "%c", DELIMITER);
 
 			/* ol_discount */
 			fprintf(order_line_file, "\"%0.2f\"",
-				(double) get_random(4) / 100.0);
+				(double) get_random_int(4) / 100.0);
 			fprintf(order_line_file, "%c", DELIMITER);
 
 			/* ol_comments */
@@ -769,21 +731,21 @@ void *gen_orders(void *data)
 		fprintf(orders_file, "%c", DELIMITER);
 
 		/* o_c_id */
-		fprintf(orders_file, "\"%d\"", (int) get_random(customers) + 1);
+		fprintf(orders_file, "\"%d\"",  get_random_int(customers) + 1);
 		fprintf(orders_file, "%c", DELIMITER);
 
 		/* o_date */
 		/* Note that the milliseconds are not calculated. */
 		time(&t2);
-		t1 = t2 - (86400 + get_random(5184000));
+		t1 = t2 - (86400 + get_random_int(5184000));
 		tm1 = localtime(&t1);
 		fprintf(orders_file, "\"%04d%02d%02d%02d%02d%02d000000\"",
-			tm1->tm_year + 1900, tm1->tm_mon + 1, tm1->tm_mday, tm1->tm_hour,
-			tm1->tm_min, tm1->tm_sec);
+			tm1->tm_year + 1900, tm1->tm_mon + 1, tm1->tm_mday,
+			tm1->tm_hour, tm1->tm_min, tm1->tm_sec);
 		fprintf(orders_file, "%c", DELIMITER);
 
 		/* o_sub_total */
-		o_sub_total = (double) (get_random(999990) + 10) / 100.0;
+		o_sub_total = (double) (get_random_int(999990) + 10) / 100.0;
 		fprintf(orders_file, "\"%0.2f\"", o_sub_total);
 		fprintf(orders_file, "%c", DELIMITER);
 
@@ -799,27 +761,30 @@ void *gen_orders(void *data)
 
 		/* o_ship_type */
 		fprintf(orders_file, "\"%s\"",
-			o_ship_type[get_random(O_SHIP_TYPE_MAX)]);
+			o_ship_type[get_random_int(O_SHIP_TYPE_MAX)]);
 		fprintf(orders_file, "%c", DELIMITER);
 
 		/* o_ship_date */
 		/* Note that the milliseconds are not calculated. */
-		t1 += get_random(691200);
+		t1 += get_random_int(691200);
 		fprintf(orders_file, "\"%04d%02d%02d%02d%02d%02d000000\"",
-			tm1->tm_year + 1900, tm1->tm_mon + 1, tm1->tm_mday, tm1->tm_hour,
-			tm1->tm_min, tm1->tm_sec);
+			tm1->tm_year + 1900, tm1->tm_mon + 1, tm1->tm_mday,
+			tm1->tm_hour, tm1->tm_min, tm1->tm_sec);
 		fprintf(orders_file, "%c", DELIMITER);
 
 		/* o_bill_addr_id */
-		fprintf(orders_file, "\"%d\"", (int) get_random(2 * customers) + 1);
+		fprintf(orders_file, "\"%d\"",
+			get_random_int(2 * customers) + 1);
 		fprintf(orders_file, "%c", DELIMITER);
 
 		/* o_ship_addr_id */
-		fprintf(orders_file, "\"%d\"", (int) get_random(2 * customers) + 1);
+		fprintf(orders_file, "\"%d\"",
+			get_random_int(2 * customers) + 1);
 		fprintf(orders_file, "%c", DELIMITER);
 
 		/* o_status */
-		fprintf(orders_file, "\"%s\"", o_status[get_random(O_STATUS_MAX)]);
+		fprintf(orders_file, "\"%s\"",
+			o_status[get_random_int(O_STATUS_MAX)]);
 
 		fprintf(orders_file, "\n");
 
@@ -831,7 +796,8 @@ void *gen_orders(void *data)
 		fprintf(cc_xacts_file, "%c", DELIMITER);
 
 		/* cx_type */
-		fprintf(cc_xacts_file, "\"%s\"", cx_type[get_random(CX_TYPE_MAX)]);
+		fprintf(cc_xacts_file, "\"%s\"",
+			cx_type[get_random_int(CX_TYPE_MAX)]);
 		fprintf(cc_xacts_file, "%c", DELIMITER);
 
 		/* cx_num */
@@ -847,7 +813,7 @@ void *gen_orders(void *data)
 		fprintf(cc_xacts_file, "%c", DELIMITER);
 
 		/* cx_expiry */
-		t2 += 864000 + get_random(62294400);
+		t2 += 864000 + get_random_int(62294400);
 		tm2 = localtime(&t2);
 		fprintf(cc_xacts_file, "\"%04d%02d%02d\"", tm2->tm_year + 1900,
 			tm2->tm_mon + 1, tm2->tm_mday);
@@ -870,7 +836,7 @@ void *gen_orders(void *data)
 		fprintf(cc_xacts_file, "%c", DELIMITER);
 
 		/* cx_co_id */
-		fprintf(cc_xacts_file, "\"%d\"", (int) get_random(92) + 1);
+		fprintf(cc_xacts_file, "\"%d\"", get_random_int(92) + 1);
 
 		fprintf(cc_xacts_file, "\n");
 	}
@@ -882,7 +848,7 @@ void *gen_orders(void *data)
 	fclose(order_line_file);
 	fclose(cc_xacts_file);
 	printf("Finished order, order_line, and cc_xacts table data.\n");
-	return NULL;
+	return;
 }
 
 int process_options(int count, char **vector)
@@ -940,9 +906,6 @@ int process_options(int count, char **vector)
 				break;
 			case 'h':
 				return 0;
-			case 'm':
-				multi = 1;
-				break;
 			default:
 				return 0;
 		}
