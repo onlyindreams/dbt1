@@ -14,7 +14,7 @@ CREATE DBPROC buyrequest(IN flag fixed(1), IN c_uname varchar(20),
   INOUT addr_city varchar(30), INOUT addr_state varchar(20), 
   INOUT addr_zip varchar(10), INOUT co_name varchar(50),
   INOUT c_phone varchar(16), INOUT c_email varchar(50), 
-  INOUT c_birthday char(8),
+  INOUT c_birthday char(10),
   INOUT c_data varchar(500), OUT c_passwd varchar(20),
   OUT c_id fixed(10), OUT sc_sub_total fixed(17,2), OUT sc_tax fixed(17,2),
   OUT sc_ship_cost fixed(5,2), OUT sc_total fixed(17,2),
@@ -80,15 +80,11 @@ CREATE DBPROC buyrequest(IN flag fixed(1), IN c_uname varchar(20),
   OUT scl_cost20 fixed(17,2), OUT scl_srp20 fixed(17,2), 
   OUT scl_backing20 varchar(15), OUT scl_qty20 fixed(3)) AS
 BEGIN
-    sc_sub_total=0r;
-    sc_tax=0;
-    sc_ship_cost=0;
-    sc_total=0;
-    num_item=0;
-if flag=1 then 
-  call getCustInfo(:c_uname, :c_id, :c_passwd, :c_fname, :c_lname, 
+if flag=1 then begin
+  CALL getCustInfo(:c_uname, :c_id, :c_passwd, :c_fname, :c_lname, 
      :addr_street1, :addr_street2, :addr_city, :addr_state, :addr_zip, 
-     :co_name, :c_phone, :c_email, :c_data, :c_birthday)
+     :co_name, :c_phone, :c_email, :c_data, :c_birthday, :c_discount);
+  end
 else begin
   set c_passwd='';
   call InsertCust(:co_name, :addr_street1, :addr_street2, :addr_city,
@@ -97,7 +93,12 @@ else begin
   UPDATE dbt.shopping_cart SET sc_c_fname=(:c_fname), sc_c_lname=(:c_lname),
      sc_c_discount=(:c_discount), sc_c_id=(:c_id) where sc_id=:sc_id;
 end;
-call updateSC(:sc_id, :sc_sub_total, :c_discount, :sc_tax, :sc_ship_cost,
+    sc_sub_total=0;
+    sc_tax=0;
+    sc_ship_cost=0;
+    sc_total=0;
+    num_item=0;
+call updateSC(:sc_id, :c_discount, :sc_sub_total, :sc_tax, :sc_ship_cost,
      :sc_total);
 call getSCDetail(:sc_id, :num_item, 
     :scl_i_id1, :scl_title1, :scl_cost1, :scl_srp1, :scl_backing1, :scl_qty1,
