@@ -284,10 +284,10 @@ void *DoTxn(void *fd)
 			/* author and title search results are cached */
 			if (app_search_results_array.odbc_data_array[TxnQItem.SlotID].search_results_odbc_data.eb.search_type!=SEARCH_SUBJECT)
 			{
-				rc = send_search_results_response(workersock, &app_search_results_array.odbc_data_array[TxnQItem.SlotID].search_results_odbc_data.eb);
+				rc = send_search_results(workersock, &app_search_results_array.odbc_data_array[TxnQItem.SlotID].search_results_odbc_data.eb);
 				if (rc!=W_OK)
 					LOG_ERROR_MESSAGE("send search_results to cache host failed");
-				rc = receive_search_results_request(workersock, &app_search_results_array.odbc_data_array[TxnQItem.SlotID].search_results_odbc_data.eb);
+				rc = receive_search_results(workersock, &app_search_results_array.odbc_data_array[TxnQItem.SlotID].search_results_odbc_data.eb);
 				if (rc!=W_OK)
 					LOG_ERROR_MESSAGE("receive search_results from cache host failed");
 				if (rc==0)

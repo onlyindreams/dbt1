@@ -11,7 +11,7 @@
 
 #include "cache_interface.h"
 
-int receive_search_results_request(int s, struct search_results_t *search_results_request)
+int receive_search_results(int s, struct search_results_t *search_results_request)
 {
 	void *data;
 	int length;
@@ -33,7 +33,7 @@ int receive_search_results_request(int s, struct search_results_t *search_result
 	return W_OK;
 }
 
-int send_search_results_response(int s,  struct search_results_t *search_results_response)
+int send_search_results(int s,  struct search_results_t *search_results_response)
 {
 	int length;
 

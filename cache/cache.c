@@ -237,7 +237,7 @@ void *cache_thread(void *fd)
 	while (1)
 	{
 		/* receive search results request */
-		if ((rec=receive_search_results_request(workersock, &search_results)) == W_ERROR)
+		if ((rec=receive_search_results(workersock, &search_results)) == W_ERROR)
 		{
 			LOG_ERROR_MESSAGE("receive_search_results_request failed");
 			close(workersock);
@@ -301,7 +301,7 @@ void *cache_thread(void *fd)
 		
 		
 		/* send results back */
-		if ((rec=send_search_results_response(workersock, &search_results)) == W_ERROR)
+		if ((rec=send_search_results(workersock, &search_results)) == W_ERROR)
 		{
 			LOG_ERROR_MESSAGE("send_search_results_response failed");
 			close(workersock);

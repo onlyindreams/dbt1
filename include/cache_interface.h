@@ -15,6 +15,6 @@
 #include <_socket.h>
 #include <odbc_interaction.h>
 
-int receive_search_results_request(int s, struct search_results_t *search_results_request);
-int send_search_results_response(int s,  struct search_results_t *search_results_response);
+int receive_search_results(int s, struct search_results_t *search_results_request);
+int send_search_results(int s,  struct search_results_t *search_results_response);
 #endif
