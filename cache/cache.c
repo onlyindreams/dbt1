@@ -34,7 +34,6 @@ void sighandler(int signum);
 
 pthread_mutex_t mutex_cache_server = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_counter = PTHREAD_MUTEX_INITIALIZER;
-int num_items;
 int db_thread;
 int sanity_check = 0;
 char sname2[32], uname2[32], auth2[32];
@@ -98,9 +97,11 @@ int main(int argc, char *argv[])
 				strcpy(sname2, optarg);
 				break;
 			case 'i':
-				num_items = atoi(optarg);
-				a_id_max = num_items / 10;
-				i_id_max = num_items / 5;
+				/* item_count is a global variable      *
+				 * it is used in execute_search_results */
+				item_count = atoi(optarg);
+				a_id_max = item_count / 10;
+				i_id_max = item_count / 5;
 				break;
 			case 'l':
 				port = atoi(optarg);
