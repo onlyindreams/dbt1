@@ -1,6 +1,12 @@
-/
-/*DROP DBPROC DigSyl;*/
-/
+/*
+/*
+/* This file is released under the terms of the Artistic License.  Please see
+/* the file LICENSE, included in this package, for details.
+/*
+/* Copyright (C) 2002 Mark Wong & Jenny Zhang &
+/*                    Open Source Development Lab, Inc.
+/*
+/*/
 CREATE DBPROC DigSyl(IN D INT, IN N INT, OUT Str varchar(64)) AS
   VAR base int; i int; digits int; start int;
 BEGIN
