@@ -7,7 +7,7 @@
 /*                    Open Source Development Lab, Inc.
 /*
 /*/
-CREATE DBPROC getSCDetail (IN sc_id fixed(10,0),
+CREATE DBPROC getSCDetail (IN sc_id fixed(10),
   OUT num_item fixed(2,0),
   OUT scl_i_id1 fixed(10,0), OUT scl_title1 varchar(60), 
   OUT scl_cost1 fixed(17,2), OUT scl_srp1 fixed(17,2), 
