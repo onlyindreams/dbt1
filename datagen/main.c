@@ -12,6 +12,7 @@
 #define _LARGEFILE64_SOURCE
 
 #include <stdlib.h>
+#include <unistd.h>
 #include <tpcw.h>
 #include <datagen.h>
 
@@ -36,24 +37,27 @@ distribution np;
 distribution vp;
 distribution grammar;
 
+int items, ebs;
+/* directory where the datafile will be put */
+char path[256];
+int flag_cust, flag_item, flag_author, flag_address, flag_order;
 
 int main(int argc, char *argv[])
 {
-	int items, ebs;
 	FILE *sequence_sql;
 	FILE *p;
 	char pwd[256];
 	char cmd[256];
-	/* directory where the datafile will be put */
-	char path[256];
 
-	if (argc != 4)
-	{
-		printf("Usage: %s <items> <ebs> <path>\n", argv[0]);
-		return 1;
-	}
+	flag_cust=0;
+	flag_item=0;
+	flag_author=0;
+	flag_address=0;
+	flag_order=0;
+	path[0]='\0';
 
-	items = atoi(argv[1]);
+	process_options(argc, argv);
+
 	if (items != 1000 && items != 10000 && items != 100000 && items != 1000000
 		&& items != 10000000)
 	{
@@ -66,13 +70,10 @@ int main(int argc, char *argv[])
 		return 2;
 	}
 
-	ebs = atoi(argv[2]);
-	strcpy(path, argv[3]);
-
 	p = popen("pwd", "r");
 	fscanf(p, "%s", pwd);
 	printf("%s\n", pwd);
-	if (strcmp(path, ".")==0) strcpy(path, pwd);
+	if (strcmp(path, ".")==0 || path[0]=='\0' ) strcpy(path, pwd);
 
 	printf("item scale factor	%d\n", items);
 	printf("EB scale factor		%d\n", ebs);
@@ -103,36 +104,147 @@ int main(int argc, char *argv[])
 	init_common();
 	load_dists();
 	printf("generating data files...\n");
-	gen_items(items, path);
-	gen_customers(ebs, path);
-	gen_authors(items, path);
-	gen_addresses(ebs, path);
-	gen_orders(ebs, items, path);
+	/*if -T is not specified, then generate all the files */
+	if (flag_item==0 && flag_cust==0 && flag_author==0 && flag_address==0 &&
+		flag_order==0)
+	{
+		gen_items(items, path);
+		gen_customers(ebs, path);
+		gen_authors(items, path);
+		gen_addresses(ebs, path);
+		gen_orders(ebs, items, path);
+		/*
+		 * In my environment, I don't have enough /tmp space to put the data files
+		 * in /tmp.
+		 */
 
-	/*
-	 * In my environment, I don't have enough /tmp space to put the data files
-	 * in /tmp.
-	 */
-	printf("creating links in /tmp to data files...\n");
-	sprintf(cmd, "ln -fs %s/address.data /tmp/address.data", path);
-	popen(cmd, "r");
-	sprintf(cmd, "ln -fs %s/address.data /tmp/address.data", path);
-	popen(cmd, "r");
-	sprintf(cmd, "ln -fs %s/author.data /tmp/author.data", path);
-	popen(cmd, "r");
-	sprintf(cmd, "ln -fs %s/customer.data /tmp/customer.data", path);
-	popen(cmd, "r");
-	sprintf(cmd, "ln -fs %s/item.data /tmp/item.data", path);
-	popen(cmd, "r");
-	sprintf(cmd, "ln -fs %s/orders.data /tmp/orders.data", path);
-	popen(cmd, "r");
-	sprintf(cmd, "ln -fs %s/order_line.data /tmp/order_line.data", path);
-	popen(cmd, "r");
-	sprintf(cmd, "ln -fs %s/cc_xacts.data /tmp/cc_xacts.data", path);
-	popen(cmd, "r");
+		printf("creating links in /tmp to data files...\n");
+		sprintf(cmd, "ln -fs %s/address.data /tmp/address.data", path);
+		popen(cmd, "r");
+		sprintf(cmd, "ln -fs %s/author.data /tmp/author.data", path);
+		popen(cmd, "r");
+		sprintf(cmd, "ln -fs %s/customer.data /tmp/customer.data", path);
+		popen(cmd, "r");
+		sprintf(cmd, "ln -fs %s/item.data /tmp/item.data", path);
+		popen(cmd, "r");
+		sprintf(cmd, "ln -fs %s/orders.data /tmp/orders.data", path);
+		popen(cmd, "r");
+		sprintf(cmd, "ln -fs %s/order_line.data /tmp/order_line.data", path);
+		popen(cmd, "r");
+		sprintf(cmd, "ln -fs %s/cc_xacts.data /tmp/cc_xacts.data", path);
+		popen(cmd, "r");
+	}
+	else
+	{
+		if (flag_item == 1) 
+		{
+			gen_items(items, path);
+			sprintf(cmd, "ln -fs %s/item.data /tmp/item.data", path);
+			popen(cmd, "r");
+		}
+		if (flag_cust == 1)
+		{
+			gen_customers(ebs, path);
+			sprintf(cmd, "ln -fs %s/customer.data /tmp/customer.data", path);
+			popen(cmd, "r");
+		}
+		if (flag_author == 1) 
+		{
+			gen_authors(items, path);
+			sprintf(cmd, "ln -fs %s/author.data /tmp/author.data", path);
+			popen(cmd, "r");
+		}
+		if (flag_address == 1)
+		{
+			gen_addresses(ebs, path);
+			sprintf(cmd, "ln -fs %s/address.data /tmp/address.data", path);
+			popen(cmd, "r");
+		}
+		if (flag_order == 1)
+		{
+			gen_orders(ebs, items, path);
+			sprintf(cmd, "ln -fs %s/orders.data /tmp/orders.data", path);
+			popen(cmd, "r");
+			sprintf(cmd, "ln -fs %s/order_line.data /tmp/order_line.data", path);
+			popen(cmd, "r");
+			sprintf(cmd, "ln -fs %s/cc_xacts.data /tmp/cc_xacts.data", path);
+			popen(cmd, "r");
+		}
+	}
+
 	sprintf(cmd, "ln -fs %s/country.data /tmp/country.data", pwd);
 	popen(cmd, "r");
 
 	free(dpath);
 	return 0;
+}
+
+void process_options(int count, char **vector)
+{
+	int option;
+	int set_items;
+	int set_eus;
+
+	set_items=0;
+	set_eus=0;
+
+	while ((option = getopt (count, vector, "i:u:p:T:h")) != -1)
+	{
+		switch (option)
+		{
+			case 'i':
+				items = atoi(optarg);
+				set_items=1;
+				break;
+			case 'u':
+				ebs = atoi(optarg);
+				set_eus=1;
+				break;
+			case 'p':
+				strcpy(path, optarg);
+				break;
+			case 'T':
+				switch (*optarg)
+				{
+					case 'i':
+						flag_item = 1 ; /*generate item ONLY */
+						break;
+					case 'c':
+						flag_cust = 1 ; /*generate customer ONLY */
+						break;
+					case 'o':
+						flag_order = 1; /*generate order ONLY */
+						break;
+					case 'a':
+						flag_author = 1; /*generate author ONLY */
+						break;
+					case 'd':
+						flag_address = 1; /*generate address ONLY */
+						break;
+				}
+				break;
+			case 'h':
+				usage();
+				exit(1);
+				break;
+			default:
+				usage();
+				exit(1);
+		}
+	}
+	if (set_items==0 || set_eus==0)
+	{
+		printf("item and eu numbers are required\n");
+		usage();
+		exit(1);
+	}
+}
+
+void usage()
+{
+	printf("usage: ./datagen -i <item> -u <eu> -p <path> -T <table_name>\n");
+	printf("table name is:\n");
+	printf(" i -- item\n c -- customer\n a -- author\n d -- address\n o -- order\n");
+	printf("example: ./datagen -i 10000 -u 1000 -p /tmp -T i -T c\n");
+	printf("generates table ITEM and CUSTOMER for 10k item 1k eu in directory /tmp\n");
 }
