@@ -263,6 +263,11 @@ void *warm_up_cache(void *fd)
 			strcpy(title_results_table[i].search_results[j].a_fname, odbc_data.search_results_odbc_data.eb.results_data[j].a_fname);
 			strcpy(title_results_table[i].search_results[j].a_lname, odbc_data.search_results_odbc_data.eb.results_data[j].a_lname);
 		}
+		for (k=0; k<PROMOTIONAL_ITEMS_MAX; k++)
+		{
+			title_results_table[i].i_related[k]= odbc_data.search_results_odbc_data.eb.pp_data.i_related[k];
+			title_results_table[i].i_thumbnail[k]= odbc_data.search_results_odbc_data.eb.pp_data.i_thumbnail[k];
+		}
 	}
 }
 
@@ -305,6 +310,7 @@ void *cache_thread(void *fd)
 		if (search_results.search_type==SEARCH_AUTHOR)
 		{
 			/* copy out data */
+			search_results.items=author_results_table[index].record_number;
 			for(i=0; i<author_results_table[index].record_number; i++)
 			{
 				search_results.results_data[i].i_id=author_results_table[index].search_results[i].i_id;
@@ -321,6 +327,7 @@ void *cache_thread(void *fd)
 		}
 		else if (search_results.search_type==SEARCH_TITLE)
 		{
+			search_results.items=title_results_table[index].record_number;
 			/* copy out data */
 			for(i=0; i<title_results_table[index].record_number; i++)
 			{
