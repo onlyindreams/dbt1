@@ -20,7 +20,7 @@
 
 /* Clause 4.7.1 */
 
-void gen_customers(int ebs)
+void gen_customers(int ebs, char *path)
 {
 	int i, j;
 	int customers;
@@ -30,8 +30,10 @@ void gen_customers(int ebs)
 	int max;
 	struct tm *tm1, *tm2, *tm3;
 	time_t t1, t2, t3;
+	char filename[256];
 
-	output = fopen64("customer.data", "w");
+	sprintf(filename, "%s/customer.data", path);
+	output = fopen64(filename, "w");
 	if (output == NULL)
 	{
 		fprintf(stderr, "cannot open customer.data\n");

@@ -21,7 +21,7 @@
 
 /* Clause 4.7.1 */
 
-void gen_items(int items)
+void gen_items(int items, char *path)
 {
 	int i;
 	FILE *output = stdout;
@@ -30,8 +30,10 @@ void gen_items(int items)
 	double srp;
 	struct tm tm1, *tm2, *tm3;
 	time_t t1, t2, t3;
+	char filename[256];
 
-	output = fopen64("item.data", "w");
+	sprintf(filename, "%s/item.data", path);
+	output = fopen64(filename, "w");
 	if (output == NULL)
 	{
 		fprintf(stderr, "cannot open item.txt");

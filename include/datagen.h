@@ -12,8 +12,8 @@
 
 #define DELIMITER ','
 
-void gen_addresses(int ebs);
-void gen_authors(int items);
-void gen_customers(int ebs);
-void gen_items(int items);
-void gen_orders(int ebs, int items);
+void gen_addresses(int ebs, char *path);
+void gen_authors(int items, char *path);
+void gen_customers(int ebs, char *path);
+void gen_items(int items, char *path);
+void gen_orders(int ebs, int items, char *path);

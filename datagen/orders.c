@@ -20,7 +20,7 @@
 
 /* Clause 4.7.1 */
 
-void gen_orders(int ebs, int items)
+void gen_orders(int ebs, int items, char *path)
 {
 	int i, j;
 	FILE *orders_file = stdout;
@@ -32,22 +32,28 @@ void gen_orders(int ebs, int items)
 	struct tm *tm1, *tm2, *tm3;
 	time_t t1, t2, t3;
 	int order_line_count;
+	char filename1[256];
+	char filename2[256];
+	char filename3[256];
 
-	orders_file = fopen64("orders.data", "w");
+	sprintf(filename1, "%s/orders.data", path);
+	orders_file = fopen64(filename1, "w");
 	if (orders_file == NULL)
 	{
 		fprintf(stderr, "cannot open orders.data\n");
 		return;
 	}
 
-	order_line_file = fopen64("order_line.data", "w");
+	sprintf(filename2, "%s/order_line.data", path);
+	order_line_file = fopen64(filename2, "w");
 	if (order_line_file == NULL)
 	{
 		fprintf(stderr, "cannot open order_line.data\n");
 		return;
 	}
 
-	cc_xacts_file = fopen64("cc_xacts.data", "w");
+	sprintf(filename3, "%s/cc_xacts.data", path);
+	cc_xacts_file = fopen64(filename3, "w");
 	if (cc_xacts_file == NULL)
 	{
 		fprintf(stderr, "cannot open cc_xacts.data\n");
