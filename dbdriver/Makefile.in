@@ -35,4 +35,4 @@ dbdriver_p2: $(TOPDIR)/make.common Makefile eu.c main.c tm_interface.so \
 		$(COMMON_OBJS) tm_interface.so $(LIBS)
 
 clean:
-	rm -f *.so dbdriver_p1 dbdriver_p2
+	rm -f *.so dbdriver_p1 dbdriver_p2 error.log mix.log think_time.log usmd.log
