@@ -11,8 +11,8 @@ CREATE DBPROC addToSC (IN sc_id fixed(10,0), IN add_flag fixed(1,0),
 IN i_id fixed(10,0)) AS
   VAR itemcount fixed(3, 0); scl_qty fixed(3,0); i_cost fixed(17,2);
       i_srp fixed(17,2); i_title char(60); i_backing char(15); 
-      i_related1 fixed(10,0); sc_subtotal fixed(17,2);
-SUBTRANS BEGIN;
+      i_related1 fixed(10,0);
+BEGIN
 IF add_flag=1 THEN BEGIN
   SELECT sum(scl_qty) INTO :itemcount FROM dbt.shopping_cart_line 
   WHERE scl_sc_id=:SC_ID;
@@ -31,7 +31,7 @@ IF add_flag=1 THEN BEGIN
     END;
   END
   ELSE BEGIN
-    stop(1, 'reach cart limit of 100 items');
+    return;
   END;
 END
 ELSE BEGIN
@@ -44,11 +44,8 @@ IF $rc=100 THEN BEGIN
   INSERT INTO dbt.shopping_cart_line values(:sc_id, :i_related1, 1,
     :i_cost, :i_srp, :i_title, :i_backing);
 END;
-CALL getSCSubTotal(:sc_id, :sc_subtotal);
-UPDATE dbt.shopping_cart SET sc_sub_total=:sc_subtotal, sc_date=timestamp
-  WHERE sc_id=:sc_id;
 END;
-SUBTRANS END;
+END;
 ;
 /
 /
