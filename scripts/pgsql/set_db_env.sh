@@ -6,8 +6,9 @@
 # the file LICENSE, included in this package, for details.
 #
 # Copyright (C) 2002 Open Source Development Lab, Inc.
-# Author: Jenny Zhang based on the scripts submitted by
-#	 Virginie Megy & Thierry Missimilly
+# Author: Jenny Zhang, NAGAYASU Satoshi
+#
+# Contributer: Virginie Megy & Thierry Missimilly
 #               Bull, Liux Competence Center
 #
 # 28 May 2003
@@ -24,17 +25,19 @@ export PATH=/usr/local/pgsql/bin:$PATH
 
 # Postgres env for the database (directory where to put the database files)
 export PGDATA=/dbt1/pgsql
-export PGPORT=5433
 
-# create Postgres DBT1 database
-echo "Creating database..."
-if [ -d $PGDATA ] ; then
-echo "======================================="
-echo "PGData directory $PGDATA already exists"
-echo "Skipping initdb"
-echo "======================================="
-else
-initdb -D $PGDATA
-fi
+echo "shutting down postgresql server..."
+pg_ctl stop > /dev/null 2>&1
 
-pg_ctl start -l logfile -D $PGDATA
+# remove and create directory where to put the database files
+echo "removing existing database cluster..."
+rm -rf $PGDATA
+mkdir -p $PGDATA
+
+# initialize database cluster
+echo "initializing database cluster..."
+initdb -D $PGDATA > /dev/null 2>&1
+
+# start remote communication server
+echo "start postgresql server..."
+pg_ctl start -o -i -l logfile > /dev/null 2>&1
