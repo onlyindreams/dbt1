@@ -102,9 +102,8 @@ OUT i_id20 FIXED(10), OUT i_title20 VARCHAR(60),
 OUT i_publisher20 VARCHAR(60), OUT i_cost20 FIXED(17, 2),
 OUT ol_qty20 FIXED(3), OUT ol_discount20 FIXED(17, 2),
 OUT ol_comments20 VARCHAR(100)) AS
-  VAR c_id FIXED(10); o_bill_addr_id FIXED(10);
-      o_ship_addr_id FIXED(10); tmptimestamp1 TIMESTAMP; 
-      tmptimestamp2 TIMESTAMP;
+  VAR o_bill_addr_id FIXED(10);
+      o_ship_addr_id FIXED(10); 
 BEGIN
   c_fname='';
   c_lname='';
@@ -154,25 +153,19 @@ BEGIN
        :i_id18, :i_title18, :i_publisher18, :i_cost18, :ol_qty18, :ol_discount18, :ol_comments18,
        :i_id19, :i_title19, :i_publisher19, :i_cost19, :ol_qty19, :ol_discount19, :ol_comments19,
        :i_id20, :i_title20, :i_publisher20, :i_cost20, :ol_qty20, :ol_discount20, :ol_comments20);
-  SELECT c_id, c_fname, c_lname, c_phone, c_email
-  INTO :c_id, :c_fname, :c_lname, :c_phone, :c_email
-  FROM dbt.customer
-  WHERE c_uname = :c_uname
-    AND c_passwd = :c_passwd;
-      SELECT o_id, CHAR(o_date,ISO), o_sub_total, o_tax, o_total, o_ship_type,
-        CHAR(o_ship_date,ISO), o_status, o_bill_addr_id, o_ship_addr_id
-        FROM dbt.orders
-        WHERE o_c_id = :c_id
-        ORDER BY o_date DESC;
-      IF $rc = 0 THEN
-      BEGIN
-        FETCH INTO :o_id, :o_date, :o_sub_total, :o_tax,
+  SELECT c_fname, c_lname, c_phone, c_email, 
+    o_id, CHAR(o_date,ISO), o_sub_total, o_tax, o_total, o_ship_type,
+    CHAR(o_ship_date,ISO), o_status, o_bill_addr_id, o_ship_addr_id,
+    cx_type, cx_auth_id
+  FROM dbt.customer, dbt.orders, dbt.cc_xacts
+  WHERE c_uname = :c_uname AND c_passwd = :c_passwd
+    and o_c_id=c_id and cx_o_id = o_id ORDER BY o_date DESC;
+  IF $rc = 0 THEN BEGIN
+ 	FETCH INTO :c_fname, :c_lname, :c_phone, :c_email,
+                   :o_id, :o_date, :o_sub_total, :o_tax,
                    :o_total, :o_ship_type, :o_ship_date, :o_status,
-                   :o_bill_addr_id, :o_ship_addr_id;
-        SELECT cx_type, cx_auth_id
-          FROM dbt.cc_xacts
-          WHERE cx_o_id = :o_id;
-        if $rc = 0 then fetch into :cx_type, :cx_auth_id;
+                   :o_bill_addr_id, :o_ship_addr_id, :cx_type, :cx_auth_id;
+        if $rc = 0 then begin
         SELECT addr_street1, addr_street2, addr_city, addr_state, addr_zip,
                 co_name
           INTO :bill_addr_street1, :bill_addr_street2, :bill_addr_city,
@@ -207,5 +200,6 @@ BEGIN
        :i_id19, :i_title19, :i_publisher19, :i_cost19, :ol_qty19, :ol_discount19, :ol_comments19,
        :i_id20, :i_title20, :i_publisher20, :i_cost20, :ol_qty20, :ol_discount20, :ol_comments20);
       end;
+  END;
 END;
 ;

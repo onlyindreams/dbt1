@@ -7,33 +7,34 @@
 /*                    Open Source Development Lab, Inc.
 /*
 /*/
-CREATE DBPROC updateSC (IN sc_id fixed(10,0), 
+CREATE DBPROC updateSC (IN sc_id fixed(10), 
 IN discount fixed(5,2), OUT  sc_sub_total fixed(17,2), 
 OUT sc_tax fixed(17,2), OUT sc_ship_cost fixed(5,2), 
 OUT sc_total fixed(17,2)) AS
-VAR i_cost fixed(17,2); i_id fixed(10,0); sub_total fixed(17,2); 
-    scl_qty fixed(3, 0); 
+VAR i_cost fixed(17,2); i_id fixed(10); sub_total fixed(17,2); 
+    scl_qty fixed(3); sc_qty fixed(3);
 BEGIN
+set sc_qty=0;
 set sc_sub_total=0.00;
+set sub_total=0.00;
 set discount=0.00;
 set sc_tax=0.00;
 set sc_ship_cost=0.00;
 set sc_total=0.00;
-SELECT scl_i_id FROM dbt.shopping_cart_line WHERE scl_sc_id=:sc_id;
+SELECT scl_i_id, scl_qty, i_cost FROM dbt.shopping_cart_line, dbt.item
+  WHERE i_id=scl_i_id AND scl_sc_id=:sc_id;
 WHILE $rc=0 DO BEGIN
-  FETCH INTO :i_id;
-  IF $rc = 0 THEN BEGIN
-     SELECT i_cost INTO :i_cost FROM dbt.item WHERE i_id=:i_id;
-     UPDATE dbt.shopping_cart_line SET scl_cost=(:i_cost) 
+  FETCH INTO :i_id, :scl_qty, :i_cost;
+  if $rc=0 THEN BEGIN
+     UPDATE dbt.shopping_cart_line SET scl_cost=(:i_cost)
         WHERE scl_i_id=:i_id AND scl_sc_id=:sc_id;
+     set sub_total=sub_total+i_cost*scl_qty;
+     set sc_qty=sc_qty+scl_qty;
   END;
 END;
-CALL getSCSubTotal(:sc_id, :sub_total);
-SELECT sum(scl_qty) INTO :scl_qty
-  FROM dbt.shopping_cart_line WHERE scl_sc_id=:sc_id;
 set sc_sub_total=sub_total*(1-discount);
 set sc_tax=sc_sub_total*0.0825;
-set sc_ship_cost=3.00+(1.00*scl_qty);
+set sc_ship_cost=3.00+(1.00*sc_qty);
 set sc_total=sc_sub_total+sc_ship_cost+sc_tax;
 UPDATE dbt.shopping_cart set sc_date=(timestamp), sc_sub_total=(:sc_sub_total),
 sc_tax=(:sc_tax), sc_ship_cost=(:sc_ship_cost), sc_total=(:sc_total) where sc_id=:sc_id;

@@ -37,10 +37,9 @@ END
 ELSE BEGIN
 SELECT * FROM dbt.shopping_cart_line WHERE scl_sc_id=:SC_ID;
 IF $rc=100 THEN BEGIN
-  SELECT i_related1 INTO :i_related1 FROM dbt.item WHERE i_id=:I_ID;
-  SELECT i_cost, i_srp, i_title, i_backing
-    INTO :i_cost, :i_srp, :i_title, :i_backing
-    FROM dbt.item where i_id=:i_related1;
+  SELECT t1.i_cost, t1.i_srp, t1.i_title, t1.i_backing, t2.i_related1
+    INTO :i_cost, :i_srp, :i_title, :i_backing, :i_related1
+    FROM dbt.item t1, dbt.item t2 where t1.i_id=t2.i_related1 and t2.i_id=:I_ID;
   INSERT INTO dbt.shopping_cart_line values(:sc_id, :i_related1, 1,
     :i_cost, :i_srp, :i_title, :i_backing);
 END;
