@@ -5,12 +5,12 @@ include @TOPDIR@/make.common
 
 CFLAGS2=$(CFLAGS) -I$(TOPDIR)/wgen
 
-all: orders.so address.so author.so customer.so item.so datagen
+all: datagen
 
 datagen: Makefile main.c ../common/common.so \
 	../wgen/tpcw.o ../wgen/text.o ../wgen/rnd.o ../wgen/bm_utils.o
 	$(CC) $(CFLAGS2) main.c -o datagen ../common/common.so ../wgen/tpcw.o \
-		../wgen/text.o ../wgen/rnd.o ../wgen/bm_utils.o -lm
+		../wgen/text.o ../wgen/rnd.o ../wgen/bm_utils.o -lpthread -lm
 
 clean:
-	rm -f datagen *.so
+	rm -f datagen debug.log error.log

@@ -16,6 +16,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <semaphore.h>
 #include <tpcw.h>
 #include <common.h>
 
@@ -46,15 +47,17 @@ int items, ebs;
 /* directory where the datafile will be put */
 char path[256];
 int flag_cust, flag_item, flag_author, flag_address, flag_order;
+sem_t sem;
 
-void gen_addresses(int ebs, char *path);
-void gen_authors(int items, char *path);
-void gen_customers(int ebs, char *path);
-void gen_items(int items, char *path);
-void gen_orders(int ebs, int items, char *path);
+/* Prototypes */
+void *gen_addresses(void *data);
+void *gen_authors(void *data);
+void *gen_customers(void *data);
+void *gen_items(void *data);
+void *gen_orders(void *data);
 int process_options(int count, char **vector);
 void usage();
-/* Prototype from wgen/text.c */
+/* Prototype for wgen/text.c since it doesn't provide one for us. */
 void load_dists(void);
 
 int main(int argc, char *argv[])
@@ -63,12 +66,9 @@ int main(int argc, char *argv[])
 	FILE *p;
 	char pwd[256];
 	char cmd[256];
+	int sem_val;
+	pthread_t t1, t2, t3, t4, t5;
 
-	flag_cust = 0;
-	flag_item = 0;
-	flag_author = 0;
-	flag_address = 0;
-	flag_order = 0;
 	path[0] = '\0';
 
 	if (process_options(argc, argv) == 0)
@@ -98,8 +98,8 @@ int main(int argc, char *argv[])
 	}
 
 	printf("item scale factor %10d\n", items);
-	printf("EB scale factor	  %10d\n", ebs);
-	printf("data file is in	  %10s\n", path);
+	printf("user scale factor %10d\n", ebs);
+	printf("data files are in %10s\n", path);
 
 	printf("generating sequence creation file: %s\n", SEQUENCE_SQL);
 	sequence_sql = fopen64(SEQUENCE_SQL, "w");
@@ -126,84 +126,80 @@ int main(int argc, char *argv[])
 	init_common();
 	load_dists();
 	printf("generating data files...\n");
-	/* if -T is not specified, then generate all the files */
-	if (flag_item == 0 && flag_cust == 0 && flag_author == 0 &&
-		flag_address == 0 && flag_order == 0)
-	{
-		gen_items(items, path);
-		gen_customers(ebs, path);
-		gen_authors(items, path);
-		gen_addresses(ebs, path);
-		gen_orders(ebs, items, path);
-		/*
-		 * In my environment, I don't have enough /tmp space to put the data
-		 * files in /tmp.
-		 */
 
-		printf("creating links in /tmp to data files...\n");
-		sprintf(cmd, "ln -fs %s/address.data /tmp/address.data", path);
-		popen(cmd, "r");
-		sprintf(cmd, "ln -fs %s/author.data /tmp/author.data", path);
-		popen(cmd, "r");
-		sprintf(cmd, "ln -fs %s/customer.data /tmp/customer.data", path);
-		popen(cmd, "r");
+	if (sem_init(&sem, 0, 0) != 0)
+	{
+		perror("sem_init");
+		return 4;
+	}
+
+	if (flag_item == 1) 
+	{
+		if (pthread_create(&t1, NULL, gen_items, NULL) != 0)
+		{
+			perror("pthread_create");
+		}
 		sprintf(cmd, "ln -fs %s/item.data /tmp/item.data", path);
 		popen(cmd, "r");
+	}
+	if (flag_cust == 1)
+	{
+		if (pthread_create(&t2, NULL, gen_customers, NULL) != 0)
+		{
+			perror("pthread_create");
+		}
+		sprintf(cmd, "ln -fs %s/customer.data /tmp/customer.data", path);
+		popen(cmd, "r");
+	}
+	if (flag_author == 1) 
+	{
+		if (pthread_create(&t3, NULL, gen_authors, NULL) != 0)
+		{
+			perror("pthread_create");
+		}
+		sprintf(cmd, "ln -fs %s/author.data /tmp/author.data", path);
+		popen(cmd, "r");
+	}
+	if (flag_address == 1)
+	{
+		if (pthread_create(&t4, NULL, gen_addresses, NULL) != 0)
+		{
+			perror("pthread_create");
+		}
+		sprintf(cmd, "ln -fs %s/address.data /tmp/address.data", path);
+		popen(cmd, "r");
+	}
+	if (flag_order == 1)
+	{
+		if (pthread_create(&t5, NULL, gen_orders, NULL) != 0)
+		{
+			perror("pthread_create");
+		}
 		sprintf(cmd, "ln -fs %s/orders.data /tmp/orders.data", path);
 		popen(cmd, "r");
-		sprintf(cmd, "ln -fs %s/order_line.data /tmp/order_line.data", path);
+		sprintf(cmd, "ln -fs %s/order_line.data /tmp/order_line.data",
+			path);
 		popen(cmd, "r");
 		sprintf(cmd, "ln -fs %s/cc_xacts.data /tmp/cc_xacts.data", path);
 		popen(cmd, "r");
 	}
-	else
-	{
-		if (flag_item == 1) 
-		{
-			gen_items(items, path);
-			sprintf(cmd, "ln -fs %s/item.data /tmp/item.data", path);
-			popen(cmd, "r");
-		}
-		if (flag_cust == 1)
-		{
-			gen_customers(ebs, path);
-			sprintf(cmd, "ln -fs %s/customer.data /tmp/customer.data", path);
-			popen(cmd, "r");
-		}
-		if (flag_author == 1) 
-		{
-			gen_authors(items, path);
-			sprintf(cmd, "ln -fs %s/author.data /tmp/author.data", path);
-			popen(cmd, "r");
-		}
-		if (flag_address == 1)
-		{
-			gen_addresses(ebs, path);
-			sprintf(cmd, "ln -fs %s/address.data /tmp/address.data", path);
-			popen(cmd, "r");
-		}
-		if (flag_order == 1)
-		{
-			gen_orders(ebs, items, path);
-			sprintf(cmd, "ln -fs %s/orders.data /tmp/orders.data", path);
-			popen(cmd, "r");
-			sprintf(cmd, "ln -fs %s/order_line.data /tmp/order_line.data",
-				path);
-			popen(cmd, "r");
-			sprintf(cmd, "ln -fs %s/cc_xacts.data /tmp/cc_xacts.data", path);
-			popen(cmd, "r");
-		}
-	}
 
 	sprintf(cmd, "ln -fs %s/country.data /tmp/country.data", pwd);
 	popen(cmd, "r");
+
+	do
+	{
+		sleep(10);
+		sem_getvalue(&sem, &sem_val);
+	} while (sem_val > 0);
+	sem_destroy(&sem);
 
 	free(dpath);
 	return 0;
 }
 
 /* Clause 4.7.1 */
-void gen_addresses(int ebs, char *path)
+void *gen_addresses(void *data)
 {
 	int i;
 	FILE *output = stdout;
@@ -216,8 +212,12 @@ void gen_addresses(int ebs, char *path)
 	if (output == NULL)
 	{
 		fprintf(stderr, "cannot open address.data\n");
-		return;
+		return NULL;
 	}
+
+	srand(0);
+	printf("Generating address table data...\n");
+	sem_post(&sem);
 
 	addresses = ebs * 2880 * 2;
 
@@ -260,10 +260,13 @@ void gen_addresses(int ebs, char *path)
 
 	fflush(output);
 	fclose(output);
+	sem_wait(&sem);
+	printf("Finished address table data.\n");
+	return NULL;
 }
 
 /* Clause 4.7.1 */
-void gen_authors(int items, char *path)
+void *gen_authors(void *data)
 {
 	int i;
 	FILE *output = stdout;
@@ -277,8 +280,12 @@ void gen_authors(int items, char *path)
 	if (output == NULL)
 	{
 		fprintf(stderr, "cannot open author.data\n");
-		return;
+		return NULL;
 	}
+
+	srand(0);
+	printf("Generating author table data...\n");
+	sem_post(&sem);
 
 	author_count = items / 4;
 
@@ -315,8 +322,8 @@ void gen_authors(int items, char *path)
 		tm2 = localtime(&t2);
 		t3 = (time_t) (get_percentage() * (double) ((long long) t2 - (long long) t1 + (long long) 86400)) + t1;
 		tm3 = localtime(&t3);
-		fprintf(output, "\"%04d%02d%02d\"", tm3->tm_year + 1900, tm3->tm_mon + 1,
-			tm3->tm_mday);
+		fprintf(output, "\"%04d%02d%02d\"", tm3->tm_year + 1900,
+			tm3->tm_mon + 1, tm3->tm_mday);
 		fprintf(output, "%c", DELIMITER);
 
 		/* a_bio */
@@ -328,10 +335,13 @@ void gen_authors(int items, char *path)
 
 	fflush(output);
 	fclose(output);
+	sem_wait(&sem);
+	printf("Finished author table data.\n");
+	return NULL;
 }
 
 /* Clause 4.7.1 */
-void gen_customers(int ebs, char *path)
+void *gen_customers(void *data)
 {
 	int i, j;
 	int customers;
@@ -348,10 +358,15 @@ void gen_customers(int ebs, char *path)
 	if (output == NULL)
 	{
 		fprintf(stderr, "cannot open customer.data\n");
-		return;
+		return NULL;
 	}
 
+	srand(0);
+	printf("Generating customer table data...\n");
+	sem_post(&sem);
+
 	customers = 2880 * ebs;
+
 	for (i = 0; i < customers; i++)
 	{
 
@@ -474,10 +489,13 @@ void gen_customers(int ebs, char *path)
 
 	fflush(output);
 	fclose(output);
+	sem_wait(&sem);
+	printf("Finished customer table data.\n");
+	return NULL;
 }
 
 /* Clause 4.7.1 */
-void gen_items(int items, char *path)
+void *gen_items(void *data)
 {
 	int i;
 	FILE *output = stdout;
@@ -493,8 +511,12 @@ void gen_items(int items, char *path)
 	if (output == NULL)
 	{
 		fprintf(stderr, "cannot open item.txt");
-		return;
+		return NULL;
 	}
+
+	srand(0);
+	printf("Generating item table data...\n");
+	sem_post(&sem);
 
 	item_count = items;
 
@@ -645,10 +667,13 @@ void gen_items(int items, char *path)
 
 	fflush(output);
 	fclose(output);
+	sem_wait(&sem);
+	printf("Finished item table data.\n");
+	return NULL;
 }
 
 /* Clause 4.7.1 */
-void gen_orders(int ebs, int items, char *path)
+void *gen_orders(void *data)
 {
 	int i, j;
 	FILE *orders_file = stdout;
@@ -669,7 +694,7 @@ void gen_orders(int ebs, int items, char *path)
 	if (orders_file == NULL)
 	{
 		fprintf(stderr, "cannot open orders.data\n");
-		return;
+		return NULL;
 	}
 
 	sprintf(filename2, "%s/order_line.data", path);
@@ -677,7 +702,7 @@ void gen_orders(int ebs, int items, char *path)
 	if (order_line_file == NULL)
 	{
 		fprintf(stderr, "cannot open order_line.data\n");
-		return;
+		return NULL;
 	}
 
 	sprintf(filename3, "%s/cc_xacts.data", path);
@@ -685,8 +710,12 @@ void gen_orders(int ebs, int items, char *path)
 	if (cc_xacts_file == NULL)
 	{
 		fprintf(stderr, "cannot open cc_xacts.data\n");
-		return;
+		return NULL;
 	}
+
+	srand(0);
+	printf("Generating order, order_line, and cc_xacts table data...\n");
+	sem_post(&sem);
 
 	customers = ebs * 2880;
 	orders = (int) (customers * 0.9);
@@ -846,6 +875,9 @@ void gen_orders(int ebs, int items, char *path)
 	fclose(orders_file);
 	fclose(order_line_file);
 	fclose(cc_xacts_file);
+	sem_wait(&sem);
+	printf("Finished order, order_line, and cc_xacts table data.\n");
+	return NULL;
 }
 
 int process_options(int count, char **vector)
@@ -853,10 +885,16 @@ int process_options(int count, char **vector)
 	int option;
 	int set_items;
 	int set_eus;
+	int flag_all = 1;
 
 	set_items = 0;
 	set_eus = 0;
 
+	flag_cust = 0;
+	flag_item = 0;
+	flag_author = 0;
+	flag_address = 0;
+	flag_order = 0;
 	while ((option = getopt (count, vector, "i:u:p:T:h")) != -1)
 	{
 		switch (option)
@@ -873,6 +911,7 @@ int process_options(int count, char **vector)
 				strcpy(path, optarg);
 				break;
 			case 'T':
+				flag_all = 0;
 				switch (*optarg)
 				{
 					case 'i':
@@ -899,6 +938,14 @@ int process_options(int count, char **vector)
 			default:
 				return 0;
 		}
+	}
+	if (flag_all == 1)
+	{
+		flag_cust = 1;
+		flag_item = 1;
+		flag_author = 1;
+		flag_address = 1;
+		flag_order = 1;
 	}
 	if (set_items == 0 || set_eus == 0)
 	{
