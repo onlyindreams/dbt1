@@ -174,7 +174,7 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	printf("The server is active.	You may terminate it with Ctrl-C.\n");
+	printf("The server is active...\n");
 
 	while (1) {
 		addrlen = sizeof(socketaddr);
