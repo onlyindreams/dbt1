@@ -44,10 +44,11 @@ int main(int argc, char *argv[])
 	int tid;
 	time_t start_time = -1;
 	float total_response_time;
-	float ips; /* bogotransactions per second */
+	float ips;
 	long long total_interaction_count = 0;
 	long long interaction_count[INTERACTION_TOTAL];
 	float interaction_response_time[INTERACTION_TOTAL];
+	int error_count;
 
 	FILE *log_cpu;
 	FILE *log_io;
@@ -63,6 +64,7 @@ int main(int argc, char *argv[])
 	time_t previous_time;
 	int elapsed_time = 0;
 	int current_interation_count = 0;
+	error_count=0;
 
 	if (argc != 2)
 	{
@@ -88,7 +90,7 @@ int main(int argc, char *argv[])
 	 * Initialize the counters for the number of each interaction to 0
 	 * as well as the total response time.
 	 */
-	for (i = 0; i < INTERACTION_TOTAL; i++)
+	for (i = 0; i < INTERACTION_TOTAL+1; i++)
 	{
 		interaction_count[i] = 0;
 		interaction_response_time[i] = 0;
@@ -105,13 +107,19 @@ int main(int argc, char *argv[])
 		&interaction[1], &total_response_time, &tid);
 
 	/*
-	 * The first line is always the Home interaction, so update the
-	 * appropriate counters.
+	 * The first line is always the Home interaction if no errors, 
+	 * so update the appropriate counters.
 	 */
-	++interaction_count[HOME];
-	interaction_response_time[HOME] += total_response_time;
+	if (strcmp(interaction, "ER") != 0)
+	{
+		++interaction_count[HOME];
+		interaction_response_time[HOME] += response_time;
+	}
+	else
+	{
+		error_count++;
+	}
 	++total_interaction_count;
-
 	previous_time = start_time;
 
 	/* Keep reading the file until we hit the end. */
@@ -204,6 +212,10 @@ int main(int argc, char *argv[])
 			++interaction_count[SHOPPING_CART];
 			interaction_response_time[SHOPPING_CART] += response_time;
 		}
+		else if (strcmp(interaction, "ER") == 0)
+		{
+			++error_count;
+		}
 
 		/* Output data to graph for interactions per second. */
 		if (current_time <= previous_time + 30)
@@ -223,7 +235,7 @@ int main(int argc, char *argv[])
 	fclose(log_mix);
 	fclose(plot_ips);
 
-	/* Calculate the actual mix of interactions. */
+	/* Calculate the actualy mix of interactions. */
 	printf("interaction\t%\tavg response time (s)\n");
 	for (i = 0; i < INTERACTION_TOTAL; i++)
 	{
@@ -234,10 +246,12 @@ int main(int argc, char *argv[])
 	
 	/* Calculated the number of interactions per second. */
 	ips = (double) total_interaction_count / difftime(current_time, start_time);
-	printf("\n%0.1f bogotransactions per second\n", ips);
+	printf("\n%0.1f interactions per second\n", ips);
 
 	printf("%0.1f minute duration\n",
 		difftime(current_time, start_time) / 60.0);
+	printf("total interacton %ld\n", total_interaction_count);
+	printf("error interacton %d\n", error_count);
 	printf("\n");
 
 	/* Open the files in ../scripts/stats to crunch numbers. */
