@@ -19,47 +19,36 @@ fi
 export PATH=/opt/sapdb/indep_prog/bin:$PATH
 #set -x
 
-# name of the database
-SID=DBT1
-
 # start remote communication server
 echo "start communication server..."
 x_server start >/dev/null 2>&1
 
+# dir where the database system files are
+SYS_DIR="$HOME/dbt1"
+
 # stop and drop probably existing demo database
-echo "stop and drop existing $SID..."
-dbmcli -d $SID -u dbm,dbm db_offline >/dev/null 2>&1
-dbmcli -d $SID -u dbm,dbm db_drop >/dev/null 2>&1
+echo "stop and drop existing $SID1..."
+dbmcli -d $SID1 -u dbm,dbm db_offline >/dev/null 2>&1
+dbmcli -d $SID1 -u dbm,dbm db_drop >/dev/null 2>&1
 
 # create new demo database
-echo "create database $SID..."
-_o=`/opt/sapdb/depend/bin/dbmcli -s -R /opt/sapdb/depend db_create $SID dbm,dbm 2>&1`
+echo "create database $SID1..."
+_o=`/opt/sapdb/depend/bin/dbmcli -s -R /opt/sapdb/depend db_create $SID1 dbm,dbm 2>&1`
 _test=`echo $_o | grep OK`
 if [ "$_test" = "" ]; then
-	echo "create $SID failed: $_o"
+	echo "create $SID1 failed: $_o"
 	exit 1
 fi
 
 # create directory where to put the database files
-mkdir -p $HOME/$SID
+mkdir -p $SYS_DIR/$SID1
 
 # setup database parameters
-echo "set parameters for $SID..."
-_o=`cat <<EOF | dbmcli -d $SID -u dbm,dbm 2>&1
-param_rmfile
-param_startsession
-param_init
-param_put LOG_MODE SINGLE
-param_put DATA_CACHE 81920
-param_put _IDXFILE_LIST_SIZE 8192
-param_put MAXDATADEVSPACES 10
-param_put MAXDATAPAGES 40960000
-param_put MAXUSERTASKS 100
-param_put MAXCPU 2
-param_put _PACKET_SIZE 131072
-param_checkall
-param_commitsession
-param_adddevspace 1 SYS  $HOME/$SID/DBT1_SYS_001   F
+echo "set parameters for $SID1..."
+./set_param.sh
+#devspace definition
+_o=`cat <<EOF | dbmcli -d $SID1 -u dbm,dbm 2>&1
+param_adddevspace 1 SYS  $SYS_DIR/$SID1/DBT1_SYS_001   F
 param_adddevspace 1 LOG  /dev/raw/raw8  R 120000
 param_adddevspace 1 DATA /dev/raw/raw1  R 150000
 param_adddevspace 2 DATA /dev/raw/raw2  R 150000
@@ -78,17 +67,17 @@ fi
 
 
 # startup database
-echo "start $SID..."
-_o=`dbmcli -d $SID -u dbm,dbm db_start 2>&1`
+echo "start $SID1..."
+_o=`dbmcli -d $SID1 -u dbm,dbm db_start 2>&1`
 _test=`echo $_o | grep OK`
 if [ "$_test" = "" ]; then
-        echo "start $SID failed: $_o"
+        echo "start $SID1 failed: $_o"
         exit 1
 fi
 
 # initialize database files
-echo "initializing $SID..."
-_o=`cat <<EOF | dbmcli -d $SID -u dbm,dbm 2>&1
+echo "initializing $SID1..."
+_o=`cat <<EOF | dbmcli -d $SID1 -u dbm,dbm 2>&1
 util_connect dbm,dbm
 util_execute init config
 util_activate dba,dba
@@ -96,13 +85,13 @@ quit
 EOF`
 _test=`echo $_o | grep OK`
 if [ "$_test" = "" ]; then
-        echo "initialize $SID failed: $_o"
+        echo "initialize $SID1 failed: $_o"
         exit 1
 fi
 
 # load database system tables
 echo "load system tables..."
-_o=`dbmcli -d $SID -u dbm,dbm load_systab -u dba,dba -ud domain 2>&1`
+_o=`dbmcli -d $SID1 -u dbm,dbm load_systab -u dba,dba -ud domain 2>&1`
 _test=`echo $_o | grep OK`
 if [ "$_test" = "" ]; then
         echo "load system tables failed: $_o"
@@ -111,7 +100,7 @@ fi
 
 # create database demo user
 echo "create database demo user..."
-_o=`cat <<EOF | dbmcli -d $SID -u dba,dba 2>&1
+_o=`cat <<EOF | dbmcli -d $SID1 -u dba,dba 2>&1
 sql_connect dba,dba
 sql_execute CREATE USER dbt PASSWORD dbt DBA NOT EXCLUSIVE
 EOF`
@@ -120,22 +109,5 @@ if [ "$_test" = "" ]; then
         echo "create db user failed: $_o"
         exit 1
 fi
-
-echo "set backup parameters..."
-_o=`cat <<EOF | dbmcli -d $SID -u dbm,dbm 2>&1
-medium_put data $HOME/$SID/datasave FILE DATA 0 8 YES
-medium_put incr $HOME/$SID/incremental FILE PAGES 0 8 YES
-medium_put auto $HOME/$SID/autosave FILE AUTO
-#util_connect dbm,dbm
-#backup_save data
-#autosave_on
-quit
-EOF`
-_test=`echo $_o | grep OK`
-if [ "$_test" = "" ]; then
-        echo "set backup parameters failed: $_o"
-        exit 1
-fi
-
 
 exit 0
