@@ -286,8 +286,5 @@ int log_debug_message(char *filename, int line, const char *fmt, ...)
 
 double time_diff(struct timeval start_time, struct timeval end_time)
 {
-	double t1, t2;
-	t1 = (double)start_time.tv_sec+(double)start_time.tv_usec/1000000.0;
-	t2 = (double)end_time.tv_sec+(double)end_time.tv_usec/1000000.0;
-	return t2-t1;
+	return (end_time.tv_sec-start_time.tv_sec)+(double)(end_time.tv_usec-start_time.tv_usec)/1000000.00;
 }
