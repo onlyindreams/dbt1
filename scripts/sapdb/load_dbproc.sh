@@ -1,6 +1,6 @@
 #!/bin/sh
 
-dbmcli -d DBT1 -u dba,dba -uSQL dbt,dbt -i create_sequence.sql
+/opt/sapdb/depend/bin/dbmcli -d DBT1 -u dba,dba -uSQL dbt,dbt -i create_sequence.sql
 /opt/sapdb/depend/bin/repmcli -d DBT1 -u dbt,dbt -b ../../storedproc/sapdb/getPromoImages.sql
 /opt/sapdb/depend/bin/repmcli -d DBT1 -u dbt,dbt -b ../../storedproc/sapdb/DigSyl.sql
 /opt/sapdb/depend/bin/repmcli -d DBT1 -u dbt,dbt -b ../../storedproc/sapdb/getSCSubTotal.sql

@@ -1,7 +1,7 @@
 #!/bin/sh
 
 ITEMS=1000
-EUS=10
+EUS=1
 
 echo This is a sample script to create a database with $ITEMS items and $EUS emulated users.
 echo
