@@ -60,7 +60,7 @@ void gen_items(int items, char *path)
 		}
 		else
 		{
-			fprintf(output, "\"%d\"", get_random(items / 4) + 1);
+			fprintf(output, "\"%d\"", (int) get_random(items / 4) + 1);
 		}
 		fprintf(output, "%c", DELIMITER);
 
@@ -163,7 +163,7 @@ void gen_items(int items, char *path)
 		fprintf(output, "%c", DELIMITER);
 
 		/* i_stock */
-		fprintf(output, "\"%d\"", get_random(21) + 10);
+		fprintf(output, "\"%d\"", (int) get_random(21) + 10);
 		fprintf(output, "%c", DELIMITER);
 
 		/* i_isbn */
@@ -172,7 +172,7 @@ void gen_items(int items, char *path)
 		fprintf(output, "%c", DELIMITER);
 
 		/* i_page */
-		fprintf(output, "\"%d\"", get_random(9980) + 20);
+		fprintf(output, "\"%d\"", (int) get_random(9980) + 20);
 		fprintf(output, "%c", DELIMITER);
 
 		/* i_backing */
