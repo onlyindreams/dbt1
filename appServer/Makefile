@@ -13,7 +13,8 @@ APP_PRGS = appServer.c app_txn_array.c app_threadpool.c \
 	app_txn_queue.c app_interface.c
 APP_OBJS = $(APP_PRGS:.c=.so)
 
-LIBS = $(SAPDBROOT)/lib/libsqlod.so -lm -lpthread
+#LIBS = $(SAPDBROOT)/lib/libsqlod.so -lm -lpthread
+LIBS = $(ODBC_LIB) -lm -lpthread
 OBJS = $(COMMON_OBJS) $(ODBC_OBJS) $(APP_OBJS) $(CACHE_DIR)/cache_interface.so
 PRGS = $(COMMON_PRGS) $(ODBC_PRGS) $(APP_PRGS)
 
