@@ -1,62 +1,151 @@
+2002-07-22 10:31  fimath
+
+	* dbdriver/main.c: Moved the calculation for the stop time into the
+	correct location.
+
+2002-07-22 09:56  jztpcw
+
+	* appServer/Makefile: remove depending on app_interaction.h
+
+2002-07-22 09:53  jztpcw
+
+	* Makefile: rearrange the orders so that .so is generated before
+	linking
+
+2002-07-22 09:42  jztpcw
+
+	* dbdriver/Makefile: update Makefile to link with
+	cache_interface.so
+
+2002-07-19 15:08  jztpcw
+
+	* interfaces/odbc/: odbc_interaction_buy_request.c,
+	odbc_interaction_order_display.c, odbc_interaction_shopping_cart.c:
+	SQLExecute fails, return W_ERROR, the old code did not return
+	W_ERROR correctly
+
+2002-07-19 10:43  jztpcw
+
+	* scripts/stats/collect_data.sh: chang the hardcoded interval and
+	count to command line parameter
+
+2002-07-19 09:58  jztpcw
+
+	* appServer/appServer.c: added: kill all appSever process when
+	receiving a Ctrl+C signal
+
+2002-07-19 09:56  jztpcw
+
+	* include/app_interaction.h: this file is no longer needed, all the
+	definitions are moved to odbc_interaction.h
+
+2002-07-19 09:47  jztpcw
+
+	* include/: queue.h, threadpool.h, transactions.h, txnarray.h,
+	txnstruct.h: this file is no longer needed
+
+2002-07-19 09:42  jztpcw
+
+	* scripts/stats/README: rename filelist.txt to README since it has
+	usage info
+
+2002-07-19 09:41  jztpcw
+
+	* scripts/stats/: collect_data.sh, io.sh, runtop.sh: rewrite the
+	scripts to collect more data and format the data
+
+2002-07-19 09:39  jztpcw
+
+	* scripts/stats/filelist.txt: rename this file to README
+
+2002-07-19 09:38  jztpcw
+
+	* scripts/stats/: collect_data.sh, io.sh, runtop.sh: remove
+	previously committed files, forgot to add comment...
+
+2002-07-19 09:32  jztpcw
+
+	* scripts/stats/: collect_data.sh, filelist.txt, io.sh, runtop.sh:
+	[no log message]
+
+2002-07-19 09:23  jztpcw
+
+	* scripts/stats/: cpu.sh, io.sh, paging.sh: [no log message]
+
+2002-07-18 09:33  fimath
+
+	* ChangeLog (tags: release_1-1-1, release_1-1): ChangeLog for 1.1
+	release.
+
+2002-07-18 09:32  fimath
+
+	* doc/sapdb_sizing.sxc (tags: release_1-1-1, release_1-1): Changed
+	terminology of 'interactions per second' to 'bogotransactions per
+	second.'
+
 2002-07-18 08:49  fimath
 
-	* tools/results.c: Changed the terminology from 'interactions per
-	second' to 'bogotransactions per second'.
+	* tools/results.c (tags: release_1-1-1, release_1-1): Changed the
+	terminology from 'interactions per second' to 'bogotransactions per
+	second'.
 
 2002-07-17 17:32  jztpcw
 
-	* include/eu.h: added cache usage for phase1 driver
+	* include/eu.h (tags: release_1-1-1): added cache usage for phase1
+	driver
 
 2002-07-17 17:31  jztpcw
 
-	* dbdriver/: eu.c, main.c: added error handling and cache usage for
-	phase1 driver
+	* dbdriver/: eu.c, main.c (utags: release_1-1-1): added error
+	handling and cache usage for phase1 driver
 
 2002-07-17 17:30  jztpcw
 
-	* dbdriver/tm_interface.c: added receiving interaction result to
-	driver
+	* dbdriver/tm_interface.c (tags: release_1-1-1): added receiving
+	interaction result to driver
 
 2002-07-17 17:30  jztpcw
 
-	* include/app_txn_array.h: added txn_result in structure
-	app_txn_array
+	* include/app_txn_array.h (tags: release_1-1-1): added txn_result
+	in structure app_txn_array
 
 2002-07-17 17:29  jztpcw
 
-	* include/common.h: added RETRY defination
+	* include/common.h (tags: release_1-1-1): added RETRY defination
 
 2002-07-17 17:27  jztpcw
 
-	* appServer/app_interface.c: added sending interaction result to
-	driver
+	* appServer/app_interface.c (tags: release_1-1-1): added sending
+	interaction result to driver
 
 2002-07-17 17:26  jztpcw
 
-	* appServer/appServer.c, appServer/app_threadpool.c, cache/cache.c:
-	added signal and error handling
+	* appServer/appServer.c, appServer/app_threadpool.c, cache/cache.c
+	(utags: release_1-1-1): added signal and error handling
 
 2002-07-15 10:32  fimath
 
 	* doc/html/: user.html, user_html_274752e.gif,
-	user_html_e3a83bc.jpg: The HTML version of the OpenOffice.org user
-	document.
+	user_html_e3a83bc.jpg (utags: release_1-1-1, release_1-1): The HTML
+	version of the OpenOffice.org user document.
 
 2002-07-15 10:31  fimath
 
-	* doc/user.sxw: I got a little jumpy, and checked in the wrong
-	copy.  This is the corerct copy that reflects the kit in the
-	current state.
+	* doc/user.sxw (tags: release_1-1-1, release_1-1): I got a little
+	jumpy, and checked in the wrong copy.  This is the corerct copy
+	that reflects the kit in the current state.
 
 2002-07-15 10:28  fimath
 
-	* doc/: component_three_tier.dia, component_two_tier.dia, user.sxw:
-	Properly revised to reflect the current state of the kit.
+	* doc/: component_three_tier.dia (tags: release_1-1-1,
+	release_1-1), component_two_tier.dia (tags: release_1-1-1,
+	release_1-1), user.sxw: Properly revised to reflect the current
+	state of the kit.
 
 2002-07-12 09:48  fimath
 
-	* scripts/sapdb/trace_off.sh: A path was incorrected.  It is fixed
-	now.
+	* scripts/sapdb/trace_off.sh (tags: release_1-1-1, release_1-1): A
+	path was incorrected.  It is fixed now.
 
 2002-07-02 11:46  fimath
 
@@ -75,23 +164,26 @@
 
 2002-06-27 10:14  jztpcw
 
-	* scripts/sapdb/create_indexes.sql: added index on i_a_id in item
-	table
+	* scripts/sapdb/create_indexes.sql (tags: release_1-1-1,
+	release_1-1): added index on i_a_id in item table
 
 2002-06-27 09:38  jztpcw
 
-	* appServer/app_threadpool.c, cache/cache_interface.c,
-	cache/cache.c, include/cache_interface.h:
+	* appServer/app_threadpool.c, cache/cache_interface.c (tags:
+	release_1-1-1), cache/cache.c, include/cache_interface.h (tags:
+	release_1-1-1) (utags: release_1-1):
 	send_search_results_response->send_search_results,
 	receive_search_results_request->receive_search_results
 
 2002-06-27 09:37  jztpcw
 
-	* appServer/Makefile: make->MAKE to make common objects
+	* appServer/Makefile (tags: release_1-1-1, release_1-1): make->MAKE
+	to make common objects
 
 2002-06-27 09:27  jztpcw
 
-	* cache/Makefile: changed static objects to shared objects
+	* cache/Makefile (tags: release_1-1-1, release_1-1): changed static
+	objects to shared objects
 
 2002-06-27 09:26  jztpcw
 
@@ -99,20 +191,22 @@
 
 2002-06-27 09:25  jztpcw
 
-	* Makefile: added make cache_exe
+	* Makefile (tags: release_1-1-1, release_1-1): added make cache_exe
 
 2002-06-27 09:24  jztpcw
 
-	* common.mk: added -DSEARCH_RESULTS_CACHE
+	* common.mk (tags: release_1-1-1, release_1-1): added
+	-DSEARCH_RESULTS_CACHE
 
 2002-06-26 17:06  jztpcw
 
-	* include/: cache.h, cache_interface.h: [no log message]
+	* include/: cache.h (tags: release_1-1-1, release_1-1),
+	cache_interface.h: [no log message]
 
 2002-06-26 17:05  jztpcw
 
-	* include/app_threadpool.h: changed structure condition_bundle_t
-	member name
+	* include/app_threadpool.h (tags: release_1-1-1, release_1-1):
+	changed structure condition_bundle_t member name
 
 2002-06-26 17:04  jztpcw
 
@@ -134,26 +228,28 @@
 
 2002-06-26 16:55  jztpcw
 
-	* appServer/appServer.c: fixed a bug: workersock number could be
-	changed after pthread_create(DoConnection) and before the thread
-	DoConnection gets the socket number
+	* appServer/appServer.c (tags: release_1-1): fixed a bug:
+	workersock number could be changed after
+	pthread_create(DoConnection) and before the thread DoConnection
+	gets the socket number
 
 2002-06-25 10:03  fimath
 
-	* scripts/sapdb/create_db.sh: Added a parameter to help index
-	creation.
+	* scripts/sapdb/create_db.sh (tags: release_1-1-1, release_1-1):
+	Added a parameter to help index creation.
 
 2002-06-21 14:34  fimath
 
-	* readme.txt: The readme.txt shows where to look for documentation
-	on the kit.
+	* readme.txt (tags: release_1-1-1, release_1-1): The readme.txt
+	shows where to look for documentation on the kit.
 
 2002-06-21 14:30  fimath
 
 	* doc/: component_three_tier.dia, user.sxw, html/user.html,
 	html/user_html_285e2625.gif, html/user_html_56d75273.gif,
-	html/user_html_m12b259a0.gif, html/user_html_m3290fcae.gif: Updated
-	documentation.
+	html/user_html_m12b259a0.gif (tags: release_1-1-1, release_1-1),
+	html/user_html_m3290fcae.gif (tags: release_1-1-1, release_1-1):
+	Updated documentation.
 
 2002-06-21 11:44  jztpcw
 
@@ -163,34 +259,40 @@
 
 2002-06-21 11:38  jztpcw
 
-	* appServer/app_interface.c: receive_transaction_packet returns
-	SOCKET_CLOSE when the peer closes a socket
+	* appServer/app_interface.c (tags: release_1-1):
+	receive_transaction_packet returns SOCKET_CLOSE when the peer
+	closes a socket
 
 2002-06-21 11:33  jztpcw
 
-	* common/_socket.c: added checking return code for connect; added
-	checking socket close in receive function
+	* common/_socket.c (tags: release_1-1-1, release_1-1): added
+	checking return code for connect; added checking socket close in
+	receive function
 
 2002-06-21 11:30  jztpcw
 
-	* include/common.h: added SOCKET_CLOSE definition
+	* include/common.h (tags: release_1-1): added SOCKET_CLOSE
+	definition
 
 2002-06-21 11:29  jztpcw
 
-	* dbdriver/eu.c: handle SOCKET_CLOSE situation by closing the
-	current socket and opening a new one
+	* dbdriver/eu.c (tags: release_1-1): handle SOCKET_CLOSE situation
+	by closing the current socket and opening a new one
 
 2002-06-21 11:28  jztpcw
 
-	* dbdriver/tm_interface.c: receive_interaction_packet returns
-	SOCKET_CLOSE when peer closes socket gracefully
+	* dbdriver/tm_interface.c (tags: release_1-1):
+	receive_interaction_packet returns SOCKET_CLOSE when peer closes
+	socket gracefully
 
 2002-06-21 11:17  fimath
 
-	* Makefile, common.mk, appServer/Makefile, common/Makefile,
-	datagen/Makefile, dbdriver/Makefile, interfaces/odbc/Makefile,
-	tools/Makefile: Started building most objects as shared objects
-	instead of static objects.
+	* Makefile, common.mk, appServer/Makefile, common/Makefile (tags:
+	release_1-1-1, release_1-1), datagen/Makefile (tags: release_1-1-1,
+	release_1-1), dbdriver/Makefile (tags: release_1-1-1, release_1-1),
+	interfaces/odbc/Makefile (tags: release_1-1-1, release_1-1),
+	tools/Makefile (tags: release_1-1-1, release_1-1): Started building
+	most objects as shared objects instead of static objects.
 	
 	Cleaned up the clean in several of the Makefiles.
 
@@ -201,19 +303,27 @@
 
 2002-06-20 10:32  fimath
 
-	* scripts/sapdb/: create_tables.sh, db_setup_sample.sh,
-	drop_tables.sh, load_dbproc.sh, trace_off.sh, trace_on.sh,
-	update_stats.sh: Added full path for dbmcli just in case it's not
-	in the user's path.
+	* scripts/sapdb/: create_tables.sh (tags: release_1-1-1,
+	release_1-1), db_setup_sample.sh (tags: release_1-1-1,
+	release_1-1), drop_tables.sh (tags: release_1-1-1, release_1-1),
+	load_dbproc.sh (tags: release_1-1-1, release_1-1), trace_off.sh,
+	trace_on.sh (tags: release_1-1-1, release_1-1), update_stats.sh
+	(tags: release_1-1-1, release_1-1): Added full path for dbmcli just
+	in case it's not in the user's path.
 
 2002-06-20 10:17  fimath
 
-	* doc/: architecture.sxw, component_three_tier.dia,
-	component_two_tier.dia, maintenance.sxw, tpc.sxw, user.sxw,
-	html/architecture.html, html/architecture_html_23295de.png,
-	html/architecture_html_m23771ffa.png,
-	html/architecture_html_m277c1b75.png, html/maintenance.html,
-	html/tpc.html, html/user.html, html/user_html_285e2625.gif,
+	* doc/: architecture.sxw (tags: release_1-1-1, release_1-1),
+	component_three_tier.dia, component_two_tier.dia, maintenance.sxw
+	(tags: release_1-1-1, release_1-1), tpc.sxw (tags: release_1-1-1,
+	release_1-1), user.sxw, html/architecture.html (tags:
+	release_1-1-1, release_1-1), html/architecture_html_23295de.png
+	(tags: release_1-1-1, release_1-1),
+	html/architecture_html_m23771ffa.png (tags: release_1-1-1,
+	release_1-1), html/architecture_html_m277c1b75.png (tags:
+	release_1-1-1, release_1-1), html/maintenance.html (tags:
+	release_1-1-1, release_1-1), html/tpc.html (tags: release_1-1-1,
+	release_1-1), html/user.html, html/user_html_285e2625.gif,
 	html/user_html_56d75273.gif: Added OpenOffice.org and HTML versions
 	of the documents on the project home page.
 
@@ -229,25 +339,33 @@
 
 2002-06-18 11:16  fimath
 
-	* filelist.txt, readme.txt, appServer/filelist.txt,
-	appServer/readme.txt, common/filelist.txt, common/readme.txt,
-	datagen/filelist.txt, datagen/readme.txt, dbdriver/filelist.txt,
-	dbdriver/readme.txt, include/filelist.txt, include/readme.txt,
-	interfaces/odbc/filelist.txt, interfaces/odbc/readme.txt,
-	scripts/filelist.txt, scripts/readme.txt,
-	scripts/sapdb/filelist.txt, scripts/sapdb/readme.txt,
-	scripts/stats/filelist.txt, scripts/stats/readme.txt,
-	storedproc/filelist.txt, storedproc/readme.txt,
-	storedproc/sapdb/filelist.txt, storedproc/sapdb/readme.txt,
-	tools/filelist.txt, tools/readme.txt: Renamed readme.txt to
-	filelist.txt since readme.txt didn't have anything useful in them
-	other than what the files are in the directory.
+	* filelist.txt (tags: release_1-1-1, release_1-1), readme.txt,
+	appServer/filelist.txt (tags: release_1-1-1, release_1-1),
+	appServer/readme.txt, common/filelist.txt (tags: release_1-1-1,
+	release_1-1), common/readme.txt, datagen/filelist.txt (tags:
+	release_1-1-1, release_1-1), datagen/readme.txt,
+	dbdriver/filelist.txt (tags: release_1-1-1, release_1-1),
+	dbdriver/readme.txt, include/filelist.txt (tags: release_1-1-1,
+	release_1-1), include/readme.txt, interfaces/odbc/filelist.txt
+	(tags: release_1-1-1, release_1-1), interfaces/odbc/readme.txt,
+	scripts/filelist.txt (tags: release_1-1-1, release_1-1),
+	scripts/readme.txt, scripts/sapdb/filelist.txt (tags:
+	release_1-1-1, release_1-1), scripts/sapdb/readme.txt,
+	scripts/stats/filelist.txt (tags: release_1-1-1, release_1-1),
+	scripts/stats/readme.txt, storedproc/filelist.txt (tags:
+	release_1-1-1, release_1-1), storedproc/readme.txt,
+	storedproc/sapdb/filelist.txt (tags: release_1-1-1, release_1-1),
+	storedproc/sapdb/readme.txt, tools/filelist.txt (tags:
+	release_1-1-1, release_1-1), tools/readme.txt: Renamed readme.txt
+	to filelist.txt since readme.txt didn't have anything useful in
+	them other than what the files are in the directory.
 
 2002-06-13 15:09  jztpcw
 
-	* appServer/app_txn_queue.c: added state to QItem structure to
-	prevent reusing queue item when database response time is long.
-	Changed isfull, enqueue, and dequeue functions accordingly
+	* appServer/app_txn_queue.c (tags: release_1-1-1, release_1-1):
+	added state to QItem structure to prevent reusing queue item when
+	database response time is long. Changed isfull, enqueue, and
+	dequeue functions accordingly
 
 2002-06-13 15:07  jztpcw
 
@@ -261,9 +379,9 @@
 
 2002-06-13 15:01  jztpcw
 
-	* include/app_txn_queue.h: added state to QItem structure. The
-	state is used to prevent reusing queue slot when database response
-	time is long
+	* include/app_txn_queue.h (tags: release_1-1-1, release_1-1): added
+	state to QItem structure. The state is used to prevent reusing
+	queue slot when database response time is long
 
 2002-06-13 14:58  jztpcw
 
@@ -273,8 +391,8 @@
 
 2002-06-13 14:53  jztpcw
 
-	* tools/odbc_test.c: changed search_results test to accept string
-	value from command line
+	* tools/odbc_test.c (tags: release_1-1-1, release_1-1): changed
+	search_results test to accept string value from command line
 
 2002-05-21 16:59  jztpcw
 
@@ -291,8 +409,8 @@
 
 2002-05-21 16:45  jztpcw
 
-	* interfaces/odbc/odbc_interaction.c: include odbc_interaction for
-	both PHASE1 and PHASE2
+	* interfaces/odbc/odbc_interaction.c (tags: release_1-1-1,
+	release_1-1): include odbc_interaction for both PHASE1 and PHASE2
 
 2002-05-21 16:44  jztpcw
 
@@ -303,9 +421,9 @@
 	odbc_interaction_order_display.c, odbc_interaction_order_inquiry.c,
 	odbc_interaction_product_detail.c,
 	odbc_interaction_search_request.c,
-	odbc_interaction_search_results.c,
-	odbc_interaction_shopping_cart.c: include odbc_interaction for both
-	PHASE1 and PHASE2, changed references to XXX_odbc_data to
+	odbc_interaction_search_results.c, odbc_interaction_shopping_cart.c
+	(utags: release_1-1-1, release_1-1): include odbc_interaction for
+	both PHASE1 and PHASE2, changed references to XXX_odbc_data to
 	XXX_odbc_data.eb
 
 2002-05-21 16:35  jztpcw
@@ -330,11 +448,11 @@
 
 2002-05-21 16:23  jztpcw
 
-	* include/odbc_interaction.h: substitute the code in this file with
-	the code in app_interaction.h and moved the data structure
-	definition for the interactions to this file. The goal is to share
-	one data structure between the modulesand to avoid copying data
-	from eu to odbc data.
+	* include/odbc_interaction.h (tags: release_1-1-1, release_1-1):
+	substitute the code in this file with the code in app_interaction.h
+	and moved the data structure definition for the interactions to
+	this file. The goal is to share one data structure between the
+	modulesand to avoid copying data from eu to odbc data.
 
 2002-05-21 16:17  jztpcw
 
@@ -345,24 +463,25 @@
 	odbc_interaction_order_display.h, odbc_interaction_order_inquiry.h,
 	odbc_interaction_product_detail.h,
 	odbc_interaction_search_request.h,
-	odbc_interaction_search_results.h,
-	odbc_interaction_shopping_cart.h: after eliminating
+	odbc_interaction_search_results.h, odbc_interaction_shopping_cart.h
+	(utags: release_1-1-1, release_1-1): after eliminating
 	app_interaction.h, all the odbc_interaction_*.h files only include
 	odbc_interaction now
 
 2002-05-21 16:15  jztpcw
 
-	* include/eu.h: moved data structure definition for each
-	interaction to odbc_interaction.h
+	* include/eu.h (tags: release_1-1): moved data structure definition
+	for each interaction to odbc_interaction.h
 
 2002-05-21 16:13  jztpcw
 
-	* include/: app_threadpool.h, app_txn_array.h: change 'include
-	app_interaction.h'->'include odbc_interaction.h
+	* include/: app_threadpool.h, app_txn_array.h (tags: release_1-1):
+	change 'include app_interaction.h'->'include odbc_interaction.h
 
 2002-05-21 16:06  jztpcw
 
-	* common/common.c: fixed the math in time_diff function
+	* common/common.c (tags: release_1-1-1, release_1-1): fixed the
+	math in time_diff function
 
 2002-05-21 16:04  jztpcw
 
@@ -479,20 +598,28 @@
 
 2002-05-15 16:25  fimath
 
-	* LICENSE, Makefile, common.mk, readme.txt, appServer/Makefile,
-	appServer/appServer.c, appServer/app_interface.c,
-	appServer/app_threadpool.c, appServer/app_txn_array.c,
-	appServer/app_txn_queue.c, appServer/design, appServer/readme.txt,
-	common/Makefile, common/_socket.c, common/common.c,
-	common/readme.txt, datagen/Makefile, datagen/address.c,
-	datagen/author.c, datagen/country.data, datagen/customer.c,
-	datagen/item.c, datagen/main.c, datagen/orders.c,
-	datagen/readme.txt, dbdriver/Makefile, dbdriver/eu.c,
-	dbdriver/main.c, dbdriver/readme.txt, dbdriver/tm_interface.c,
-	include/_socket.h, include/app_interaction.h,
-	include/app_interface.h, include/app_threadpool.h,
+	* LICENSE (tags: release_1-1-1, release_1-1), Makefile, common.mk,
+	readme.txt, appServer/Makefile, appServer/appServer.c,
+	appServer/app_interface.c, appServer/app_threadpool.c,
+	appServer/app_txn_array.c (tags: release_1-1-1, release_1-1),
+	appServer/app_txn_queue.c, appServer/design (tags: release_1-1-1,
+	release_1-1), appServer/readme.txt, common/Makefile,
+	common/_socket.c, common/common.c, common/readme.txt,
+	datagen/Makefile, datagen/address.c (tags: release_1-1-1,
+	release_1-1), datagen/author.c (tags: release_1-1-1, release_1-1),
+	datagen/country.data (tags: release_1-1-1, release_1-1),
+	datagen/customer.c (tags: release_1-1-1, release_1-1),
+	datagen/item.c (tags: release_1-1-1, release_1-1), datagen/main.c
+	(tags: release_1-1-1, release_1-1), datagen/orders.c (tags:
+	release_1-1-1, release_1-1), datagen/readme.txt, dbdriver/Makefile,
+	dbdriver/eu.c, dbdriver/main.c (tags: release_1-1),
+	dbdriver/readme.txt, dbdriver/tm_interface.c, include/_socket.h
+	(tags: release_1-1-1, release_1-1), include/app_interaction.h
+	(tags: release_1-1-1, release_1-1), include/app_interface.h (tags:
+	release_1-1-1, release_1-1), include/app_threadpool.h,
 	include/app_txn_array.h, include/app_txn_queue.h, include/common.h,
-	include/datagen.h, include/eu.h, include/odbc_interaction.h,
+	include/datagen.h (tags: release_1-1-1, release_1-1), include/eu.h,
+	include/odbc_interaction.h,
 	include/odbc_interaction_admin_confirm.h,
 	include/odbc_interaction_admin_request.h,
 	include/odbc_interaction_best_sellers.h,
@@ -505,9 +632,13 @@
 	include/odbc_interaction_product_detail.h,
 	include/odbc_interaction_search_request.h,
 	include/odbc_interaction_search_results.h,
-	include/odbc_interaction_shopping_cart.h, include/queue.h,
-	include/readme.txt, include/threadpool.h, include/tm_interface.h,
-	include/transactions.h, include/txnarray.h, include/txnstruct.h,
+	include/odbc_interaction_shopping_cart.h, include/queue.h (tags:
+	release_1-1-1, release_1-1), include/readme.txt,
+	include/threadpool.h (tags: release_1-1-1, release_1-1),
+	include/tm_interface.h (tags: release_1-1-1, release_1-1),
+	include/transactions.h (tags: release_1-1-1, release_1-1),
+	include/txnarray.h (tags: release_1-1-1, release_1-1),
+	include/txnstruct.h (tags: release_1-1-1, release_1-1),
 	interfaces/odbc/Makefile, interfaces/odbc/odbc_interaction.c,
 	interfaces/odbc/odbc_interaction_admin_confirm.c,
 	interfaces/odbc/odbc_interaction_admin_request.c,
@@ -523,50 +654,86 @@
 	interfaces/odbc/odbc_interaction_search_results.c,
 	interfaces/odbc/odbc_interaction_shopping_cart.c,
 	interfaces/odbc/readme.txt, scripts/readme.txt,
-	scripts/run_test_sample.sh, scripts/sapdb/address.sql,
-	scripts/sapdb/author.sql, scripts/sapdb/backup_db.sh,
-	scripts/sapdb/cc_xacts.sql, scripts/sapdb/country.sql,
-	scripts/sapdb/create_db.sh, scripts/sapdb/create_indexes.sh,
-	scripts/sapdb/create_indexes.sql, scripts/sapdb/create_keys.sh,
-	scripts/sapdb/create_keys.sql, scripts/sapdb/create_tables.sh,
-	scripts/sapdb/create_tables.sql, scripts/sapdb/customer.sql,
-	scripts/sapdb/db_setup_sample.sh, scripts/sapdb/drop_db.sh,
-	scripts/sapdb/drop_dbproc.sql, scripts/sapdb/drop_tables.sh,
-	scripts/sapdb/drop_tables.sql, scripts/sapdb/item.sql,
-	scripts/sapdb/load_db.sh, scripts/sapdb/load_dbproc.sh,
-	scripts/sapdb/monitor.sh, scripts/sapdb/order_line.sql,
-	scripts/sapdb/orders.sql, scripts/sapdb/readme.txt,
-	scripts/sapdb/restart.sh, scripts/sapdb/trace_off.sh,
-	scripts/sapdb/trace_on.sh, scripts/sapdb/update_stats.sh,
-	scripts/sapdb/update_stats.sql, scripts/stats/cpu.sh,
-	scripts/stats/io.sh, scripts/stats/paging.sh,
-	scripts/stats/readme.txt, storedproc/readme.txt,
-	storedproc/sapdb/DigSyl.sql, storedproc/sapdb/InsertCust.sql,
-	storedproc/sapdb/addToSC.sql, storedproc/sapdb/admin_confirm.sql,
-	storedproc/sapdb/admin_request.sql,
-	storedproc/sapdb/best_sellers.sql, storedproc/sapdb/buyconfirm.sql,
-	storedproc/sapdb/buyrequest.sql, storedproc/sapdb/createSC.sql,
-	storedproc/sapdb/getCustInfo.sql, storedproc/sapdb/getCustName.sql,
-	storedproc/sapdb/getOrderItems.sql,
-	storedproc/sapdb/getPromoImages.sql,
-	storedproc/sapdb/getSCDetail.sql,
-	storedproc/sapdb/getSCSubTotal.sql, storedproc/sapdb/home.sql,
-	storedproc/sapdb/initOrderItems.sql,
-	storedproc/sapdb/initSCItems.sql,
-	storedproc/sapdb/new_products.sql,
-	storedproc/sapdb/order_display.sql,
-	storedproc/sapdb/order_inquiry.sql,
-	storedproc/sapdb/product_detail.sql, storedproc/sapdb/readme.txt,
-	storedproc/sapdb/refreshSC.sql,
-	storedproc/sapdb/search_results_author.sql,
-	storedproc/sapdb/search_results_subject.sql,
-	storedproc/sapdb/search_results_title.sql,
-	storedproc/sapdb/shoppingcart.sql, storedproc/sapdb/updateSC.sql,
-	tools/Makefile, tools/load_db_proc.c, tools/odbc_test.c,
-	tools/readme.txt, tools/results.c, wgen/BUGS, wgen/Makefile,
-	wgen/README, wgen/bm_utils.c, wgen/config.h, wgen/grammar.tpcw,
-	wgen/main.c, wgen/makefile.suite, wgen/rnd.c, wgen/rnd.h,
-	wgen/text.c, wgen/tpcw.001, wgen/tpcw.c, wgen/tpcw.dsp,
-	wgen/tpcw.dsw, wgen/tpcw.h (utags: start, dbt1_1-0): Initial
+	scripts/run_test_sample.sh (tags: release_1-1-1, release_1-1),
+	scripts/sapdb/address.sql (tags: release_1-1-1, release_1-1),
+	scripts/sapdb/author.sql (tags: release_1-1-1, release_1-1),
+	scripts/sapdb/backup_db.sh (tags: release_1-1-1, release_1-1),
+	scripts/sapdb/cc_xacts.sql (tags: release_1-1-1, release_1-1),
+	scripts/sapdb/country.sql (tags: release_1-1-1, release_1-1),
+	scripts/sapdb/create_db.sh, scripts/sapdb/create_indexes.sh (tags:
+	release_1-1-1, release_1-1), scripts/sapdb/create_indexes.sql,
+	scripts/sapdb/create_keys.sh (tags: release_1-1-1, release_1-1),
+	scripts/sapdb/create_keys.sql (tags: release_1-1-1, release_1-1),
+	scripts/sapdb/create_tables.sh, scripts/sapdb/create_tables.sql
+	(tags: release_1-1-1, release_1-1), scripts/sapdb/customer.sql
+	(tags: release_1-1-1, release_1-1),
+	scripts/sapdb/db_setup_sample.sh, scripts/sapdb/drop_db.sh (tags:
+	release_1-1-1, release_1-1), scripts/sapdb/drop_dbproc.sql (tags:
+	release_1-1-1, release_1-1), scripts/sapdb/drop_tables.sh,
+	scripts/sapdb/drop_tables.sql (tags: release_1-1-1, release_1-1),
+	scripts/sapdb/item.sql (tags: release_1-1-1, release_1-1),
+	scripts/sapdb/load_db.sh (tags: release_1-1-1, release_1-1),
+	scripts/sapdb/load_dbproc.sh, scripts/sapdb/monitor.sh (tags:
+	release_1-1-1, release_1-1), scripts/sapdb/order_line.sql (tags:
+	release_1-1-1, release_1-1), scripts/sapdb/orders.sql (tags:
+	release_1-1-1, release_1-1), scripts/sapdb/readme.txt,
+	scripts/sapdb/restart.sh (tags: release_1-1-1, release_1-1),
+	scripts/sapdb/trace_off.sh, scripts/sapdb/trace_on.sh,
+	scripts/sapdb/update_stats.sh, scripts/sapdb/update_stats.sql
+	(tags: release_1-1-1, release_1-1), scripts/stats/cpu.sh (tags:
+	release_1-1-1, release_1-1), scripts/stats/io.sh (tags:
+	release_1-1-1, release_1-1), scripts/stats/paging.sh (tags:
+	release_1-1-1, release_1-1), scripts/stats/readme.txt,
+	storedproc/readme.txt, storedproc/sapdb/DigSyl.sql (tags:
+	release_1-1-1, release_1-1), storedproc/sapdb/InsertCust.sql (tags:
+	release_1-1-1, release_1-1), storedproc/sapdb/addToSC.sql (tags:
+	release_1-1-1, release_1-1), storedproc/sapdb/admin_confirm.sql
+	(tags: release_1-1-1, release_1-1),
+	storedproc/sapdb/admin_request.sql (tags: release_1-1-1,
+	release_1-1), storedproc/sapdb/best_sellers.sql (tags:
+	release_1-1-1, release_1-1), storedproc/sapdb/buyconfirm.sql (tags:
+	release_1-1-1, release_1-1), storedproc/sapdb/buyrequest.sql (tags:
+	release_1-1-1, release_1-1), storedproc/sapdb/createSC.sql (tags:
+	release_1-1-1, release_1-1), storedproc/sapdb/getCustInfo.sql
+	(tags: release_1-1-1, release_1-1),
+	storedproc/sapdb/getCustName.sql (tags: release_1-1-1,
+	release_1-1), storedproc/sapdb/getOrderItems.sql (tags:
+	release_1-1-1, release_1-1), storedproc/sapdb/getPromoImages.sql
+	(tags: release_1-1-1, release_1-1),
+	storedproc/sapdb/getSCDetail.sql (tags: release_1-1-1,
+	release_1-1), storedproc/sapdb/getSCSubTotal.sql (tags:
+	release_1-1-1, release_1-1), storedproc/sapdb/home.sql (tags:
+	release_1-1-1, release_1-1), storedproc/sapdb/initOrderItems.sql
+	(tags: release_1-1-1, release_1-1),
+	storedproc/sapdb/initSCItems.sql (tags: release_1-1-1,
+	release_1-1), storedproc/sapdb/new_products.sql (tags:
+	release_1-1-1, release_1-1), storedproc/sapdb/order_display.sql
+	(tags: release_1-1-1, release_1-1),
+	storedproc/sapdb/order_inquiry.sql (tags: release_1-1-1,
+	release_1-1), storedproc/sapdb/product_detail.sql (tags:
+	release_1-1-1, release_1-1), storedproc/sapdb/readme.txt,
+	storedproc/sapdb/refreshSC.sql (tags: release_1-1-1, release_1-1),
+	storedproc/sapdb/search_results_author.sql (tags: release_1-1-1,
+	release_1-1), storedproc/sapdb/search_results_subject.sql (tags:
+	release_1-1-1, release_1-1),
+	storedproc/sapdb/search_results_title.sql (tags: release_1-1-1,
+	release_1-1), storedproc/sapdb/shoppingcart.sql (tags:
+	release_1-1-1, release_1-1), storedproc/sapdb/updateSC.sql (tags:
+	release_1-1-1, release_1-1), tools/Makefile, tools/load_db_proc.c
+	(tags: release_1-1-1, release_1-1), tools/odbc_test.c,
+	tools/readme.txt, tools/results.c, wgen/BUGS (tags: release_1-1-1,
+	release_1-1), wgen/Makefile (tags: release_1-1-1, release_1-1),
+	wgen/README (tags: release_1-1-1, release_1-1), wgen/bm_utils.c
+	(tags: release_1-1-1, release_1-1), wgen/config.h (tags:
+	release_1-1-1, release_1-1), wgen/grammar.tpcw (tags:
+	release_1-1-1, release_1-1), wgen/main.c (tags: release_1-1-1,
+	release_1-1), wgen/makefile.suite (tags: release_1-1-1,
+	release_1-1), wgen/rnd.c (tags: release_1-1-1, release_1-1),
+	wgen/rnd.h (tags: release_1-1-1, release_1-1), wgen/text.c (tags:
+	release_1-1-1, release_1-1), wgen/tpcw.001 (tags: release_1-1-1,
+	release_1-1), wgen/tpcw.c (tags: release_1-1-1, release_1-1),
+	wgen/tpcw.dsp (tags: release_1-1-1, release_1-1), wgen/tpcw.dsw
+	(tags: release_1-1-1, release_1-1), wgen/tpcw.h (tags:
+	release_1-1-1, release_1-1) (utags: start, dbt1_1-0): Initial
 	release.
 
