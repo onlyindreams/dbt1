@@ -5,13 +5,13 @@
 # This file is released under the terms of the Artistic License.  Please see
 # the file LICENSE, included in this package, for details.
 #
-# Copyright (C) 2002 Open Source Development Lab, Inc.
-# Author: Jenny Zhang, NAGAYASU Satoshi
-#
+# Copyright (C) 2003 Open Source Development Lab, Inc.
+# History:
+# May 2003: Created by Jenny Zhang based on created_db.sh contributed by
 # Contributer: Virginie Megy & Thierry Missimilly
 #               Bull, Liux Competence Center
 #
-# 28 May 2003
+# June 2003: Merged code provided by  NAGAYASU Satoshi
 
 # dont start script as root!
 id=`id | sed s/\(.*// | sed s/uid=//`

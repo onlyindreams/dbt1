@@ -5,11 +5,11 @@
 # the file LICENSE, included in this package, for details.
 #
 # Copyright (C) 2002 Open Source Development Lab, Inc.
-# Author: Jenny Zhang based on the scripts submitted by
-#        Virginie Megy & Thierry Missimilly
-#               Bull, Liux Competence Center
-#
-# 28 May 2003
+# History:
+# Feb 2001: Original version created by Mark Wong & Jenny Zhang for SAPDB
+# Apr 2003: Rewritten for PostgreSQL by
+#           Virginie Megy & Thierry Missimilly
+#                Bull, Linux Competence Center
 
 psql -d $SID1 -f country.sql &
 psql -d $SID1 -f author.sql & 
