@@ -1,5 +1,5 @@
-/* app_interface.h 
- * appServer interface for sending/receiving packet to/from eb
+/*
+ * app_threadpool.h 
  *
  * This file is released under the terms of the Artistic License.  Please see
  * the file LICENSE, included in this package, for details.
@@ -8,10 +8,12 @@
  *                    Open Source Development Lab, Inc.
  *
  */
+
 #ifndef _APP_THREADPOOL_H
 #define _APP_THREADPOOL_H_
-#include "odbc_interaction.h"
-#include "app_txn_queue.h"
+
+#include <odbc_interaction.h>
+#include <app_txn_queue.h>
 
 struct condition_bundle_t {
 	int done_flag;
@@ -19,11 +21,15 @@ struct condition_bundle_t {
 	pthread_cond_t done_cv;
 };
 
-int init_thread_pool(int PoolThreads, int TxnQSize, char *sname, char *uname, char *auth);
+int init_thread_pool(int PoolThreads, int TxnQSize, char *sname, char *uname,
+	char *auth);
 void *DoTxn(void *fd);
 void set_txn_done_flag(struct Queue *txn_queue, int QIndex);
 
 #ifdef _SIMDB
 void fill_promo_data(struct promotional_processing_t *pp_data);
-#endif
-#endif
+#endif /* _SIMDB */
+
+extern int mode_cache;
+
+#endif /* _APP_THREADPOOL_H_ */
