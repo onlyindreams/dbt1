@@ -14,6 +14,8 @@
 
 #include <stdio.h>
 #include <time.h>
+#include <ctype.h>
+#include <string.h>
 #include <datagen.h>
 #include <common.h>
 
@@ -75,7 +77,7 @@ void gen_customers(int ebs, char *path)
 		fprintf(output, "%c", DELIMITER);
 
 		/* c_addr_id */
-		fprintf(output, "\"%d\"", get_random(2 * customers) + 1);
+		fprintf(output, "\"%d\"", (int) get_random(2 * customers) + 1);
 		fprintf(output, "%c", DELIMITER);
 
 		/* c_phone */
@@ -162,5 +164,5 @@ void gen_customers(int ebs, char *path)
 	}
 
 	fflush(output);
-	close(output);
+	fclose(output);
 }
