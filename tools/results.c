@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
 
 	time_t previous_time;
 	int elapsed_time = 0;
-	int current_interation_count = 0;
+	int current_interaction_count = 0;
 
 	char marker[128];
 
@@ -210,16 +210,16 @@ int main(int argc, char *argv[])
 		/* Output data to graph for interactions per second. */
 		if (current_time <= previous_time + 30)
 		{
-			++current_interation_count;
+			++current_interaction_count;
 		}
 		else
 		{
 			fprintf(plot_ips, "%d,%f\n", elapsed_time,
-				(double) current_interation_count / 30.0);
-			++elapsed_time;
+				(double) current_interaction_count / 30.0);
+			elapsed_time += 30;
 
 			previous_time = current_time;
-			current_interation_count = 1;
+			current_interaction_count = 1;
 		}
 	}
 	fclose(log_mix);
