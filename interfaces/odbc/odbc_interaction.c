@@ -39,6 +39,16 @@ int odbc_connect(struct odbc_context_t *odbcc)
 		return W_ERROR;
 	}
 
+#ifdef AUTO_COMMIT_OFF
+	rc= SQLSetConnectAttr(odbcc->hdbc, SQL_ATTR_AUTOCOMMIT,
+		SQL_AUTOCOMMIT_OFF, NULL);
+	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
+	{
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+		return ERROR;
+	}
+#endif
+
 	/* Open connection to the database. */
 	rc = SQLConnect(odbcc->hdbc, servername, SQL_NTS,
 		username, SQL_NTS, authentication, SQL_NTS);
@@ -124,6 +134,14 @@ int odbc_init(char *sname, char *uname, char *auth)
 	{
 		LOG_ERROR_MESSAGE("alloc env handle failed");
 		return W_ERROR;
+	}
+
+	rc = SQLSetEnvAttr(henv, SQL_ATTR_ODBC_VERSION, (void *) SQL_OV_ODBC3, 0);
+	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
+	{
+		SQLFreeHandle(SQL_HANDLE_ENV, henv);
+		printf("set env failed");
+		return 0;
 	}
 
 	/* Set the database connect string, username and password. */

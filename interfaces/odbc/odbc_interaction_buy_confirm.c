@@ -355,8 +355,33 @@ int execute_buy_confirm(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 		printf("SQLExecute error %d\n", rc);
 #endif /* DEBUG */
 		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+#ifndef AUTOCOMMIT_OFF
+		return W_ERROR;
+#endif
+	}
+#ifdef AUTOCOMMIT_OFF
+	if (rc == SQL_SUCCESS)
+	{
+		/* Commit. */
+		rc = SQLPrepare(odbcc->hstmt, COMMIT, SQL_NTS);
+	}
+	else
+	{
+		/* Rollback. */
+		rc = SQLPrepare(odbcc->hstmt, ROLLBACK, SQL_NTS);
+	}
+	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
+	{
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
 		return W_ERROR;
 	}
+	rc = SQLExecute(odbcc->hstmt);
+	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
+	{
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+		return W_ERROR;
+	}
+#endif
 
 	return W_OK;
 }

@@ -444,9 +444,6 @@ int execute_buy_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 
 	/* Execute stored procedure. */
 	rc = SQLExecute(odbcc->hstmt);
-#ifdef DEBUG
-	printf("rc %d\n", rc);
-#endif /* DEBUG */
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
 #ifdef DEBUG
@@ -455,12 +452,38 @@ int execute_buy_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 		LOG_ERROR_MESSAGE("returning_flag %d", odbcd->buy_request_odbc_data.eb.returning_flag);
 #endif /* DEBUG */
 		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+#ifndef AUTOCOMMIT_OFF
 		return W_ERROR;
+#endif
 	}
 #ifdef DEBUG
 	printf("after exec c_fname %s\n", odbcd->buy_request_odbc_data.eb.c_fname);
 	printf("after exec c_id %d\n", odbcd->buy_request_odbc_data.eb.c_id);
 #endif /* DEBUG */
+
+#ifdef AUTOCOMMIT_OFF
+	if (rc == SQL_SUCCESS)
+	{
+		/* Commit. */
+		rc = SQLPrepare(odbcc->hstmt, COMMIT, SQL_NTS);
+	}
+	else
+	{
+		/* Rollback. */
+		rc = SQLPrepare(odbcc->hstmt, ROLLBACK, SQL_NTS);
+	}
+	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
+	{
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+		return W_ERROR;
+	}
+	rc = SQLExecute(odbcc->hstmt);
+	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
+	{
+		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
+		return W_ERROR;
+	}
+#endif
 
 	return W_OK;
 }
