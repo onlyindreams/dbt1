@@ -17,14 +17,6 @@
 #include <ctype.h>
 #include <common.h>
 
-const char *interaction_name[INTERACTION_TOTAL] =
-{
-    "Admin Confirm", "Admin Request", "Best Sellers", "Buy Confirm",
-	"Buy Request", "Customer Registration", "Home", "New Products",
-	"Order Display", "Order Inquiry", "Product Detail", "Search Request",
-    "Search Results", "Shopping Cart"
-};
-
 int main(int argc, char *argv[])
 {
 	int i;
