@@ -17,5 +17,3 @@ void gen_authors(int items, char *path);
 void gen_customers(int ebs, char *path);
 void gen_items(int items, char *path);
 void gen_orders(int ebs, int items, char *path);
-void process_options(int count, char **vector);
-void usage();
