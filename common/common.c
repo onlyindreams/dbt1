@@ -218,12 +218,12 @@ void get_a_string(char *a_string, int x, int y)
 	int length;
 	int i;
 
-	length = x + get_random((long long) (y - x)) + 1;
+	length = x + get_random_int(y - x + 1) + 1;
 	a_string[length - 1] = '\0';
 
 	for (i = 0; i < length - 1; i++)
 	{
-		a_string[i] = a_string_char[get_random(A_STRING_CHAR_LEN)];
+		a_string[i] = a_string_char[get_random_int(A_STRING_CHAR_LEN)];
 	}
 
 	return;
@@ -236,12 +236,12 @@ void get_n_string(char *n_string, int x, int y)
 	int length;
 	int i;
 
-	length = x + get_random((long long) (y - x)) + 1;
+	length = x + get_random_int(y - x + 1) + 1;
 	n_string[length - 1] = '\0';
 
 	for (i = 0; i < length - 1; i++)
 	{
-		n_string[i] = n_string_char[get_random(N_STRING_CHAR_LEN)];
+		n_string[i] = n_string_char[get_random_int(N_STRING_CHAR_LEN)];
 	}
 
 	return;
@@ -251,14 +251,22 @@ void get_n_string(char *n_string, int x, int y)
 /* Clause 2.1.13 */
 int get_nu_rand(int a, int x, int y)
 {
-	return (((int) get_random((long long) (a + 1)) | (x + (int) get_random((long long) (y + 1)))) % (y - x + 1)) + x;
+	return ((get_random_int((a + 1)) | (x + (int) get_random_int((y + 1)))) % (y - x + 1)) + x;
 }
 
 
-/* Return a number from 0 to max - 1. */
+/* Return a number from 0 to max. */
+/*
 long long get_random(long long max)
 {
 	return (long long) (get_percentage() * (double) max);
+}
+*/
+
+/* Return a number from 0 to max - 1. */
+int get_random_int(int max)
+{
+	return rand() %  max;
 }
 
 int log_error_message(char *filename, int line, const char *fmt, ...)
