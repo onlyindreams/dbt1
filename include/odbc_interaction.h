@@ -11,6 +11,8 @@
 #ifndef _ODBC_INTERACTION_H_
 #define _ODBC_INTERACTION_H_
 
+/* comment the next line out if unixODBC is used*/
+#include <WINDOWS.H>
 #include <sqltypes.h>
 #include <common.h>
 
