@@ -62,6 +62,7 @@ int main(int argc, char *argv[])
 	char marker[128];
 
 	error_count = 0;
+	previous_time=0;
 
 	if (argc != 2)
 	{
