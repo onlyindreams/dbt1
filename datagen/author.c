@@ -21,15 +21,17 @@
 
 /* Clause 4.7.1 */
 
-void gen_authors(int items)
+void gen_authors(int items, char *path)
 {
 	int i;
 	FILE *output = stdout;
 	char a_string[1024];
 	struct tm tm1, *tm2, *tm3;
 	time_t t1, t2, t3;
+	char filename[256];
 
-	output = fopen64("author.data", "w");
+	sprintf(filename, "%s/author.data", path);
+	output = fopen64(filename, "w");
 	if (output == NULL)
 	{
 		fprintf(stderr, "cannot open author.data\n");
