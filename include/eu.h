@@ -18,10 +18,10 @@
 #include <interaction_data.h>
 
 #include <common.h>
-#ifdef odbc
+#ifdef ODBC
 #include <odbc_interaction.h>
 #endif
-#ifdef libpq
+#ifdef LIBPQ
 #include <libpq_interaction.h>
 #endif
 

@@ -215,11 +215,28 @@ print $fh "</form>";
 print $fh h2("Run log data");
 my @runlog;
 
+#zip the mix.log and result.mix.log, mix.log.* and time.log under appserver
+system("tar cvfz $indir/result.mix.log.tar.gz -C $indir result.mix.log --remove-files");
+
+my ($name, $fname);
+my @mix_log = glob("$indir/mix.log.*");
+foreach $name (@mix_log)
+{
+	$fname = basename($name);
+	system("tar cvfz $indir/$fname.tar.gz -C $indir $fname --remove-files");
+}
+
+my @time_log = glob("$indir/appserver/time.log.*");
+foreach $name (@time_log)
+{
+	$fname = basename($name);
+	system("tar cvfz $indir/appserver/$fname.tar.gz -C $indir/appserver $fname --remove-files");
+}
+
 my @driver_out = glob("$indir/dbdriver.out.*");
 my @cache_out = glob("$indir/cache.out.*");
 my @server_out = glob("$indir/server.out.*");
-my ($name, $fname);
-@runlog=("BT","ips.csv","result.mix.log","dbdriver/","appserver/","cache/", "dbt1_master.out", "dbt1_slave.out");
+@runlog=("BT","ips.csv","result.mix.log.tar.gz","dbdriver/","appserver/","cache/", "dbt1_master.out", "dbt1_slave.out");
 print $fh start_ul;
 foreach $name (@runlog)
 {

@@ -12,10 +12,10 @@
 #ifndef _APP_THREADPOOL_H
 #define _APP_THREADPOOL_H_
 
-#ifdef USE_ODBC
+#ifdef ODBC
 #include <odbc_interaction.h>
 #endif
-#ifdef USE_PGSQL
+#ifdef PGSQL
 #include <pgsql_interaction.h>
 #endif
 
@@ -27,11 +27,11 @@ struct condition_bundle_t {
 	pthread_cond_t done_cv;
 };
 
-#ifdef odbc
+#ifdef ODBC
 int init_thread_pool(int PoolThreads, int TxnQSize, char *sname, char *uname,
 	char *auth);
 #endif
-#ifdef libpq
+#ifdef LIBPQ
 int init_thread_pool(int PoolThreads, int TxnQSize, char *sname, char *dbname, char *uname, char *auth);
 #endif
 void *DoTxn(void *fd);

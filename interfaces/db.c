@@ -11,7 +11,7 @@
 
 #include <db.h>
 
-#ifdef odbc
+#ifdef ODBC
 #include <odbc_interaction_admin_confirm.h>
 #include <odbc_interaction_admin_request.h>
 #include <odbc_interaction_best_sellers.h>
@@ -27,7 +27,7 @@
 #include <odbc_interaction_search_results.h>
 #endif
 
-#ifdef libpq
+#ifdef LIBPQ
 #include <libpq_interaction_admin_confirm.h>
 #include <libpq_interaction_admin_request.h>
 #include <libpq_interaction_best_sellers.h>
@@ -52,17 +52,17 @@ int db_connect(struct db_context_t *dbc)
 	return OK;
 }
 
-#ifdef odbc
+#ifdef ODBC
 int db_init(char *sname, char *uname, char *auth)
 #endif
-#ifdef libpq
+#ifdef LIBPQ
 int db_init(char *shost, char *dbname, char *uname, char *auth)
 #endif
 {
-#ifdef odbc	
+#ifdef ODBC	
 	_db_init(sname, uname, auth);
 #endif
-#ifdef libpq
+#ifdef LIBPQ
 	_db_init(shost, dbname, uname, auth);
 #endif
 	return OK;
@@ -128,7 +128,7 @@ int process_interaction(int interaction, struct db_context_t *dbc,
 			LOG_ERROR_MESSAGE("unknown interaction type %d", interaction);
 			return ERROR;
 	}
-#ifdef odbc
+#ifdef ODBC
 	if (rc == OK)
 	{
 		/* Commit. */
@@ -148,7 +148,7 @@ int process_interaction(int interaction, struct db_context_t *dbc,
 #endif
 /* libpq does not have autocommit implemented yet, it is controlled by BEGIN/END
 */
-#ifdef libpq
+#ifdef LIBPQ
 	if (rc == OK)
 	{
 		status = OK;

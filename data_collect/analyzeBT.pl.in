@@ -77,3 +77,4 @@ for (my $i=0; $i<=$#file_list; $i++)
 system("cat $output_path/result.mix.log.* | sort -n > $output_path/result.mix.log");
 system("@TOPDIR@/tools/results --mixfile $output_path/result.mix.log --outputdir $output_path");
 
+system("rm $output_path/result.mix.log.*");

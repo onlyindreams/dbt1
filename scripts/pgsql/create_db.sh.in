@@ -17,7 +17,7 @@ db_param=$1
 
 # create database
 echo "create database $SID1..."
-_o=`createdb -U $USER $SID1 2>&1`
+_o=`createdb $SID1 2>&1`
 _test=`echo $_o | grep CREATE`
 if [ "$_test" = "" ]; then
 	echo "create $SID1 failed: $_o $_test"

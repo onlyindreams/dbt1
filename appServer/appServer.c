@@ -67,12 +67,12 @@ pthread_mutex_t mutex_app_server = PTHREAD_MUTEX_INITIALIZER;
 
 int help;
 int port, PoolThreads, TxnQSize, ArraySize;
-#ifdef odbc
+#ifdef ODBC
 	char sname[32];
 	char uname[32];
 	char auth[32];
 #endif
-#ifdef libpq
+#ifdef LIBPQ
 	char sname[32];
 	char dbname[32];
 	char uname[32];
@@ -95,12 +95,12 @@ int main(int argc, char *argv[])
 #endif /* GET_TIME */
 
 /* set default values */
-#ifdef odbc
+#ifdef ODBC
 	strcpy(sname, "localhost:DBT1");
 	strcpy(uname, "dbt");
 	strcpy(auth, "dbt");
 #endif
-#ifdef libpq
+#ifdef LIBPQ
 	strcpy(sname, "localhost");
 	strcpy(dbname, "DBT1");
 	strcpy(uname, "pgsql");
@@ -250,10 +250,10 @@ int main(int argc, char *argv[])
 	}
 
 	/* create the threadpool. */
-#ifdef odbc
+#ifdef ODBC
 	if (!init_thread_pool(PoolThreads, TxnQSize, sname, uname, auth))
 #endif
-#ifdef libpq
+#ifdef LIBPQ
 	if (!init_thread_pool(PoolThreads, TxnQSize, sname, dbname, uname, auth))
 #endif
 	{
@@ -499,10 +499,10 @@ void *DoConnection(void *fd)
 
 int usage(char *name)
 {
-#ifdef odbc
+#ifdef ODBC
 	printf("usage: %s --dbnodename <dbnodename> ", name);
 #endif
-#ifdef libpq
+#ifdef LIBPQ
 	printf("usage: %s --host <hostname> --dbname <dbname> ", name);
 #endif
 	printf("--username <username> --password <password> --server_port <port>\n");
@@ -514,11 +514,11 @@ int usage(char *name)
 	printf("\n\n");
 
 	printf("The default values if not specified:\n");
-#ifdef odbc
+#ifdef ODBC
 	printf("dbnodename: %s, username: %s, password: %s\n", 
 		sname, uname, auth);
 #endif
-#ifdef libpq
+#ifdef LIBPQ
 	printf("host: %s, dbname: %s, username: %s, password: %s\n", 
 		sname, dbname, uname, auth);
 #endif

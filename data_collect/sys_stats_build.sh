@@ -45,18 +45,18 @@ sysstat_version=`cat .sar.tmp |grep version | awk '{print $3}'`
 rm .sar.tmp
 echo "sysstat version $sysstat_version"
 
-if [ $sysstat_version = '4.1.2' ]
+if [ $sysstat_version = '4.0.3' ]
 then 
 #use sysstat 4.1.2
 #sar
 #/usr/local/bin/sar -u -P ALL -d -B -r -q -W -b -o $RESULTS_PATH/run.sar.data $INTERVAL $COUNT &
-sar -u -P ALL -d -B -r -q -W -b -o $RESULTS_PATH/build.sar.data $INTERVAL $COUNT &
+sar -u -U ALL -d -B -r -q -W -b -o $RESULTS_PATH/build.sar.data $INTERVAL $COUNT &
 else
 #use sysstat 4.0.3
 #sar
 #/usr/bin/sar -u -U ALL -d -B -r -q -W -b -o $RESULTS_PATH/run.sar.data $INTERVAL $COUNT &
-sar -u -U ALL -d -B -r -q -W -b -o $RESULTS_PATH/build.sar.data $INTERVAL $COUNT &
 #/usr/bin/iostat -d $INTERVAL $COUNT >> $RESULTS_PATH/iostat.txt &
+sar -u -P ALL -d -B -r -q -W -b -o $RESULTS_PATH/build.sar.data $INTERVAL $COUNT &
 fi
 
 echo "start iostat";

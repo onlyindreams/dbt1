@@ -24,7 +24,7 @@
 #include <common.h>
 #include <_socket.h>
 #include <cache_interface.h>
-#ifdef odbc
+#ifdef ODBC
 #include <sql.h>
 #include <sqlext.h>
 #endif
@@ -69,11 +69,11 @@ extern int search_results_cache_port;
  */
 int mode_cache = 1;
 
-#ifdef odbc
+#ifdef ODBC
 int init_thread_pool(int PoolThreads, int TxnQSize, char *sname, char *uname,
 	char *auth)
 #endif
-#ifdef libpq
+#ifdef LIBPQ
 int init_thread_pool(int PoolThreads, int TxnQSize, char *sname, char *dbname, char *uname, char *auth)
 #endif
 {
@@ -94,14 +94,14 @@ int init_thread_pool(int PoolThreads, int TxnQSize, char *sname, char *dbname, c
 	}
 
 #ifndef _SIMDB
-#ifdef odbc
+#ifdef ODBC
 	/* This should be buried under a generic database initializtion call. */
 	if (db_init(sname, uname, auth) == ERROR)
 	{
 		return ERROR;
 	}
 #endif
-#ifdef libpq
+#ifdef LIBPQ
 	if (db_init(sname, dbname, uname, auth) == ERROR)
 	{
 		return ERROR;

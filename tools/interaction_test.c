@@ -47,12 +47,12 @@ char subject[I_SUBJECT_LEN + 1] = "ARTS";
 int mode_access = MODE_APPSERVER;
 int mode_cache = MODE_CACHE_OFF;
 
-#ifdef odbc
+#ifdef ODBC
 char sname2[32] = "localhost:DBT1";
 char uname2[32] = "pgsql";
 char auth2[32] = "pgsql";
 #endif
-#ifdef libpq
+#ifdef LIBPQ
 char sname2[32] = "localhost";
 char dbname2[32] = "DBT1";
 char uname2[32] = "pgsql";
@@ -236,10 +236,10 @@ int main(int argc, char *argv[])
 	}
 	else
 	{
-#ifdef odbc
+#ifdef ODBC
 		if (db_init(sname2, uname2, auth2) != OK)
 #endif
-#ifdef libpq
+#ifdef LIBPQ
 		if (db_init(sname2, dbname2, uname2, auth2) != OK)
 #endif
 		{

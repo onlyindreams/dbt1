@@ -77,3 +77,5 @@ for (my $i=0; $i<=$#file_list; $i++)
 system("cat $output_path/result.mix.log.* | sort -n > $output_path/result.mix.log");
 system("../tools/results -f $output_path/result.mix.log > $output_path/BT");
 
+#clean the unwanted mix.log
+system("rm $output_path/result.mix.log.*");

@@ -1,6 +1,4 @@
 /*
- * main.c
- *
  * This file is released under the terms of the Artistic License.  Please see
  * the file LICENSE, included in this package, for details.
  *
@@ -49,13 +47,13 @@ int main(int argc, char *argv[])
 
 	/* setup default value in case the user forgets, but in most
 	   cases the user should set it */
-#ifdef libpq
+#ifdef LIBPQ
 	strcpy(sname, "localhost");
 	strcpy(dbname, "DBT1");
 	strcpy(uname, "pgsql");
 	strcpy(auth, "pgsql");
 #endif
-#ifdef odbc
+#ifdef ODBC
 	strcpy(sname, "localhost:DBT1");
 	strcpy(uname, "dbt");
 	strcpy(auth, "dbt");
@@ -112,7 +110,7 @@ int main(int argc, char *argv[])
                         {
                                 break;
                         }
-#ifdef libpq
+#ifdef LIBPQ
 			if (strcmp(long_options[option_index].name, "dbhost") == 0)
                         {
                                 strcpy(sname, optarg);
@@ -122,7 +120,7 @@ int main(int argc, char *argv[])
                                 strcpy(dbname, optarg);
                         }
 #endif
-#ifdef odbc
+#ifdef ODBC
 			if (strcmp(long_options[option_index].name, "dbnodename") == 0)
                         {
                                 strcpy(sname, optarg);
@@ -243,10 +241,10 @@ int main(int argc, char *argv[])
 int usage(char *name)
 {
 	printf("run without the middle tier and search_results_cache: \n");
-#ifdef libpq
+#ifdef LIBPQ
 	printf("usage: %s --access_direct --dbhost <dbhost> --dbname <dbname>\n", name);
 #endif
-#ifdef odbc
+#ifdef ODBC
 	printf("usage: %s --access_direct --dbnodehost <dbnodehost>\n", name);
 #endif
 	printf("--username <username> --password <password>\n");
@@ -256,10 +254,10 @@ int usage(char *name)
 
 
 	printf("run without the middle tier but with search_results_cache: \n");
-#ifdef libpq
+#ifdef LIBPQ
 	printf("usage: %s --access_direct --dbhost <dbhost> --dbname <dbname>\n", name);
 #endif
-#ifdef odbc
+#ifdef ODBC
 	printf("usage: %s --access_direct --dbnodehost <dbnodehost>\n", name);
 #endif
 	printf("--access_cache --cache_host <cache_host> --cache_port <cache_port>\n");
@@ -272,10 +270,10 @@ int usage(char *name)
 	printf("usage: %s --server_name <server_name> --port <port>\n", name);
 
 	printf("The default values if not defined\n");
-#ifdef libpq
+#ifdef LIBPQ
 	printf("--dbhost %s --dbname %s\n", sname, dbname);
 #endif
-#ifdef odbc
+#ifdef ODBC
 	printf("--dbnodehost %s\n", sname);
 #endif
 	printf("--username %s --password %s\n", uname, auth);

@@ -1,9 +1,12 @@
 dnl> Process this file with autoconf to produce a configure script.
-AC_INIT(wgen/bm_utils.c)
+AC_INIT(dbt1, 2.1, osdldbt-general@lists.sourceforge.net)
+AM_INIT_AUTOMAKE
+AC_CONFIG_HEADERS(config.h)
 
 dnl> Checks for programs.
 AC_PROG_AWK
 AC_PROG_CC
+AC_PROG_CXX
 
 dnl> Checks for libraries.
 dnl Replace `main' with a function in -lm:
@@ -30,27 +33,26 @@ AC_CHECK_FUNCS(gettimeofday mktime socket strdup)
 dnl> Configuration options for different databases, PostgreSQL is default.
 DATABASE_TO_USE="pgsql"
 DBI_NAME="libpq"
-AC_ARG_WITH(postgres,
-	[  --with-postgresql default],
-	[ DATABASE_TO_USE="pgsql" DBI_NAME="libpq" ])
+AC_ARG_WITH(postgresql,
+  [AC_HELP_STRING([--with-postgresql=DIR],
+    [Default on. Set to the path of the PostgreSQL's installation, or leave
+     unset if the path is already in the compiler search path.])],
+  [DATABASE_TO_USE=$withval],
+  [DATABASE_TO_USE="pgsql"]
+)
 AC_ARG_WITH(sapdb,
 	[  --with-sapdb],
 	[ DATABASE_TO_USE="sapdb" DBI_NAME="odbc" ])
 
 dnl> Set up rules depending on what database is selected.
-if test "x$DATABASE_TO_USE" = "xpgsql"; then
-	AC_CHECK_HEADERS(libpq-fe.h,
-		[],
-		[AC_CHECK_HEADERS(postgresql/libpq-fe.h,
-			[],
-			[AC_CHECK_HEADERS(/usr/local/pgsql/include/libpq-fe.h,
-				[],
-				[ AC_MSG_ERROR([libpq headers required]) ]) ]) ])
-	AC_SEARCH_LIBS(PQexec,
-		pq,
-		,
-		AC_MSG_ERROR([libpq libs required]))
-elif test "x$DATABASE_TO_USE" = "xsapdb"; then
+if test "$DATABASE_TO_USE" != "pgsql"; then
+	CFLAGS="-I${DATABASE_TO_USE}/include $CFLAGS"
+	CPPFLAGS="-I${DATABASE_TO_USE}/include $CPPFLAGS"
+	LDFLAGS="-L${DATABASE_TO_USE}/lib -Wl,-R${DATABASE_TO_USE}/lib $LDFLAGS"
+	AC_CHECK_HEADERS(libpq-fe.h, [], AC_MSG_ERROR([libpq headers required]))
+	AC_SEARCH_LIBS(PQexec, pq, [], AC_MSG_ERROR([libpq libs required]))
+	AC_DEFINE(LIBPQ, 1, [using PostgreSQL])
+elif test "$DATABASE_TO_USE" != "sapdb"; then
 	dnl>
 	dnl> ODBC Library (required)
 	dnl>
@@ -63,6 +65,7 @@ elif test "x$DATABASE_TO_USE" = "xsapdb"; then
 		sqlod sqlrte,
 		,
 		AC_MSG_ERROR([SAPDB ODBC library required]))
+	AC_DEFINE(ODBC, 1, [using ODBC to SAPDB])
 else
         AC_MSG_ERROR('You stink at autoconf!')
 fi
@@ -102,4 +105,5 @@ data_collect/analyzeBT.pl
 data_collect/pgsql/dbt1_master.pl
 data_collect/pgsql/db_stats.sh
 data_collect/pgsql/get_config.sh
+src/Makefile
 )

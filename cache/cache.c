@@ -37,12 +37,12 @@ void sighandler(int signum);
 pthread_mutex_t mutex_cache_server = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_counter = PTHREAD_MUTEX_INITIALIZER;
 int i_id_max, a_id_max;
-#ifdef odbc
+#ifdef ODBC
 	char sname2[32] = "localhost:DBT1";
 	char uname2[32] = "dbt";
 	char auth2[32] = "dbt";
 #endif
-#ifdef libpq
+#ifdef LIBPQ
 	char sname2[32] = "localhost";
 	char dbname2[32] = "DBT1";
 	char uname2[32] = "pgsql";
@@ -252,10 +252,10 @@ void *init_cache(void *data)
 	struct table_range *range;
 	int author_step, title_step;
 
-#ifdef odbc
+#ifdef ODBC
 	if (db_init(sname2, uname2, auth2) != OK)
 #endif
-#ifdef libpq
+#ifdef LIBPQ
 	if (db_init(sname2, dbname2, uname2, auth2) != OK)
 #endif
 	
@@ -708,10 +708,10 @@ int undo_digsyl(char *search_string)
 
 int usage(char *name)
 {
-#ifdef odbc
+#ifdef ODBC
 	printf("usage: %s --dbnodename <dbnodename> \n", name);
 #endif
-#ifdef libpq
+#ifdef LIBPQ
 	printf("usage: %s --host <hostname> --dbname <dbname> \n", name);
 #endif
 	printf("--username <username> --password <password>\n");
@@ -721,10 +721,10 @@ int usage(char *name)
 	printf("--sanity_check\n\n");
 
 	printf("if not defined, the default values are:\n");
-#ifdef odbc
+#ifdef ODBC
         printf("--dbnodename %s ", sname2);
 #endif
-#ifdef libpq
+#ifdef LIBPQ
         printf("--host %s --dbname %s ", sname2, dbname2);
 #endif
 	printf("--username %s --password %s\n", uname2, auth2);

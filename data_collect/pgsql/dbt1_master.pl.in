@@ -1001,6 +1001,7 @@ kill_process('dbt1_slave');
 system("@TOPDIR@/data_collect/analyzeBT.pl -o $out_dir -l $out_dir");
 system("cp", "@TOPDIR@/run/db_logfile.txt", "$out_dir/");
 
+system("chmod", "666", "$out_dir/db_logfile.txt");
 exit;
 
 sub connect_to_host

@@ -49,21 +49,21 @@ sysstat_version=`cat .sar.tmp |grep version | awk '{print $3}'`
 rm .sar.tmp
 echo "sysstat version $sysstat_version"
 
-if [ $sysstat_version = '4.1.2' ]
+if [ $sysstat_version = '4.0.3' ]
 then 
 #use sysstat 4.1.2
 #sar
 #/usr/local/bin/sar -u -P ALL -d -B -r -q -W -b -o $RESULTS_PATH/run.sar.data $INTERVAL $COUNT &
-sar -u -P ALL -d -B -r -q -W -b -o $RESULTS_PATH/run.sar.data $INTERVAL $COUNT &
+sar -u -U ALL -d -B -r -q -W -b -o $RESULTS_PATH/run.sar.data $INTERVAL $COUNT &
 #iostat
 #/usr/src/ziostat/ziostat -a -d $INTERVAL $COUNT >> $RESULTS_PATH/iostat.txt &
 #/usr/src/ziostat/ziostat -a -x $INTERVAL $COUNT >> $RESULTS_PATH/iostat-x.txt &
 #/usr/local/bin/iostat -d $INTERVAL $COUNT >> $RESULTS_PATH/iostat.txt &
 else
+sar -u -P ALL -d -B -r -q -W -b -o $RESULTS_PATH/run.sar.data $INTERVAL $COUNT &
 #use sysstat 4.0.3
 #sar
 #/usr/bin/sar -u -U ALL -d -B -r -q -W -b -o $RESULTS_PATH/run.sar.data $INTERVAL $COUNT &
-sar -u -U ALL -d -B -r -q -W -b -o $RESULTS_PATH/run.sar.data $INTERVAL $COUNT &
 #iostat
 #/usr/bin/iostat -d $INTERVAL $COUNT >> $RESULTS_PATH/iostat.txt &
 fi

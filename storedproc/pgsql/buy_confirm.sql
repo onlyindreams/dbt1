@@ -204,14 +204,14 @@ CREATE OR REPLACE FUNCTION buy_confirm (
 			INTO _ship_addr_id, _co_id 
 			FROM address, country
 			WHERE co_name = _country 
-				AND addr_co_id = _co_id 
+				AND addr_co_id = co_id 
 				AND addr_zip = _addr_zip 
 				AND addr_state = _addr_state 
 				AND addr_city = _addr_city 
 				AND addr_street1 = _addr_street1 
 				AND addr_street2 = _addr_street2;
 
-			IF FOUND THEN
+			IF NOT FOUND THEN
 				_ship_addr_id := nextval(''AddrID'');
 				INSERT INTO address 
 				VALUES(_ship_addr_id, _addr_street1, _addr_street2, 

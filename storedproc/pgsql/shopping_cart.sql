@@ -190,7 +190,7 @@ CREATE OR REPLACE FUNCTION shopping_cart (
 	PERFORM addToSC(t_sc_id, _add_flag, _i_id);
     ELSE
 	--FOR i in array_lower(_i_id_array,1) .. array_upper(_i_id_array,1) LOOP 
-	FOR i in 0..(_itemcount-1) LOOP 
+	FOR i in 1..(_itemcount) LOOP 
 		PERFORM refreshSC(t_sc_id, _i_id_array[i], _qty_array[i]);
 	END LOOP;
 
@@ -441,6 +441,16 @@ commit;
 ---- AS l(
 ----    sc_id NUMERIC(10),
 ----    itemcount NUMERIC(2),
+----    pp_i_id1 NUMERIC(10),
+----    pp_i_t1 NUMERIC(10),
+----    pp_i_id2 NUMERIC(10),
+----    pp_i_t2 NUMERIC(10),
+----    pp_i_id3 NUMERIC(10),
+----    pp_i_t3 NUMERIC(10),
+----    pp_i_id4 NUMERIC(10),
+----    pp_i_t4 NUMERIC(10),
+----    pp_i_id5 NUMERIC(10),
+----    pp_i_t5 NUMERIC(10),
 ----    scl_i_id1 NUMERIC(10),
 ----    scl_title1 VARCHAR(60),
 ----    scl_cost1 NUMERIC(17,2),
@@ -561,14 +571,4 @@ commit;
 ----    scl_srp20 NUMERIC(17,2),
 ----    scl_backing20 VARCHAR(15),
 ----    scl_qty20 NUMERIC(3),
-----    pp_i_id1 NUMERIC(10),
-----    pp_i_t1 NUMERIC(10),
-----    pp_i_id2 NUMERIC(10),
-----    pp_i_t2 NUMERIC(10),
-----    pp_i_id3 NUMERIC(10),
-----    pp_i_t3 NUMERIC(10),
-----    pp_i_id4 NUMERIC(10),
-----    pp_i_t4 NUMERIC(10),
-----    pp_i_id5 NUMERIC(10),
-----    pp_i_t5 NUMERIC(10),
 ----);

@@ -1,3 +1,14 @@
+Release V2.1
+
+Improvement:
+============
+Changed most of the stored procedures so that we do not return set of records unnecessarily.  
+
+Changed the scripts and stored procedures so that the kit works on PG v7.4.1/
+
+Changed the stored proceudres to take arrays as input parameters so that we do not need to change the PG source code.
+
+
 Release v2.0
 We stopped supporting the SAPDB version now.  I do not guarantee that the SAPDB version still work.
 

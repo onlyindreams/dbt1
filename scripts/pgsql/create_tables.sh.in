@@ -1,3 +1,5 @@
 #!/bin/sh
 
-psql -d $SID1 -U $PGUSER -f @TOPDIR@/scripts/pgsql/create_tables.sql
+psql -d $SID1 -f @TOPDIR@/scripts/pgsql/create_tables.sql
+psql -d $SID1 -c "GRANT ALL PRIVILEGES ON TABLE address, author, cc_xacts, country, customer, item, order_line, orders, shopping_cart, shopping_cart_line TO PUBLIC"
+psql -d $SID1 -c "GRANT ALL PRIVILEGES ON TABLE custid, addrid, scid TO PUBLIC"

@@ -1,0 +1,73 @@
+<project name="dbt1" default="compile" basedir=".">
+
+	<property file="${basedir}/build.properties" />
+	<property name="src.dir" value="${basedir}/src" />
+	<property name="build.dir" value="${basedir}/build" />
+	<property name="jar.dir" value="${basedir}/jar" />
+	<property name="servlet.jar"
+		value="${jboss.server}/lib/javax.servlet.jar" />
+
+	<!--
+	 | The classpath for running the client
+	 -->
+	<path id="client.classpath">
+		<pathelement location="${build.dir}" />
+		<fileset dir="${jboss.home}/client">
+			<include name="**/*.jar" />
+		</fileset>
+		<fileset dir="${jboss.home}/server/all/deploy/jboss-net.sar">
+			<include name="*.jar" />
+		</fileset>
+		<fileset dir="${pgsql.home}/share/java">
+			<include name="*.jar" />
+		</fileset>
+	</path>
+
+	<!--
+	 | The build classpath
+	 -->
+	<path id="build.classpath">
+		<path refid="client.classpath" />
+		<pathelement location="${servlet.jar}" />
+	</path>
+
+	<target name="prepare">
+		<mkdir dir="${build.dir}" />
+		<mkdir dir="${jar.dir}" />
+	</target>
+
+	<target name="compile" depends="prepare">
+		<javac destdir="${build.dir}" classpathref="build.classpath"
+			deprecation="on">
+			<src path="${src.dir}" />
+		</javac>
+	</target>
+
+	<target name="package" depends="compile">
+		<delete file="jar/web-client.war"/>
+		<war warfile="jar/web-client.war" webxml="dd/web.xml">
+			<classes dir="${build.dir}" >
+				<include name="**/*.class" />
+			</classes>
+			<lib dir="${pgsql.home}/share/java">
+				<include name="postgresql.jar" />
+			</lib>
+		</war>
+	</target>
+
+	<target name="assemble" depends="package">
+		<delete file="jar/dbt1.ear"/>
+		<ear destfile="jar/dbt1.ear" appxml="dd/application.xml">
+			<fileset dir="jar" includes="*.war" />
+		</ear>
+	</target>
+
+	<target name="deploy" depends="assemble">
+		<copy file="jar/dbt1.ear" todir="${jboss.server}/deploy" />
+	</target>
+
+	<target name="clean">
+		<delete dir="${build.dir}" />
+	</target>
+
+</project>

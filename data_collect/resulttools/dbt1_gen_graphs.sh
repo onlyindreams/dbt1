@@ -115,15 +115,6 @@ if [ -f $input_dir/run.ziostat.txt ]; then
 	./gr_single_dir.pl -i "$output_dir/run.ziostat.*.dat" -o $output_dir/run.ziostat_util -t "run ziostat disk utility" -b "run.ziostat." -e ".dat" -c 10 -hl "samples every 60 sec"
 fi
 
-if [ -f $input_dir/run.iostat.txt ]; then
-	echo "parse run iostat";
-	./parse_iostat.pl -i $input_dir/run.iostat.txt -d $output_dir/run.iostat -co "iostat -d taken every 60 seconds" -o '-d'
-	#generate graphs based on run iostat .dat file
-	./gr_single_dir.pl -i "$output_dir/run.iostat.*.dat" -o $output_dir/run.iostat_read_sec -t "run iostat read per second" -b "run.iostat." -e ".dat" -c 1 -hl "samples every 60 sec"
-	./gr_single_dir.pl -i "$output_dir/run.iostat.*.dat" -o $output_dir/run.iostat_write_sec -t "run iostat write per second" -b "run.iostat." -e ".dat" -c 2 -hl "samples every 60 sec"
-	./gr_single_dir.pl -i "$output_dir/run.iostat.*.dat" -o $output_dir/run.iostat_tps -t "run iostat tps" -b "run.iostat." -e ".dat" -c 0 -hl "samples every 60 sec"
-fi
-
 if [ -f $input_dir/build.sar.data ]; then
 	echo "parse build sar -b";
 	#parse sar io
@@ -137,14 +128,14 @@ if [ -f $input_dir/build.sar.data ]; then
 	#parse sar total cpu
 	./parse_sar.pl -i $input_dir/build.sar.data -out $output_dir/build.sar_cpu_all -c "sar -u taken every 60 seconds" -op '-u'
 
-	if [ $sysstat_version = '4.1.2' ]; then
-		echo "parse build sar -P";
-		#parse sar individual cpu
-		./parse_sar.pl -i $input_dir/build.sar.data -out $output_dir/build.sar -c "sar -P taken every 60 seconds" -op '-P' -n $CPUS
-	else
+	if [ $sysstat_version = '4.0.3' ]; then
 		echo "parse build sar -U";
 		#parse sar individual cpu
 		./parse_sar.pl -i $input_dir/build.sar.data -out $output_dir/build.sar -c "sar -U taken every 60 seconds" -op '-U' -n $CPUS
+	else
+		echo "parse build sar -P";
+		#parse sar individual cpu
+		./parse_sar.pl -i $input_dir/build.sar.data -out $output_dir/build.sar -c "sar -P taken every 60 seconds" -op '-P' -n $CPUS
 	fi
 
 	echo "parse build sar -W";
@@ -155,15 +146,14 @@ if [ -f $input_dir/build.sar.data ]; then
 	
 	./gr_single_dir.pl -i "$output_dir/build.sar.cpu*.dat" -o $output_dir/build.sar_cpu_system -t "build sar individual CPU pct_system" -b "build.sar." -e ".dat" -c 2 -hl "samples every 60 sec"
 	
-	if [ $VERSION -eq 5 ]
+	if [ $VERSION -eq 4 ]
 	then
-		./gr_single_dir.pl -i "$output_dir/build.sar.cpu*.dat" -o $output_dir/build.sar_cpu_iowait -t "build sar individual CPU pct_iowait" -b "build.sar." -e ".dat" -c 3 -hl "samples every 60 sec"
-	
-		./gr_single_dir.pl -i "$output_dir/build.sar.cpu*.dat" -o $output_dir/build.sar_cpu_idle -t "build sar individual CPU pct_idle" -b "build.sar." -e ".dat" -c 4 -hl "samples every 60 sec"
-		./gr_single_dir.pl -i "$output_dir/build.sar_cpu_all.dat" -o $output_dir/build.sar_cpu_all -t "build sar CPU" -b "build.sar_cpu_all" -e ".dat" -c 0,1,2,3,4 -hl "samples every 60 sec"
-	else
 		./gr_single_dir.pl -i "$output_dir/build.sar.cpu*.dat" -o $output_dir/build.sar_cpu_idle -t "build sar individual CPU pct_idle" -b "build.sar." -e ".dat" -c 3 -hl "samples every 60 sec"
 		./gr_single_dir.pl -i "$output_dir/build.sar_cpu_all.dat" -o $output_dir/build.sar_cpu_all -t "build sar CPU" -b "build.sar_cpu_all" -e ".dat" -c 0,1,2,3 -hl "samples every 60 sec"
+	else
+		./gr_single_dir.pl -i "$output_dir/build.sar.cpu*.dat" -o $output_dir/build.sar_cpu_iowait -t "build sar individual CPU pct_iowait" -b "build.sar." -e ".dat" -c 3 -hl "samples every 60 sec"
+		./gr_single_dir.pl -i "$output_dir/build.sar.cpu*.dat" -o $output_dir/build.sar_cpu_idle -t "build sar individual CPU pct_idle" -b "build.sar." -e ".dat" -c 4 -hl "samples every 60 sec"
+		./gr_single_dir.pl -i "$output_dir/build.sar_cpu_all.dat" -o $output_dir/build.sar_cpu_all -t "build sar CPU" -b "build.sar_cpu_all" -e ".dat" -c 0,1,2,3,4 -hl "samples every 60 sec"
 	fi
 	
 	./gr_single_dir.pl -i "$output_dir/build.sar_io.dat" -o $output_dir/build.sar_io -t "sar IO" -b "build.sar_io" -e ".dat" -c 0,1,2,3,4 -hl "samples every 60 sec"
@@ -172,7 +162,6 @@ if [ -f $input_dir/build.sar.data ]; then
 	
 	./gr_single_dir.pl -i "$output_dir/build.sar_memory.dat" -o $output_dir/build.sar_memory_pct -t "build sar memory percentage" -b "build.sar_memory" -e ".dat" -c 2,8 -hl "samples every 60 sec"
 fi
-
 
 if [ -f $input_dir/run.sar.data ]; then
 	echo "parse run sar -b";
@@ -187,15 +176,15 @@ if [ -f $input_dir/run.sar.data ]; then
 	#parse sar total cpu
 	./parse_sar.pl -i $input_dir/run.sar.data -out $output_dir/run.sar_cpu_all -c "sar -u taken every 60 seconds" -op '-u'
 
-	if [ $sysstat_version = '4.1.2' ]
+	if [ $sysstat_version = '4.0.3' ]
 	then
-		echo "parse run sar -P";
-		#parse sar individual cpu
-		./parse_sar.pl -i $input_dir/run.sar.data -out $output_dir/run.sar -c "sar -P taken every 60 seconds" -op '-P' -n $CPUS
-	else
 		echo "parse run sar -U";
 		#parse sar individual cpu
 		./parse_sar.pl -i $input_dir/run.sar.data -out $output_dir/run.sar -c "sar -U taken every 60 seconds" -op '-U' -n $CPUS
+	else
+		echo "parse run sar -P";
+		#parse sar individual cpu
+		./parse_sar.pl -i $input_dir/run.sar.data -out $output_dir/run.sar -c "sar -P taken every 60 seconds" -op '-P' -n $CPUS
 	fi
 
 	echo "parse run sar -W";
@@ -207,15 +196,14 @@ if [ -f $input_dir/run.sar.data ]; then
 	
 	./gr_single_dir.pl -i "$output_dir/run.sar.cpu*.dat" -o $output_dir/run.sar_cpu_system -t "run sar individual CPU pct_system" -b "run.sar." -e ".dat" -c 2 -hl "samples every 60 sec"
 	
-	if [ $VERSION -eq 5 ]
+	if [ $VERSION -eq 4 ]
 	then
-		./gr_single_dir.pl -i "$output_dir/run.sar.cpu*.dat" -o $output_dir/run.sar_cpu_iowait -t "run sar individual CPU pct_iowait" -b "run.sar." -e ".dat" -c 3 -hl "samples every 60 sec"
-	
-		./gr_single_dir.pl -i "$output_dir/run.sar.cpu*.dat" -o $output_dir/run.sar_cpu_idle -t "run sar individual CPU pct_idle" -b "run.sar." -e ".dat" -c 4 -hl "samples every 60 sec"
-		./gr_single_dir.pl -i "$output_dir/run.sar_cpu_all.dat" -o $output_dir/run.sar_cpu_all -t "run sar CPU" -b "run.sar_cpu_all" -e ".dat" -c 0,1,2,3,4 -hl "samples every 60 sec"
-	else
 		./gr_single_dir.pl -i "$output_dir/run.sar.cpu*.dat" -o $output_dir/run.sar_cpu_idle -t "run sar individual CPU pct_idle" -b "run.sar." -e ".dat" -c 3 -hl "samples every 60 sec"
 		./gr_single_dir.pl -i "$output_dir/run.sar_cpu_all.dat" -o $output_dir/run.sar_cpu_all -t "run sar CPU" -b "run.sar_cpu_all" -e ".dat" -c 0,1,2,3 -hl "samples every 60 sec"
+	else
+		./gr_single_dir.pl -i "$output_dir/run.sar.cpu*.dat" -o $output_dir/run.sar_cpu_iowait -t "run sar individual CPU pct_iowait" -b "run.sar." -e ".dat" -c 3 -hl "samples every 60 sec"
+		./gr_single_dir.pl -i "$output_dir/run.sar.cpu*.dat" -o $output_dir/run.sar_cpu_idle -t "run sar individual CPU pct_idle" -b "run.sar." -e ".dat" -c 4 -hl "samples every 60 sec"
+		./gr_single_dir.pl -i "$output_dir/run.sar_cpu_all.dat" -o $output_dir/run.sar_cpu_all -t "run sar CPU" -b "run.sar_cpu_all" -e ".dat" -c 0,1,2,3,4 -hl "samples every 60 sec"
 	fi
 	
 	./gr_single_dir.pl -i "$output_dir/run.sar_io.dat" -o $output_dir/run.sar_io -t "sar IO" -b "run.sar_io" -e ".dat" -c 0,1,2,3,4 -hl "samples every 60 sec"

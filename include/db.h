@@ -14,22 +14,22 @@
 
 #include <interaction_data.h>
 
-#ifdef odbc
+#ifdef ODBC
 /* ODBC include files. */
 #include <odbc_interaction.h>
 #endif
 
-#ifdef libpq
+#ifdef LIBPQ
 #include <libpq_interaction.h>
 #endif
 
 #define STATUS_ROLLBACK 4
 
 int db_connect(struct db_context_t *dbc);
-#ifdef odbc
+#ifdef ODBC
 int db_init(char *sname, char *uname, char *auth);
 #endif
-#ifdef libpq
+#ifdef LIBPQ
 int db_init(char *shost, char *dbname, char *uname, char *auth);
 #endif
 int db_connect(struct db_context_t *dbc);
