@@ -10,6 +10,7 @@
  * TPCW v1.6
  */
 
+#define _LARGEFILE64_SOURCE
 
 #include <stdio.h>
 #include <time.h>
@@ -32,21 +33,21 @@ void gen_orders(int ebs, int items)
 	time_t t1, t2, t3;
 	int order_line_count;
 
-	orders_file = fopen("orders.data", "w");
+	orders_file = fopen64("orders.data", "w");
 	if (orders_file == NULL)
 	{
 		fprintf(stderr, "cannot open orders.data\n");
 		return;
 	}
 
-	order_line_file = fopen("order_line.data", "w");
+	order_line_file = fopen64("order_line.data", "w");
 	if (order_line_file == NULL)
 	{
 		fprintf(stderr, "cannot open order_line.data\n");
 		return;
 	}
 
-	cc_xacts_file = fopen("cc_xacts.data", "w");
+	cc_xacts_file = fopen64("cc_xacts.data", "w");
 	if (cc_xacts_file == NULL)
 	{
 		fprintf(stderr, "cannot open cc_xacts.data\n");

@@ -9,6 +9,8 @@
  * 10 january 2001
  */
 
+#define _LARGEFILE64_SOURCE
+
 #include <stdlib.h>
 #include <tpcw.h>
 #include <datagen.h>
@@ -68,7 +70,7 @@ int main(int argc, char *argv[])
 	printf("EB scale factor		%d\n", ebs);
 
 	printf("generating sequence creation file: %s\n", SEQUENCE_SQL);
-	sequence_sql = fopen(SEQUENCE_SQL, "w");
+	sequence_sql = fopen64(SEQUENCE_SQL, "w");
 	if (sequence_sql == NULL)
 	{
 		printf("cannot open %s\n", SEQUENCE_SQL);

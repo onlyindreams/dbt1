@@ -10,6 +10,7 @@
  * TPCW v1.6
  */
 
+#define _LARGEFILE64_SOURCE
 
 #include <stdio.h>
 #include <time.h>
@@ -30,7 +31,7 @@ void gen_items(int items)
 	struct tm tm1, *tm2, *tm3;
 	time_t t1, t2, t3;
 
-	output = fopen("item.data", "w");
+	output = fopen64("item.data", "w");
 	if (output == NULL)
 	{
 		fprintf(stderr, "cannot open item.txt");

@@ -10,6 +10,7 @@
  * TPCW v1.6
  */
 
+#define _LARGEFILES64_SOURCE
 
 #include <stdio.h>
 #include <time.h>
@@ -26,7 +27,7 @@ void gen_addresses(int ebs)
 	char a_string[1024];
 	int addresses;
 
-	output = fopen("address.data", "w");
+	output = fopen64("address.data", "w");
 	if (output == NULL)
 	{
 		fprintf(stderr, "cannot open address.data\n");

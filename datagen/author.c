@@ -10,6 +10,7 @@
  * TPCW v1.6
  */
 
+#define _LARGEFILE64_SOURCE
 
 #include <stdio.h>
 #include <time.h>
@@ -28,7 +29,7 @@ void gen_authors(int items)
 	struct tm tm1, *tm2, *tm3;
 	time_t t1, t2, t3;
 
-	output = fopen("author.data", "w");
+	output = fopen64("author.data", "w");
 	if (output == NULL)
 	{
 		fprintf(stderr, "cannot open author.data\n");
