@@ -14,13 +14,15 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <time.h>
 #include <errno.h>
 #include <ctype.h>
 #include <math.h>
-#include <eu.h>
+
 #include <common.h>
+#include <eu.h>
 #include <cache.h>
 
 #ifdef PHASE1
@@ -130,6 +132,11 @@ char tm_address[32];
 char cache_host[32];
 int cache_port;
 #endif
+
+sem_t running_interactions[INTERACTION_TOTAL];
+
+int altered = 0;
+int stop_connecting = 0;
 
 /*
  * Generate input data and request an interaction to be executed.
@@ -428,9 +435,14 @@ int do_interaction(struct eu_context_t *euc)
 	/* reset sc_id after buy_confirm */
 	else if (euc->interaction == BUY_CONFIRM) 
 		euc->sc_id = UNKNOWN_SHOPPING_CART;
-//#ifdef DEBUG
-//	dump_interaction_output(euc);
-//#endif /* DEBUG */
+	/* check if valid data is returned for search results */
+	else if (euc->interaction == SEARCH_RESULTS &&
+		euc->search_results_data.search_type != SEARCH_SUBJECT)
+	{	
+		if (euc->search_results_data.items == 0) 
+			rc = W_ERROR;
+	}
+		                
 #endif /* PHASE2 */
 
 	return rc;
@@ -625,8 +637,7 @@ int dump_interaction_output(struct eu_context_t *euc)
 			DEBUGMSG("c_uname: %s", euc->order_inquiry_data.c_uname);
 			break;
 		case PRODUCT_DETAIL:
-			DEBUGMSG("i_title %s, a_fname %s, a_lname %s, i_pub_date
-%s, i_publisher %s, i_subject %s, i_desc %s, i_image %lld, i_cost %0.2f, i_srp %0.2f, i_avail %s, i_isbn %s, i_page %d, i_backing %s, i_dimensions %s",
+			DEBUGMSG("i_title %s, a_fname %s, a_lname %s, i_pub_date %s, i_publisher %s, i_subject %s, i_desc %s, i_image %lld, i_cost %0.2f, i_srp %0.2f, i_avail %s, i_isbn %s, i_page %d, i_backing %s, i_dimensions %s",
 				euc->product_detail_data.i_title,
 				euc->product_detail_data.a_fname,
 				euc->product_detail_data.a_lname,
@@ -1199,6 +1210,7 @@ int init_eus(char *sname, int port, int eus,
 {
 	int i, rc;
 	struct timespec ts;
+	char filename[512];
 
 #ifdef PHASE1
 #ifdef SEARCH_RESULTS_CACHE
@@ -1206,6 +1218,19 @@ int init_eus(char *sname, int port, int eus,
 	cache_port = port;
 #endif
 #endif
+
+	/*
+	 * Initialize the semaphore that keeps count of what interactions are
+	 * currently being executed.
+	 */
+	for (i = 0; i < INTERACTION_TOTAL; i++)
+	{
+		if (sem_init(&running_interactions[i], 0, 0) != 0)
+		{
+			LOG_ERROR_MESSAGE("cannot init running_interactions[%d]\n", i);
+			return W_ERROR;
+		}
+	}
 
 	/*
 	 * Initialize the semaphore that keeps count of the number of threads
@@ -1221,21 +1246,24 @@ int init_eus(char *sname, int port, int eus,
 	 * Open log files to record the actual mix of interactions, the think time
 	 * calculated, and the USMD calculated.
 	 */
-	log_mix = fopen(MIX_LOG_NAME, "w");
+	sprintf(filename, "%s%s", output_path, MIX_LOG_NAME);
+	log_mix = fopen(filename, "w");
 	if (log_mix == NULL)
 	{
 		fprintf(stderr, "cannot open %s\n", MIX_LOG_NAME);
 		return W_ERROR;
 	}
 
-	log_think_time = fopen(THINK_TIME_LOG_NAME, "w");
+	sprintf(filename, "%s%s", output_path, THINK_TIME_LOG_NAME);
+	log_think_time = fopen(filename, "w");
 	if (log_think_time == NULL)
 	{
 		fprintf(stderr, "cannot open %s\n", THINK_TIME_LOG_NAME);
 		return W_ERROR;
 	}
 
-	log_usmd = fopen(USMD_LOG_NAME, "w");
+	sprintf(filename, "%s%s", output_path, USMD_LOG_NAME);
+	log_usmd = fopen(filename, "w");
 	if (log_usmd == NULL)
 	{
 		fprintf(stderr, "cannot open %s\n", USMD_LOG_NAME);
@@ -1333,9 +1361,13 @@ int init_eus(char *sname, int port, int eus,
 	 * are started.  Do not factor in the rampup time as part of the run
 	 * duration.
 	 */
-	stop_time = time(NULL) + duration + (int) ((eus / rampuprate) * 60);
+	stop_time = (int) time(NULL) + duration + (int) ((eus / rampuprate) * 60);
+printf("start: %d\n", (int) time(NULL));
+printf("stop: %d\n", (int) stop_time);
+printf("duration: %d\n", duration);
+printf("ramp: %d\n", ((eus / rampuprate) * 60));
 
-	printf("starting %d users\n", eus);
+	printf("Starting %d users per minutes.\n", rampuprate);
 	for (i = 0; i < eus; i++)
 	{
 		pthread_t tid;
@@ -1351,14 +1383,31 @@ int init_eus(char *sname, int port, int eus,
 		if (pthread_create(&tid, NULL, &start_eu, &port) != 0)
 #endif /* PHASE2 */
 		{
-			/* Just bail if a thread cannot start. */
-			LOG_ERROR_MESSAGE("error creating thread\n");
-			return W_ERROR;
+			if (altered == 0)
+			{
+				/* Just bail if a thread cannot start. */
+				LOG_ERROR_MESSAGE("error creating thread\n");
+				return W_ERROR;
+			}
+			else
+			{
+				printf("cannot start any more users\n");
+				sem_wait(&running_eu_count);
+				return OK;
+			}
+		}
+		if ((i % 100) == 0)
+		{
+			printf("Started %d users.\n", i);
 		}
 		ts.tv_sec = (time_t) (60 / rampuprate);
 		ts.tv_nsec =
 			(long) ((60000.0 / (double) ((rampuprate * 1000) % 1000)) * 1000000.0);
 		nanosleep(&ts, NULL);
+		if (stop_connecting == 1)
+		{
+			break;
+		}
 	}
 
 	return OK;
@@ -1842,8 +1891,10 @@ void *start_eu(void *data)
 #ifdef PHASE2
 	if ((euc.s = _connect(tm_address, *port)) == -1)
 	{
+		stop_connecting = 1;
 		printf("connect to appServer failed\n");
 		LOG_ERROR_MESSAGE("connect failed");
+		sem_wait(&running_eu_count);
 		return NULL;
 	}
 #endif /* PHASE2 */
@@ -1869,7 +1920,9 @@ void *start_eu(void *data)
 			{
 				perror("gettimeofday");
 			}
+			sem_post(&running_interactions[euc.interaction]);
 			rc = do_interaction(&euc);
+			sem_wait(&running_interactions[euc.interaction]);
 			
 			/* Get the time after the interaction has executed. */
 			if (gettimeofday(&rt1, NULL) == -1)
@@ -1981,7 +2034,9 @@ void *start_eu(void *data)
 				{
 					perror("gettimeofday");
 				}
+				sem_post(&running_interactions[euc.interaction]);
 				rc = do_interaction(&euc);
+				sem_wait(&running_interactions[euc.interaction]);
 				/* Get the time after the interaction has executed. */
 				if (gettimeofday(&rt1, NULL) == -1)
 				{
