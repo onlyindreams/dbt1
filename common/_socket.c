@@ -10,15 +10,15 @@
  * 20 march 2002
  */
 
+#include <unistd.h>
+#include <string.h>
 #include <_socket.h>
 
 int _connect(char *address, unsigned short port)
 {
-	extern int errno;
 	int sockfd;
 	struct sockaddr_in sa;
 	struct hostent *he;
-	socklen_t addrlen;
 	in_addr_t addr;
 
 	bzero(&sa, sizeof(struct sockaddr_in));
@@ -109,7 +109,6 @@ int _send(int s, void *data, int length)
 
 int _server_init_socket(int port)
 {
-	extern int errno;
 	struct sockaddr_in sa;
 	int mastersock;
 
