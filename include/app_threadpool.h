@@ -14,14 +14,15 @@
 #include "app_txn_queue.h"
 
 struct condition_bundle_t {
-	int txn_done_flag;
+	int done_flag;
 	pthread_mutex_t condition_mutex;
-	pthread_cond_t txn_done_cv;
+	pthread_cond_t done_cv;
 };
 
 int init_thread_pool(int PoolThreads, int TxnQSize, char *sname, char *uname, char *auth);
 void *DoTxn(void *fd);
 void set_txn_done_flag(struct Queue *txn_queue, int QIndex);
+
 #ifdef _SIMDB
 void fill_promo_data(struct promotional_processing_t *pp_data);
 #endif
