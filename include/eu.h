@@ -45,7 +45,7 @@ struct eu_context_t
 	int previous_interaction; /* The previous interaction. */
 	int previous_search_interaction;
 	/* indicate if it is the first interaction so that 'prepare_home' can
-	   decide if a new c_id need to be generated
+	 * decide if a new c_id need to be generated
 	 */
 	int first_interaction; 
 
@@ -90,5 +90,7 @@ int mark_logs(char *mark);
 
 extern int customers;
 extern sem_t running_eu_count;
+extern sem_t running_interactions[INTERACTION_TOTAL];
+extern int altered;
 
 #endif /* _EU_H_ */
