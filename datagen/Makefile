@@ -3,7 +3,7 @@
 
 CC = gcc
 
-CFLAGS = -g -I../include -I../wgen
+CFLAGS = -g -I../include -I../wgen -DSTDLIB_HAS_GETOPT
 
 all: orders.so address.so author.so customer.so item.so datagen
 
