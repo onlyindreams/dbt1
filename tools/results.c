@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
 	int tid;
 	time_t start_time = -1;
 	float total_response_time;
-	float ips;
+	float ips; /* bogotransactions per second */
 	long long total_interaction_count = 0;
 	long long interaction_count[INTERACTION_TOTAL];
 	float interaction_response_time[INTERACTION_TOTAL];
@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
 	 * Initialize the counters for the number of each interaction to 0
 	 * as well as the total response time.
 	 */
-	for (i = 0; i < INTERACTION_TOTAL+1; i++)
+	for (i = 0; i < INTERACTION_TOTAL; i++)
 	{
 		interaction_count[i] = 0;
 		interaction_response_time[i] = 0;
@@ -235,7 +235,7 @@ int main(int argc, char *argv[])
 	fclose(log_mix);
 	fclose(plot_ips);
 
-	/* Calculate the actualy mix of interactions. */
+	/* Calculate the actual mix of interactions. */
 	printf("interaction\t%\tavg response time (s)\n");
 	for (i = 0; i < INTERACTION_TOTAL; i++)
 	{
@@ -246,186 +246,12 @@ int main(int argc, char *argv[])
 	
 	/* Calculated the number of interactions per second. */
 	ips = (double) total_interaction_count / difftime(current_time, start_time);
-	printf("\n%0.1f interactions per second\n", ips);
+	printf("\n%0.1f bogotransactions per second\n", ips);
 
 	printf("%0.1f minute duration\n",
 		difftime(current_time, start_time) / 60.0);
-	printf("total interacton %ld\n", total_interaction_count);
-	printf("error interacton %d\n", error_count);
-	printf("\n");
-
-	/* Open the files in ../scripts/stats to crunch numbers. */
-	log_cpu = fopen("../scripts/stats/cpu.csv", "r");
-	if (log_cpu == NULL)
-	{
-		printf("cannot open ../scripts/stats/cpu.csv for reading\n");
-		return 4;
-	}
-
-	/* Skip the first 2 lines, system info and 1 line of data. */
-	fscanf(log_cpu, "%*s");
-	fscanf(log_cpu, "%*s");
-	count = 0;
-	while (fscanf(log_cpu, "%f,%f,%f,%f", &user, &nice, &sys, &idle) != EOF)
-	{
-		total_user += user;
-		total_nice += nice;
-		total_sys += sys;
-		total_idle += idle;
-		++count;
-	}
-	fclose(log_cpu);
-	printf("CPU:\n");
-	printf("Average %%user %0.2f\n", total_user / (double) count);
-	printf("Average %%nice %0.2f\n", total_nice / (double) count);
-	printf("Average %%sys %0.2f\n", total_sys / (double) count);
-	printf("Average %%idle %0.2f\n", total_idle / (double) count);
-	printf("\n");
-
-	log_io = fopen("../scripts/stats/io.csv", "r");
-	if (log_io == NULL)
-	{
-		printf("cannot open ../scripts/stats/io.csv for reading\n");
-		return 5;
-	}
-
-	/* Skip the first 2 lines, system info and 1 line of data. */
-	fscanf(log_io, "%*s");
-	fscanf(log_io, "%*s");
-	io_dev_head = NULL;
-	while (fscanf(log_io, "%s", iostat_line) != EOF)
-	{
-		char dev_name[32];
-		int dev_name_len;
-		struct io_dev_node_t *tmp;
-		float rrqms, wrqms, rs, ws, rsecs, wsecs, avgrqsz, avgqusz, await,
-			svctm, util;
-
-		/* I know there's a better way to do this, but I can't think... */
-		dev_name_len =
-			strlen(iostat_line) - strlen((char *) strstr(iostat_line, ","));
-		strncpy(dev_name, iostat_line, dev_name_len);
-		dev_name[dev_name_len] = '\0';
-
-		tmp = io_dev_head;
-		if (tmp == NULL)
-		{
-			/* List is empty, insert this at the head. */
-			tmp =
-				(struct io_dev_node_t *) malloc(sizeof(struct io_dev_node_t));
-			strcpy(tmp->name, dev_name);
-			tmp->count = 0;
-			tmp->next = NULL;
-			tmp->rrqms = tmp->wrqms = tmp->rs = tmp->ws = tmp->rsecs =
-				tmp->wsecs = tmp->avgrqsz = tmp->avgqusz = tmp->await =
-				tmp->svctm = tmp->util = 0.0;
-			io_dev_head = tmp;
-		}
-		else
-		{
-			/* Locate the device in the list by name. */
-			while (tmp != NULL && strcmp(dev_name, tmp->name) != 0)
-			{
-				tmp = tmp->next;
-			}
-		}
-		if (tmp == NULL)
-		{
-			struct io_dev_node_t *tmp2;
-
-			/* Dev is not in the list, so stick it on the top. */
-			tmp = io_dev_head;
-			while (tmp->next != NULL)
-			{
-				tmp = tmp->next;
-			}
-
-			tmp2 = tmp;
-			tmp =
-			(struct io_dev_node_t *) malloc(sizeof(struct io_dev_node_t));
-			strcpy(tmp->name, dev_name);
-			tmp->count = 0;
-			tmp->next = NULL;
-			tmp->rrqms = tmp->wrqms = tmp->rs = tmp->ws = tmp->rsecs =
-				tmp->wsecs = tmp->avgrqsz = tmp->avgqusz = tmp->await =
-				tmp->svctm = tmp->util = 0.0;
-			tmp2->next = tmp;
-		}
-
-		/* Read the input. */
-		sscanf((char *) strstr(iostat_line, ","),
-			",%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f",
-			&rrqms, &wrqms, &rs, &ws, &rsecs, &wsecs, &avgrqsz, &avgqusz,
-			&await, &svctm, &util);
-		tmp->rrqms += rrqms;
-		tmp->wrqms += wrqms;
-		tmp->rs += rs;
-		tmp->ws += ws;
-		tmp->rsecs += rsecs;
-		tmp->wsecs += wsecs;
-		tmp->avgrqsz += avgrqsz;
-		tmp->avgqusz += avgqusz;
-		tmp->await += await;
-		tmp->svctm += svctm;
-		tmp->util += util;
-		++tmp->count;
-
-	}
-	fclose(log_io);
-	io_dev_cur = io_dev_head;
-	printf("I/O:\n");
-	printf("The following numbers are presented as averages for each column.\n");
-	printf("Note that stats are reported for every device attached to the system.\n");
-	printf("device\trrqm/s\twrqm/s\tr/s\tw/s\trsec/s\twsec/s\tavgrq-sz\tavgqu-sz\tawait\tsvctm\t%%util\n");
-	while (io_dev_cur != NULL)
-	{
-		printf("%s\t%0.2f\t%0.2f\t%0.2f\t%0.2f\t%0.2f\t%0.2f\t%0.2f\t\t%0.2f\t\t%0.2f\t%0.2f\t%0.2f\n",
-			io_dev_cur->name,
-			io_dev_cur->rrqms / io_dev_cur->count,
-			io_dev_cur->wrqms / io_dev_cur->count,
-			io_dev_cur->rs / io_dev_cur->count,
-			io_dev_cur->ws / io_dev_cur->count,
-			io_dev_cur->rsecs / io_dev_cur->count,
-			io_dev_cur->wsecs / io_dev_cur->count,
-			io_dev_cur->avgrqsz / io_dev_cur->count,
-			io_dev_cur->avgqusz / io_dev_cur->count,
-			io_dev_cur->await / io_dev_cur->count,
-			io_dev_cur->svctm / io_dev_cur->count,
-			io_dev_cur->util / io_dev_cur->count);
-		io_dev_cur = io_dev_cur->next;
-	}
-	printf("\n");
-
-	log_paging = fopen("../scripts/stats/paging.csv", "r");
-	if (log_paging == NULL)
-	{
-		printf("cannot open ../scripts/stats/paging.csv for reading\n");
-		return 6;
-	}
-
-	/* Skip the first 2 lines, system info and 1 line of data. */
-	fscanf(log_paging, "%*s");
-	fscanf(log_paging, "%*s");
-	count = 0;
-	while (fscanf(log_paging, "%f,%f,%f,%f,%f,%f", &pgpgin, &pgpgout,
-		&activepg, &inadtypg, &inaclnpg, &inatarpg) != EOF)
-	{
-		total_pgpgin += pgpgin;
-		total_pgpgout += pgpgout;
-		total_activepg += activepg;
-		total_inadtypg += inadtypg;
-		total_inaclnpg += inaclnpg;
-		total_inatarpg += inatarpg;
-		++count;
-	}
-	fclose(log_paging);
-	printf("Paging:\n");
-	printf("Average pgpgin/s %0.2f\n", total_pgpgin / (double) count);
-	printf("Average pgpgout/s %0.2f\n", total_pgpgout / (double) count);
-	printf("Average activepg %0.2f\n", total_activepg / (double) count);
-	printf("Average inadtypg %0.2f\n", total_inadtypg / (double) count);
-	printf("Average inaclnpg %0.2f\n", total_inaclnpg / (double) count);
-	printf("Average inatarpg %0.2f\n", total_inatarpg / (double) count);
+	printf("total bogotransactions %ld\n", total_interaction_count);
+	printf("error bogotransactions %d\n", error_count);
 	printf("\n");
 
 	return 0;
