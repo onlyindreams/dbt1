@@ -20,14 +20,16 @@
 
 /* Clause 4.7.1 */
 
-void gen_addresses(int ebs)
+void gen_addresses(int ebs, char *path)
 {
 	int i;
 	FILE *output = stdout;
 	char a_string[1024];
 	int addresses;
+	char filename[256];
 
-	output = fopen64("address.data", "w");
+	sprintf(filename, "%s/address.data", path);
+	output = fopen64(filename, "w");
 	if (output == NULL)
 	{
 		fprintf(stderr, "cannot open address.data\n");
