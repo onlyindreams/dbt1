@@ -9,20 +9,20 @@ INCLUDE_DIR=../include
 
 EXE = appCache 
 CACHE_PRGS = cache.c cache_interface.c
-CACHE_OBJS = $(CACHE_PRGS:.c=.o)
+CACHE_OBJS = $(CACHE_PRGS:.c=.so)
 
 LIBS = $(SAPDBROOT)/lib/libsqlod.so -lm -lpthread
-OBJS = $(COMMON_OBJS) $(CACHE_OBJS) $(ODBC_DIR)/odbc_interaction.o \
-	$(ODBC_DIR)/odbc_interaction_search_results.o
-PRGS = $(COMMON_PRGS) $(CACHE_PRGS) $(ODBC_DIR)/odbc_interaction.o \
-	$(ODBC_DIR)/odbc_interaction_search_results.o
+OBJS = $(COMMON_OBJS) $(CACHE_OBJS) $(ODBC_DIR)/odbc_interaction.so \
+	$(ODBC_DIR)/odbc_interaction_search_results.so
+PRGS = $(COMMON_PRGS) $(CACHE_PRGS) $(ODBC_DIR)/odbc_interaction.c \
+	$(ODBC_DIR)/odbc_interaction_search_results.c
 
 all: $(EXE)
 
 $(EXE): $(OBJS)
 	$(CC) -o $@ $(OBJS) $(LIBS)
 
-%.o:%.c
+%.so:%.c
 	$(CC) -c $(CFLAGS) -o $@ $<
 
 $(COMMON_OBJS):$(COMMON_PRGS)
@@ -32,7 +32,7 @@ $(ODBC_OBJS): $(ODBC_PRGS)
 	cd $(ODBC_DIR); $(MAKE)
 
 clean:
-	rm $(EXE) *.o
+	rm $(EXE) *.so
 
 explain:
 	@echo "$(OBJS)"
