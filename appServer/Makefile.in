@@ -1,19 +1,13 @@
 # Makefile
 # 20 february 2002
 
-include ../common.mk
-
-ODBC_DIR=../interfaces/odbc
-COMMON_DIR=../common
-INCLUDE_DIR=../include
-CACHE_DIR=../cache
+include @TOPDIR@/make.common
 
 EXE = appServer
 APP_PRGS = appServer.c app_txn_array.c app_threadpool.c \
 	app_txn_queue.c app_interface.c
 APP_OBJS = $(APP_PRGS:.c=.so)
 
-#LIBS = $(SAPDBROOT)/lib/libsqlod.so -lm -lpthread
 LIBS = $(ODBC_LIB) -lm -lpthread
 OBJS = $(COMMON_OBJS) $(ODBC_OBJS) $(APP_OBJS) $(CACHE_DIR)/cache_interface.so
 PRGS = $(COMMON_PRGS) $(ODBC_PRGS) $(APP_PRGS)
@@ -39,7 +33,7 @@ explain:
 	@echo "$(OBJS)"
 
 $(EXE): \
-	../common.mk \
+	$(TOPDIR)/make.common \
 	Makefile \
 	$(OBJS) \
 	$(INCLUDE_DIR)/common.h \
@@ -52,7 +46,7 @@ $(EXE): \
 	$(ODBC_INCLUDE)
 
 $(APPOBJS): \
-	../common.mk \
+	$(TOPDIR)/make.common \
 	Makefile \
 	$(INCLUDE_DIR)/common.h \
 	$(INCLUDE_DIR)/eu.h \

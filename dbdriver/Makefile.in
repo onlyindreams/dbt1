@@ -1,0 +1,38 @@
+# Makefile
+# 30 january 2002
+
+include @TOPDIR@/make.common
+
+CFLAGS_P1 = $(CFLAGS) -DPHASE1
+CFLAGS_P2 = $(CFLAGS) -DPHASE2
+
+LIBS = $(ODBC_LIB) -lm -lpthread
+
+all: eu_p1.so eu_p2.so tm_interface.so dbdriver_p1 dbdriver_p2
+
+eu_p1.so: $(TOPDIR)/make.common Makefile eu.c $(INCLUDE_DIR)/eu.h \
+	$(INCLUDE_DIR)/common.h
+	$(CC) -c $(CFLAGS_P1) eu.c -o eu_p1.so
+
+eu_p2.so: $(TOPDIR)/make.common Makefile eu.c $(INCLUDE_DIR)/eu.h \
+	$(INCLUDE_DIR)/common.h
+	$(CC) -c $(CFLAGS_P2) eu.c -o eu_p2.so
+
+tm_interface.so: $(TOPDIR)/make.common Makefile tm_interface.c \
+	$(INCLUDE_DIR)/tm_interface.h \
+	$(COMMON_PRGS) $(INCLUDE_DIR)/common.h $(INCLUDE_DIR)/_socket.h
+	$(CC) -c $(CFLAGS_P2) -I$(SAPDBROOT)/incl tm_interface.c -o tm_interface.so
+
+dbdriver_p1: $(TOPDIR)/make.common Makefile main.c eu_p1.so \
+	$(COMMON_DIR)/common.so $(ODBC_OBJS) ../cache/cache_interface.so 
+	$(CC) $(CFLAGS_P1) main.c -o dbdriver_p1 eu_p1.so \
+		../common/common.so  $(ODBC_OBJS) ../cache/cache_interface.so \
+		$(COMMON_DIR)/_socket.so $(LIBS)
+
+dbdriver_p2: $(TOPDIR)/make.common Makefile eu.c main.c tm_interface.so \
+	$(COMMON_OBJS)
+	$(CC) $(CFLAGS_P2) main.c -o dbdriver_p2 eu_p2.so \
+		$(COMMON_OBJS) tm_interface.so $(LIBS)
+
+clean:
+	rm -f *.so dbdriver_p1 dbdriver_p2

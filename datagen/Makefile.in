@@ -1,33 +1,33 @@
 # Makefile
 # 10 january 2001
 
-CC = gcc
+include @TOPDIR@/make.common
 
-CFLAGS = -g -I../include -I../wgen -DSTDLIB_HAS_GETOPT
+CFLAGS2=$(CFLAGS) -I$(TOPDIR)/wgen
 
 all: orders.so address.so author.so customer.so item.so datagen
 
 orders.so: Makefile orders.c ../include/datagen.h ../wgen/tpcw.h
-	$(CC) -c -shared -fpic $(CFLAGS) orders.c -o orders.so
+	$(CC) -c -shared -fpic $(CFLAGS2) orders.c -o orders.so
 
 address.so: Makefile address.c ../include/datagen.h ../wgen/tpcw.h
-	$(CC) -c -shared -fpic $(CFLAGS) address.c -o address.so
+	$(CC) -c -shared -fpic $(CFLAGS2) address.c -o address.so
 
 author.so: Makefile author.c ../include/datagen.h ../wgen/tpcw.h
-	$(CC) -c -shared -fpic $(CFLAGS) author.c -o author.so
+	$(CC) -c -shared -fpic $(CFLAGS2) author.c -o author.so
 
 customer.so: Makefile customer.c ../include/datagen.h ../wgen/tpcw.h
-	$(CC) -c -shared -fpic $(CFLAGS) customer.c -o customer.so
+	$(CC) -c -shared -fpic $(CFLAGS2) customer.c -o customer.so
 
 item.so: Makefile item.c ../include/datagen.h ../wgen/tpcw.h
-	$(CC) -c -shared -fpic $(CFLAGS) item.c -o item.so
+	$(CC) -c -shared -fpic $(CFLAGS2) item.c -o item.so
 
 datagen: Makefile main.c orders.so address.so author.so customer.so item.so \
 	../include/datagen.h ../include/common.h ../common/common.so \
 	../wgen/tpcw.o ../wgen/text.o ../wgen/rnd.o ../wgen/bm_utils.o
-	$(CC) $(CFLAGS) main.c -o datagen ../common/common.so orders.so address.so \
-		author.so customer.so item.so ../wgen/tpcw.o ../wgen/text.o \
-		../wgen/rnd.o ../wgen/bm_utils.o -lm
+	$(CC) $(CFLAGS2) main.c -o datagen ../common/common.so orders.so \
+		address.so author.so customer.so item.so ../wgen/tpcw.o \
+		../wgen/text.o ../wgen/rnd.o ../wgen/bm_utils.o -lm
 
 clean:
-	rm -f *.so
+	rm -f datagen *.so
