@@ -1,0 +1,572 @@
+2002-07-18 08:49  fimath
+
+	* tools/results.c: Changed the terminology from 'interactions per
+	second' to 'bogotransactions per second'.
+
+2002-07-17 17:32  jztpcw
+
+	* include/eu.h: added cache usage for phase1 driver
+
+2002-07-17 17:31  jztpcw
+
+	* dbdriver/: eu.c, main.c: added error handling and cache usage for
+	phase1 driver
+
+2002-07-17 17:30  jztpcw
+
+	* dbdriver/tm_interface.c: added receiving interaction result to
+	driver
+
+2002-07-17 17:30  jztpcw
+
+	* include/app_txn_array.h: added txn_result in structure
+	app_txn_array
+
+2002-07-17 17:29  jztpcw
+
+	* include/common.h: added RETRY defination
+
+2002-07-17 17:27  jztpcw
+
+	* appServer/app_interface.c: added sending interaction result to
+	driver
+
+2002-07-17 17:26  jztpcw
+
+	* appServer/appServer.c, appServer/app_threadpool.c, cache/cache.c:
+	added signal and error handling
+
+2002-07-15 10:32  fimath
+
+	* doc/html/: user.html, user_html_274752e.gif,
+	user_html_e3a83bc.jpg: The HTML version of the OpenOffice.org user
+	document.
+
+2002-07-15 10:31  fimath
+
+	* doc/user.sxw: I got a little jumpy, and checked in the wrong
+	copy.  This is the corerct copy that reflects the kit in the
+	current state.
+
+2002-07-15 10:28  fimath
+
+	* doc/: component_three_tier.dia, component_two_tier.dia, user.sxw:
+	Properly revised to reflect the current state of the kit.
+
+2002-07-12 09:48  fimath
+
+	* scripts/sapdb/trace_off.sh: A path was incorrected.  It is fixed
+	now.
+
+2002-07-02 11:46  fimath
+
+	* tools/results.c: Fixed a calculation error and a typo.
+
+2002-06-28 09:46  fimath
+
+	* tools/results.c: Fixed a bug where total_response_time should
+	have been used instead of response_time to record the first
+	interaction's response time.
+
+2002-06-27 14:12  fimath
+
+	* doc/sapdb_sizing.sxc: Added information that calculates the
+	growth rate of the database.
+
+2002-06-27 10:14  jztpcw
+
+	* scripts/sapdb/create_indexes.sql: added index on i_a_id in item
+	table
+
+2002-06-27 09:38  jztpcw
+
+	* appServer/app_threadpool.c, cache/cache_interface.c,
+	cache/cache.c, include/cache_interface.h:
+	send_search_results_response->send_search_results,
+	receive_search_results_request->receive_search_results
+
+2002-06-27 09:37  jztpcw
+
+	* appServer/Makefile: make->MAKE to make common objects
+
+2002-06-27 09:27  jztpcw
+
+	* cache/Makefile: changed static objects to shared objects
+
+2002-06-27 09:26  jztpcw
+
+	* appServer/Makefile: added cache_interface in the object files
+
+2002-06-27 09:25  jztpcw
+
+	* Makefile: added make cache_exe
+
+2002-06-27 09:24  jztpcw
+
+	* common.mk: added -DSEARCH_RESULTS_CACHE
+
+2002-06-26 17:06  jztpcw
+
+	* include/: cache.h, cache_interface.h: [no log message]
+
+2002-06-26 17:05  jztpcw
+
+	* include/app_threadpool.h: changed structure condition_bundle_t
+	member name
+
+2002-06-26 17:04  jztpcw
+
+	* cache/Makefile: Makefile
+
+2002-06-26 17:03  jztpcw
+
+	* cache/cache_interface.c: socket interface
+
+2002-06-26 17:02  jztpcw
+
+	* cache/cache.c: main cache functions
+
+2002-06-26 16:56  jztpcw
+
+	* appServer/app_threadpool.c: added SEARCH_RESULTS_CACHE to direct
+	search_results_author and search_results_title to the text search
+	module
+
+2002-06-26 16:55  jztpcw
+
+	* appServer/appServer.c: fixed a bug: workersock number could be
+	changed after pthread_create(DoConnection) and before the thread
+	DoConnection gets the socket number
+
+2002-06-25 10:03  fimath
+
+	* scripts/sapdb/create_db.sh: Added a parameter to help index
+	creation.
+
+2002-06-21 14:34  fimath
+
+	* readme.txt: The readme.txt shows where to look for documentation
+	on the kit.
+
+2002-06-21 14:30  fimath
+
+	* doc/: component_three_tier.dia, user.sxw, html/user.html,
+	html/user_html_285e2625.gif, html/user_html_56d75273.gif,
+	html/user_html_m12b259a0.gif, html/user_html_m3290fcae.gif: Updated
+	documentation.
+
+2002-06-21 11:44  jztpcw
+
+	* appServer/appServer.c: added handling SOCKET_CLOSE. fixed a bug
+	which caused appServer to hang when queue is full by unlocking
+	mutex before exiting the thread
+
+2002-06-21 11:38  jztpcw
+
+	* appServer/app_interface.c: receive_transaction_packet returns
+	SOCKET_CLOSE when the peer closes a socket
+
+2002-06-21 11:33  jztpcw
+
+	* common/_socket.c: added checking return code for connect; added
+	checking socket close in receive function
+
+2002-06-21 11:30  jztpcw
+
+	* include/common.h: added SOCKET_CLOSE definition
+
+2002-06-21 11:29  jztpcw
+
+	* dbdriver/eu.c: handle SOCKET_CLOSE situation by closing the
+	current socket and opening a new one
+
+2002-06-21 11:28  jztpcw
+
+	* dbdriver/tm_interface.c: receive_interaction_packet returns
+	SOCKET_CLOSE when peer closes socket gracefully
+
+2002-06-21 11:17  fimath
+
+	* Makefile, common.mk, appServer/Makefile, common/Makefile,
+	datagen/Makefile, dbdriver/Makefile, interfaces/odbc/Makefile,
+	tools/Makefile: Started building most objects as shared objects
+	instead of static objects.
+	
+	Cleaned up the clean in several of the Makefiles.
+
+2002-06-20 10:51  fimath
+
+	* tools/results.c: Fixed the calculation of average response time
+	per interaction (again).
+
+2002-06-20 10:32  fimath
+
+	* scripts/sapdb/: create_tables.sh, db_setup_sample.sh,
+	drop_tables.sh, load_dbproc.sh, trace_off.sh, trace_on.sh,
+	update_stats.sh: Added full path for dbmcli just in case it's not
+	in the user's path.
+
+2002-06-20 10:17  fimath
+
+	* doc/: architecture.sxw, component_three_tier.dia,
+	component_two_tier.dia, maintenance.sxw, tpc.sxw, user.sxw,
+	html/architecture.html, html/architecture_html_23295de.png,
+	html/architecture_html_m23771ffa.png,
+	html/architecture_html_m277c1b75.png, html/maintenance.html,
+	html/tpc.html, html/user.html, html/user_html_285e2625.gif,
+	html/user_html_56d75273.gif: Added OpenOffice.org and HTML versions
+	of the documents on the project home page.
+
+2002-06-18 15:57  fimath
+
+	* doc/: sapdb_sizing.sxc, sapdb_sizing.sxc: Fixed a minor typo.
+
+2002-06-18 15:53  fimath
+
+	* doc/sapdb_sizing.sxc: Moved and converted from sizing.sdc.  It
+	used to be a StarOffice 5.2 spreadsheet.  Now it's an OpenOffice
+	spreadsheet.
+
+2002-06-18 11:16  fimath
+
+	* filelist.txt, readme.txt, appServer/filelist.txt,
+	appServer/readme.txt, common/filelist.txt, common/readme.txt,
+	datagen/filelist.txt, datagen/readme.txt, dbdriver/filelist.txt,
+	dbdriver/readme.txt, include/filelist.txt, include/readme.txt,
+	interfaces/odbc/filelist.txt, interfaces/odbc/readme.txt,
+	scripts/filelist.txt, scripts/readme.txt,
+	scripts/sapdb/filelist.txt, scripts/sapdb/readme.txt,
+	scripts/stats/filelist.txt, scripts/stats/readme.txt,
+	storedproc/filelist.txt, storedproc/readme.txt,
+	storedproc/sapdb/filelist.txt, storedproc/sapdb/readme.txt,
+	tools/filelist.txt, tools/readme.txt: Renamed readme.txt to
+	filelist.txt since readme.txt didn't have anything useful in them
+	other than what the files are in the directory.
+
+2002-06-13 15:09  jztpcw
+
+	* appServer/app_txn_queue.c: added state to QItem structure to
+	prevent reusing queue item when database response time is long.
+	Changed isfull, enqueue, and dequeue functions accordingly
+
+2002-06-13 15:07  jztpcw
+
+	* appServer/app_threadpool.c: added function set_txn_don_flag to
+	set condition variables
+
+2002-06-13 15:05  jztpcw
+
+	* appServer/appServer.c: added more timestamps for debug purpose,
+	use condition variables
+
+2002-06-13 15:01  jztpcw
+
+	* include/app_txn_queue.h: added state to QItem structure. The
+	state is used to prevent reusing queue slot when database response
+	time is long
+
+2002-06-13 14:58  jztpcw
+
+	* include/app_threadpool.h: added condition_bundle_t structure
+	definition. This structure is used to signal DoConnection thread
+	when transaction is done
+
+2002-06-13 14:53  jztpcw
+
+	* tools/odbc_test.c: changed search_results test to accept string
+	value from command line
+
+2002-05-21 16:59  jztpcw
+
+	* dbdriver/eu.c: call time_diff to get response time
+
+2002-05-21 16:49  jztpcw
+
+	* dbdriver/Makefile: added more macro definitions
+
+2002-05-21 16:47  jztpcw
+
+	* interfaces/odbc/Makefile: generate only one type of object files
+	for both PHASE1 and PHASE2, -DPHASE1 must be defined.
+
+2002-05-21 16:45  jztpcw
+
+	* interfaces/odbc/odbc_interaction.c: include odbc_interaction for
+	both PHASE1 and PHASE2
+
+2002-05-21 16:44  jztpcw
+
+	* interfaces/odbc/: odbc_interaction_admin_confirm.c,
+	odbc_interaction_admin_request.c, odbc_interaction_best_sellers.c,
+	odbc_interaction_buy_confirm.c, odbc_interaction_buy_request.c,
+	odbc_interaction_home.c, odbc_interaction_new_products.c,
+	odbc_interaction_order_display.c, odbc_interaction_order_inquiry.c,
+	odbc_interaction_product_detail.c,
+	odbc_interaction_search_request.c,
+	odbc_interaction_search_results.c,
+	odbc_interaction_shopping_cart.c: include odbc_interaction for both
+	PHASE1 and PHASE2, changed references to XXX_odbc_data to
+	XXX_odbc_data.eb
+
+2002-05-21 16:35  jztpcw
+
+	* appServer/Makefile: added some macro definitions
+
+2002-05-21 16:34  jztpcw
+
+	* appServer/app_threadpool.c: removed 'include app_interaction.h',
+	removed some testing code
+
+2002-05-21 16:29  jztpcw
+
+	* tools/Makefile: added some macro definitions to make use of
+	../common.mk
+
+2002-05-21 16:28  jztpcw
+
+	* tools/odbc_test.c: changed ebc->euc, fixed a bug to get correct
+	parameter from command line, include odbc_interacion.h for both
+	PHASE1 and PHASE2
+
+2002-05-21 16:23  jztpcw
+
+	* include/odbc_interaction.h: substitute the code in this file with
+	the code in app_interaction.h and moved the data structure
+	definition for the interactions to this file. The goal is to share
+	one data structure between the modulesand to avoid copying data
+	from eu to odbc data.
+
+2002-05-21 16:17  jztpcw
+
+	* include/: odbc_interaction_admin_confirm.h,
+	odbc_interaction_admin_request.h, odbc_interaction_best_sellers.h,
+	odbc_interaction_buy_confirm.h, odbc_interaction_buy_request.h,
+	odbc_interaction_home.h, odbc_interaction_new_products.h,
+	odbc_interaction_order_display.h, odbc_interaction_order_inquiry.h,
+	odbc_interaction_product_detail.h,
+	odbc_interaction_search_request.h,
+	odbc_interaction_search_results.h,
+	odbc_interaction_shopping_cart.h: after eliminating
+	app_interaction.h, all the odbc_interaction_*.h files only include
+	odbc_interaction now
+
+2002-05-21 16:15  jztpcw
+
+	* include/eu.h: moved data structure definition for each
+	interaction to odbc_interaction.h
+
+2002-05-21 16:13  jztpcw
+
+	* include/: app_threadpool.h, app_txn_array.h: change 'include
+	app_interaction.h'->'include odbc_interaction.h
+
+2002-05-21 16:06  jztpcw
+
+	* common/common.c: fixed the math in time_diff function
+
+2002-05-21 16:04  jztpcw
+
+	* common/Makefile: added some macro definitions to make better use
+	of ../common.mk
+
+2002-05-21 16:00  jztpcw
+
+	* common.mk: added some macro definitions, removed *_p1.o and
+	*_p2.o
+
+2002-05-20 11:27  fimath
+
+	* readme.txt: Updated to correctly reflect the files and
+	directories under this directory.
+
+2002-05-20 11:22  fimath
+
+	* tools/results.c: The variable type for response_time got changed
+	from float to double.  This broke the fscanf that was trying to put
+	a value into response_time.
+
+2002-05-15 16:25  fimath
+
+	* LICENSE, Makefile, common.mk, readme.txt, appServer/Makefile,
+	appServer/appServer.c, appServer/app_interface.c,
+	appServer/app_threadpool.c, appServer/app_txn_array.c,
+	appServer/app_txn_queue.c, appServer/design, appServer/readme.txt,
+	common/Makefile, common/_socket.c, common/common.c,
+	common/readme.txt, datagen/Makefile, datagen/address.c,
+	datagen/author.c, datagen/country.data, datagen/customer.c,
+	datagen/item.c, datagen/main.c, datagen/orders.c,
+	datagen/readme.txt, dbdriver/Makefile, dbdriver/eu.c,
+	dbdriver/main.c, dbdriver/readme.txt, dbdriver/tm_interface.c,
+	include/_socket.h, include/app_interaction.h,
+	include/app_interface.h, include/app_threadpool.h,
+	include/app_txn_array.h, include/app_txn_queue.h, include/common.h,
+	include/datagen.h, include/eu.h, include/odbc_interaction.h,
+	include/odbc_interaction_admin_confirm.h,
+	include/odbc_interaction_admin_request.h,
+	include/odbc_interaction_best_sellers.h,
+	include/odbc_interaction_buy_confirm.h,
+	include/odbc_interaction_buy_request.h,
+	include/odbc_interaction_home.h,
+	include/odbc_interaction_new_products.h,
+	include/odbc_interaction_order_display.h,
+	include/odbc_interaction_order_inquiry.h,
+	include/odbc_interaction_product_detail.h,
+	include/odbc_interaction_search_request.h,
+	include/odbc_interaction_search_results.h,
+	include/odbc_interaction_shopping_cart.h, include/queue.h,
+	include/readme.txt, include/threadpool.h, include/tm_interface.h,
+	include/transactions.h, include/txnarray.h, include/txnstruct.h,
+	interfaces/odbc/Makefile, interfaces/odbc/odbc_interaction.c,
+	interfaces/odbc/odbc_interaction_admin_confirm.c,
+	interfaces/odbc/odbc_interaction_admin_request.c,
+	interfaces/odbc/odbc_interaction_best_sellers.c,
+	interfaces/odbc/odbc_interaction_buy_confirm.c,
+	interfaces/odbc/odbc_interaction_buy_request.c,
+	interfaces/odbc/odbc_interaction_home.c,
+	interfaces/odbc/odbc_interaction_new_products.c,
+	interfaces/odbc/odbc_interaction_order_display.c,
+	interfaces/odbc/odbc_interaction_order_inquiry.c,
+	interfaces/odbc/odbc_interaction_product_detail.c,
+	interfaces/odbc/odbc_interaction_search_request.c,
+	interfaces/odbc/odbc_interaction_search_results.c,
+	interfaces/odbc/odbc_interaction_shopping_cart.c,
+	interfaces/odbc/readme.txt, scripts/readme.txt,
+	scripts/run_test_sample.sh, scripts/sapdb/address.sql,
+	scripts/sapdb/author.sql, scripts/sapdb/backup_db.sh,
+	scripts/sapdb/cc_xacts.sql, scripts/sapdb/country.sql,
+	scripts/sapdb/create_db.sh, scripts/sapdb/create_indexes.sh,
+	scripts/sapdb/create_indexes.sql, scripts/sapdb/create_keys.sh,
+	scripts/sapdb/create_keys.sql, scripts/sapdb/create_tables.sh,
+	scripts/sapdb/create_tables.sql, scripts/sapdb/customer.sql,
+	scripts/sapdb/db_setup_sample.sh, scripts/sapdb/drop_db.sh,
+	scripts/sapdb/drop_dbproc.sql, scripts/sapdb/drop_tables.sh,
+	scripts/sapdb/drop_tables.sql, scripts/sapdb/item.sql,
+	scripts/sapdb/load_db.sh, scripts/sapdb/load_dbproc.sh,
+	scripts/sapdb/monitor.sh, scripts/sapdb/order_line.sql,
+	scripts/sapdb/orders.sql, scripts/sapdb/readme.txt,
+	scripts/sapdb/restart.sh, scripts/sapdb/trace_off.sh,
+	scripts/sapdb/trace_on.sh, scripts/sapdb/update_stats.sh,
+	scripts/sapdb/update_stats.sql, scripts/stats/cpu.sh,
+	scripts/stats/io.sh, scripts/stats/paging.sh,
+	scripts/stats/readme.txt, storedproc/readme.txt,
+	storedproc/sapdb/DigSyl.sql, storedproc/sapdb/InsertCust.sql,
+	storedproc/sapdb/addToSC.sql, storedproc/sapdb/admin_confirm.sql,
+	storedproc/sapdb/admin_request.sql,
+	storedproc/sapdb/best_sellers.sql, storedproc/sapdb/buyconfirm.sql,
+	storedproc/sapdb/buyrequest.sql, storedproc/sapdb/createSC.sql,
+	storedproc/sapdb/getCustInfo.sql, storedproc/sapdb/getCustName.sql,
+	storedproc/sapdb/getOrderItems.sql,
+	storedproc/sapdb/getPromoImages.sql,
+	storedproc/sapdb/getSCDetail.sql,
+	storedproc/sapdb/getSCSubTotal.sql, storedproc/sapdb/home.sql,
+	storedproc/sapdb/initOrderItems.sql,
+	storedproc/sapdb/initSCItems.sql,
+	storedproc/sapdb/new_products.sql,
+	storedproc/sapdb/order_display.sql,
+	storedproc/sapdb/order_inquiry.sql,
+	storedproc/sapdb/product_detail.sql, storedproc/sapdb/readme.txt,
+	storedproc/sapdb/refreshSC.sql,
+	storedproc/sapdb/search_results_author.sql,
+	storedproc/sapdb/search_results_subject.sql,
+	storedproc/sapdb/search_results_title.sql,
+	storedproc/sapdb/shoppingcart.sql, storedproc/sapdb/updateSC.sql,
+	tools/Makefile, tools/load_db_proc.c, tools/odbc_test.c,
+	tools/readme.txt, tools/results.c, wgen/BUGS, wgen/Makefile,
+	wgen/README, wgen/bm_utils.c, wgen/config.h, wgen/grammar.tpcw,
+	wgen/main.c, wgen/makefile.suite, wgen/rnd.c, wgen/rnd.h,
+	wgen/text.c, wgen/tpcw.001, wgen/tpcw.c, wgen/tpcw.dsp,
+	wgen/tpcw.dsw, wgen/tpcw.h: Initial revision
+
+2002-05-15 16:25  fimath
+
+	* LICENSE, Makefile, common.mk, readme.txt, appServer/Makefile,
+	appServer/appServer.c, appServer/app_interface.c,
+	appServer/app_threadpool.c, appServer/app_txn_array.c,
+	appServer/app_txn_queue.c, appServer/design, appServer/readme.txt,
+	common/Makefile, common/_socket.c, common/common.c,
+	common/readme.txt, datagen/Makefile, datagen/address.c,
+	datagen/author.c, datagen/country.data, datagen/customer.c,
+	datagen/item.c, datagen/main.c, datagen/orders.c,
+	datagen/readme.txt, dbdriver/Makefile, dbdriver/eu.c,
+	dbdriver/main.c, dbdriver/readme.txt, dbdriver/tm_interface.c,
+	include/_socket.h, include/app_interaction.h,
+	include/app_interface.h, include/app_threadpool.h,
+	include/app_txn_array.h, include/app_txn_queue.h, include/common.h,
+	include/datagen.h, include/eu.h, include/odbc_interaction.h,
+	include/odbc_interaction_admin_confirm.h,
+	include/odbc_interaction_admin_request.h,
+	include/odbc_interaction_best_sellers.h,
+	include/odbc_interaction_buy_confirm.h,
+	include/odbc_interaction_buy_request.h,
+	include/odbc_interaction_home.h,
+	include/odbc_interaction_new_products.h,
+	include/odbc_interaction_order_display.h,
+	include/odbc_interaction_order_inquiry.h,
+	include/odbc_interaction_product_detail.h,
+	include/odbc_interaction_search_request.h,
+	include/odbc_interaction_search_results.h,
+	include/odbc_interaction_shopping_cart.h, include/queue.h,
+	include/readme.txt, include/threadpool.h, include/tm_interface.h,
+	include/transactions.h, include/txnarray.h, include/txnstruct.h,
+	interfaces/odbc/Makefile, interfaces/odbc/odbc_interaction.c,
+	interfaces/odbc/odbc_interaction_admin_confirm.c,
+	interfaces/odbc/odbc_interaction_admin_request.c,
+	interfaces/odbc/odbc_interaction_best_sellers.c,
+	interfaces/odbc/odbc_interaction_buy_confirm.c,
+	interfaces/odbc/odbc_interaction_buy_request.c,
+	interfaces/odbc/odbc_interaction_home.c,
+	interfaces/odbc/odbc_interaction_new_products.c,
+	interfaces/odbc/odbc_interaction_order_display.c,
+	interfaces/odbc/odbc_interaction_order_inquiry.c,
+	interfaces/odbc/odbc_interaction_product_detail.c,
+	interfaces/odbc/odbc_interaction_search_request.c,
+	interfaces/odbc/odbc_interaction_search_results.c,
+	interfaces/odbc/odbc_interaction_shopping_cart.c,
+	interfaces/odbc/readme.txt, scripts/readme.txt,
+	scripts/run_test_sample.sh, scripts/sapdb/address.sql,
+	scripts/sapdb/author.sql, scripts/sapdb/backup_db.sh,
+	scripts/sapdb/cc_xacts.sql, scripts/sapdb/country.sql,
+	scripts/sapdb/create_db.sh, scripts/sapdb/create_indexes.sh,
+	scripts/sapdb/create_indexes.sql, scripts/sapdb/create_keys.sh,
+	scripts/sapdb/create_keys.sql, scripts/sapdb/create_tables.sh,
+	scripts/sapdb/create_tables.sql, scripts/sapdb/customer.sql,
+	scripts/sapdb/db_setup_sample.sh, scripts/sapdb/drop_db.sh,
+	scripts/sapdb/drop_dbproc.sql, scripts/sapdb/drop_tables.sh,
+	scripts/sapdb/drop_tables.sql, scripts/sapdb/item.sql,
+	scripts/sapdb/load_db.sh, scripts/sapdb/load_dbproc.sh,
+	scripts/sapdb/monitor.sh, scripts/sapdb/order_line.sql,
+	scripts/sapdb/orders.sql, scripts/sapdb/readme.txt,
+	scripts/sapdb/restart.sh, scripts/sapdb/trace_off.sh,
+	scripts/sapdb/trace_on.sh, scripts/sapdb/update_stats.sh,
+	scripts/sapdb/update_stats.sql, scripts/stats/cpu.sh,
+	scripts/stats/io.sh, scripts/stats/paging.sh,
+	scripts/stats/readme.txt, storedproc/readme.txt,
+	storedproc/sapdb/DigSyl.sql, storedproc/sapdb/InsertCust.sql,
+	storedproc/sapdb/addToSC.sql, storedproc/sapdb/admin_confirm.sql,
+	storedproc/sapdb/admin_request.sql,
+	storedproc/sapdb/best_sellers.sql, storedproc/sapdb/buyconfirm.sql,
+	storedproc/sapdb/buyrequest.sql, storedproc/sapdb/createSC.sql,
+	storedproc/sapdb/getCustInfo.sql, storedproc/sapdb/getCustName.sql,
+	storedproc/sapdb/getOrderItems.sql,
+	storedproc/sapdb/getPromoImages.sql,
+	storedproc/sapdb/getSCDetail.sql,
+	storedproc/sapdb/getSCSubTotal.sql, storedproc/sapdb/home.sql,
+	storedproc/sapdb/initOrderItems.sql,
+	storedproc/sapdb/initSCItems.sql,
+	storedproc/sapdb/new_products.sql,
+	storedproc/sapdb/order_display.sql,
+	storedproc/sapdb/order_inquiry.sql,
+	storedproc/sapdb/product_detail.sql, storedproc/sapdb/readme.txt,
+	storedproc/sapdb/refreshSC.sql,
+	storedproc/sapdb/search_results_author.sql,
+	storedproc/sapdb/search_results_subject.sql,
+	storedproc/sapdb/search_results_title.sql,
+	storedproc/sapdb/shoppingcart.sql, storedproc/sapdb/updateSC.sql,
+	tools/Makefile, tools/load_db_proc.c, tools/odbc_test.c,
+	tools/readme.txt, tools/results.c, wgen/BUGS, wgen/Makefile,
+	wgen/README, wgen/bm_utils.c, wgen/config.h, wgen/grammar.tpcw,
+	wgen/main.c, wgen/makefile.suite, wgen/rnd.c, wgen/rnd.h,
+	wgen/text.c, wgen/tpcw.001, wgen/tpcw.c, wgen/tpcw.dsp,
+	wgen/tpcw.dsw, wgen/tpcw.h (utags: start, dbt1_1-0): Initial
+	release.
+
