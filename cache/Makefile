@@ -11,7 +11,8 @@ EXE = appCache
 CACHE_PRGS = cache.c cache_interface.c
 CACHE_OBJS = $(CACHE_PRGS:.c=.so)
 
-LIBS = $(SAPDBROOT)/lib/libsqlod.so -lm -lpthread
+#LIBS = $(SAPDBROOT)/lib/libsqlod.so -lm -lpthread
+LIBS = $(ODBC_LIB) -lm -lpthread
 OBJS = $(COMMON_OBJS) $(CACHE_OBJS) $(ODBC_DIR)/odbc_interaction.so \
 	$(ODBC_DIR)/odbc_interaction_search_results.so
 PRGS = $(COMMON_PRGS) $(CACHE_PRGS) $(ODBC_DIR)/odbc_interaction.c \
@@ -23,10 +24,10 @@ $(EXE): $(OBJS)
 	$(CC) -o $@ $(OBJS) $(LIBS)
 
 %.so:%.c
-	$(CC) -c -shared -fpic $(CFLAGS) -o $@ $<
+	$(CC) -c $(CFLAGS) -o $@ $<
 
 $(COMMON_OBJS):$(COMMON_PRGS)
-	cd $(COMMON_DIR); $(MAKE)
+	cd $(COMMON_DIR); $(make)
 
 $(ODBC_OBJS): $(ODBC_PRGS)
 	cd $(ODBC_DIR); $(MAKE)
