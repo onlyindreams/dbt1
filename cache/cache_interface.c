@@ -24,7 +24,7 @@ int receive_search_results(int s, struct search_results_t
 	if ((rec = _receive(s, search_results_request, length)) == -1)
 	{
 		LOG_ERROR_MESSAGE("cannot receive search results request");
-		return W_ERROR;
+		return ERROR;
 	}
 	if (rec == 0)
 	{
@@ -43,7 +43,7 @@ int send_search_results(int s,
 	if (_send(s, search_results_response, length) == -1)
 	{
 		LOG_ERROR_MESSAGE("cannot send search_results, errno %d", errno);
-		return W_ERROR;
+		return ERROR;
 	}
 
 	return OK;

@@ -4,64 +4,77 @@
 -- the file LICENSE, included in this package, for details.
 --
 -- Copyright (C) 2002 Open Source Development Lab, Inc.
--- History:
--- Feb 2001: Created by Mark Wong & Jenny Zhang
--- Apr 2003: Rewritten for PostgreSQL by Virginie Megy & Thierry Missimilly
---                Bull, Linux Competence Center
--- June 2003: Rewritten by NAGAYASU Satoshi to return records
+-- History: 
+-- July-2003: Created by Satoshi Nagayasu
+--
+--
 --
 CREATE OR REPLACE FUNCTION InsertCust ( varchar(50), varchar(40), varchar(40), varchar(30), varchar(20), varchar(10), varchar(15), varchar(15), varchar(16), varchar(50), varchar(500), numeric(10,0), numeric(5,2), char(8) ) RETURNS numeric(10,0) AS '
   DECLARE
-    Co_Name ALIAS FOR $1;
-    Addr_Street1 ALIAS FOR $2;
-    Addr_Street2 ALIAS FOR $3;
-    Addr_City ALIAS FOR $4;
-    Addr_State ALIAS FOR $5;
-    Addr_Zip ALIAS FOR $6;
-    C_FName ALIAS FOR $7;
-    C_LName ALIAS FOR $8;
-    C_Phone ALIAS FOR $9;
-    C_Email ALIAS FOR $10;
-    C_Data ALIAS FOR $11;
-    SC_ID ALIAS FOR $12;
-    C_Discount ALIAS FOR $13;
-    C_BirthDate ALIAS FOR $14;
+    _Co_Name ALIAS FOR $1;
+    _Addr_Street1 ALIAS FOR $2;
+    _Addr_Street2 ALIAS FOR $3;
+    _Addr_City ALIAS FOR $4;
+    _Addr_State ALIAS FOR $5;
+    _Addr_Zip ALIAS FOR $6;
+    _C_FName ALIAS FOR $7;
+    _C_LName ALIAS FOR $8;
+    _C_Phone ALIAS FOR $9;
+    _C_Email ALIAS FOR $10;
+    _C_Data ALIAS FOR $11;
+    _SC_ID ALIAS FOR $12;
+    _C_Discount ALIAS FOR $13;
+    _C_BirthDate ALIAS FOR $14;
 
-    C_Addr_ID numeric(10,0);
-    Co_ID smallint;
-    C_UName char(20);
-    C_PassWD char(20);
-    CurrentTime timestamp;
-    C_Expire timestamp;
-    CurrentDate date;
-    tmpdate date;
+    _C_Addr_ID numeric(10,0);
+    _Co_ID smallint;
+    _C_UName varchar(20);
+    _C_PassWD char(20);
+    _CurrentTime timestamp;
+    _C_Expire timestamp;
+    _CurrentDate date;
+    _tmpdate date;
+
+    _c_id numeric(10,0);
   BEGIN
-	SELECT INTO Co_ID co_id FROM country WHERE co_name=Co_Name;
-    SELECT INTO C_Addr_ID addr_id  FROM address
-     WHERE addr_co_id=Co_ID AND addr_zip=Addr_Zip AND
-           addr_state=Addr_State AND addr_city=Addr_City AND
-           addr_street1=Addr_Street1 AND addr_street2=Addr_Street2;
+    SELECT co_id INTO _Co_ID FROM country WHERE co_name=_Co_Name;
+    SELECT addr_id INTO _C_Addr_ID FROM address
+     WHERE addr_co_id   = _Co_ID
+       AND addr_zip     = _Addr_Zip
+       AND addr_state   = _Addr_State
+       AND addr_city    = _Addr_City
+       AND addr_street1 = _Addr_Street1
+       AND addr_street2 = _Addr_Street2;
+
     IF NOT FOUND THEN
-      C_Addr_ID = nextval(''AddrID'');
-      INSERT INTO address VALUES (C_Addr_ID, Addr_Street1, Addr_Street2, Addr_City, Addr_State, Addr_Zip, Co_ID);
+      _C_Addr_ID := nextval(''AddrID'');
+      INSERT INTO address VALUES (_C_Addr_ID, _Addr_Street1, _Addr_Street2,
+                                  _Addr_City, _Addr_State, _Addr_Zip, _Co_ID);
     END IF;
+
+    _C_ID := nextval(''CustID'');
+
+    SELECT DigSyl(_C_ID::integer, 0) INTO _C_UName;
+    _C_PassWD := lower(_C_UName);
+    _CurrentTime := now();
+    _CurrentDate := now();
+    _C_Expire := now() + ''02:00'';
+    _tmpdate := _C_BirthDate;
+--RAISE NOTICE ''c_uname=|%|'', _C_UNAME;
+
+    INSERT INTO customer(c_id,c_uname,c_passwd,c_fname,c_lname,c_addr_id,
+                         c_phone,c_email,c_since,c_last_visit,c_login,
+                         c_expiration,c_discount, c_balance, c_ytd_pmt,
+                         c_birthdate, c_data)
+           VALUES (_C_ID, _C_UName, _C_PassWD, _C_FName, _C_LName, _C_Addr_ID,
+                   _C_Phone, _C_Email, _CurrentDate,_CurrentDate, _CurrentTime,
+                   _C_Expire, _C_Discount, 0.00, 0.00,
+                   _tmpdate, _C_Data);
+
+    RETURN _c_id;
   END;
 ' LANGUAGE 'plpgsql';
-
--- SELECT CustID.NEXTVAL into :c_id from sysdba.dual;
--- CALL DigSyl(:C_ID, 0, :C_UName);
--- set C_PassWD=lower(C_UName);
--- set CurrentTime = timestamp;
--- set CurrentDate = date;
--- set C_Expire = addtime(CurrentTime, '00020000');
--- set tmpdate=C_BirthDate;
--- INSERT INTO dbt.customer(c_id, c_uname,c_passwd,c_fname,c_lname,c_addr_id,
---   c_phone,c_email,c_since,c_last_visit,c_login,c_expiration,c_discount,
---   c_balance, c_ytd_pmt, c_birthdate, c_data) values(:C_ID, :C_UName, :C_PassWD,
---   :C_FName, :C_LName, :C_Addr_ID, :C_Phone, :C_Email, :CurrentDate,
---   :CurrentDate, :CurrentTime, :C_Expire, :C_Discount, 0.00, 0.00,
---   :tmpdate, :C_Data);
-
+commit;
 
 -- 
 -- Usage:

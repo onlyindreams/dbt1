@@ -1,0 +1,2 @@
+vacuumdb -z $SID1
+psql -d $SID1 -U $PGUSER -f @TOPDIR@/scripts/pgsql/analyze_table.sql

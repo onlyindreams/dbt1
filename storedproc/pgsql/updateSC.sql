@@ -1,57 +1,90 @@
-/*
- *
- * This file is released under the terms of the Artistic License.  Please see
- * the file LICENSE, included in this package, for details.
- *
- * Copyright (C) 2002 Open Source Development Lab, Inc.
- * History:
- * Feb 2002: Original version created by Mark Wong & Jenny Zhang 
- * Apr 2003: Rewritten for PostgreSQL by Virginie Megy & Thierry Missimilly
- *		  Bull, Linux Competence Center
- *
- */
-CREATE FUNCTION updateSC (NUMERIC(10,0), NUMERIC(5,2)) RETURNS INTEGER AS '
+--
+--
+-- This file is released under the terms of the Artistic License.  Please see
+-- the file LICENSE, included in this package, for details.
+--
+-- Copyright (C) 2002 Open Source Development Lab, Inc.
+-- History:
+-- July-2003: Created by Satoshi Nagayasu & Hideyuki Kawashima
+--
+CREATE OR REPLACE FUNCTION updateSC ( numeric(10), numeric(5,2) ) RETURNS SETOF RECORD AS '
+  DECLARE
+    _sc_id ALIAS FOR $1;
+    discount ALIAS FOR $2;
 
-DECLARE
+    _sc_sub_total numeric(17,2);
+    _sc_tax numeric(17,2);
+    _sc_ship_cost numeric(5,2);
+    _sc_total numeric(17,2);
 
-	shopcart_id alias for $1;
-	shopcart_discount alias for $2;
+    _i_cost numeric(17,2);
+    _i_id numeric(10);
+    _sub_total numeric(17,2);
+    _scl_qty numeric(3);
+    sc_qty numeric(3);
 
-	item_cost numeric(17,2);
-	item_id numeric(10,0);
---	discount numeric(5,2);
-	shopcart_sub_total numeric(17,2);
-	shopcart_total numeric(17,2);
-	shopcartline_qty numeric(3, 0);
-	shopcart_tax numeric(17,2);
-	shopcart_ship_cost numeric(17,2);
-	curs_scl_i_id refcursor;
+    rec RECORD;
+    refcur REFCURSOR;
+  BEGIN
+    sc_qty := 0;
+    _sc_sub_total := 0.00;
+    _sub_total := 0.00;
+-- discount is specified by the caller.
+--    discount := 0.00;
+    _sc_tax := 0.00;
+    _sc_ship_cost := 0.00;
+    _sc_total := 0.00;
 
-BEGIN
-shopcart_sub_total:=0.00;
--- discount:=0.00;
-shopcart_tax:=0.00;
-shopcart_ship_cost:=0.00;
-shopcart_total:=0.00;
-OPEN curs_scl_i_id FOR SELECT scl_i_id FROM shopping_cart_line WHERE scl_sc_id=shopcart_id;
-FETCH curs_scl_i_id INTO item_id;
-WHILE FOUND LOOP
-     SELECT i_cost INTO item_cost FROM item WHERE i_id=item_id;
-     UPDATE shopping_cart_line SET scl_cost=item_cost
-        WHERE scl_i_id=item_id AND scl_sc_id=shopcart_id;
-     FETCH curs_scl_i_id INTO item_id;
-  END LOOP;
-CLOSE curs_scl_i_id;
-shopcart_sub_total:= getSCSubTotal(shopcart_id);
-SELECT sum(scl_qty) INTO shopcartline_qty
-  FROM shopping_cart_line WHERE scl_sc_id=shopcart_id;
-shopcart_sub_total:=shopcart_sub_total*(1-shopcart_discount);
-shopcart_tax:=shopcart_sub_total*0.0825;
-shopcart_ship_cost:=3.00+(1.00*shopcartline_qty);
-shopcart_total:=shopcart_sub_total+shopcart_ship_cost+shopcart_tax;
-UPDATE shopping_cart set sc_date=''now'', sc_sub_total=shopcart_sub_total,
-sc_tax=shopcart_tax, sc_ship_cost=shopcart_ship_cost, sc_total=shopcart_total where sc_id=shopcart_id;
-RETURN 1;
-END;
+    OPEN refcur FOR SELECT scl_i_id, scl_qty, i_cost
+                      FROM shopping_cart_line, item
+                     WHERE i_id=scl_i_id
+                       AND scl_sc_id=_sc_id;
+
+    FETCH refcur INTO _i_id, _scl_qty, _i_cost;
+
+    WHILE FOUND LOOP
+--      RAISE NOTICE ''i_id=%,scl_qty=%,i_cost=%'', _i_id, _scl_qty, _i_cost;
+
+      UPDATE shopping_cart_line SET scl_cost=_i_cost
+       WHERE scl_i_id=_i_id
+         AND scl_sc_id=_sc_id;
+
+      _sub_total := _sub_total + _i_cost * _scl_qty;
+      sc_qty := sc_qty + _scl_qty;
+
+      FETCH refcur INTO _i_id, _scl_qty, _i_cost;
+    END LOOP;
+
+    _sc_sub_total := _sub_total * (1-discount);
+    _sc_tax       := _sc_sub_total * 0.0825;
+    _sc_ship_cost := 3.00 + (1.00*sc_qty);
+    _sc_total     := _sc_sub_total + _sc_ship_cost + _sc_tax;
+
+    UPDATE shopping_cart
+       SET sc_date=now(), sc_sub_total=_sc_sub_total,
+           sc_tax=_sc_tax, sc_ship_cost=_sc_ship_cost,
+           sc_total=_sc_total
+     WHERE sc_id=_sc_id;
+
+    SELECT _sc_sub_total::numeric(17,2), _sc_tax::numeric(17,2),
+           _sc_ship_cost::numeric(5,2), _sc_total::numeric(17,2)
+      INTO rec;
+
+    RETURN NEXT rec;
+    RETURN;
+  END;
 ' LANGUAGE 'plpgsql';
+commit;
+
+
+-- 
+-- Usage:
+-- 
+-- SELECT * FROM updateSC ( 
+--         sc_id numeric(10)
+--         discount numeric(5,2) )
+--   AS l( sc_sub_total numeric(17,2),
+--         sc_tax numeric(17,2),
+--         sc_ship_cost numeric(5,2),
+--         sc_total numeric(17,2) );
 

@@ -1,0 +1,79 @@
+#!/usr/bin/perl -w
+use FileHandle;
+use English;
+use Getopt::Long;
+use Pod::Usage;
+
+=head1 NAME
+
+analyzeBT.pl
+
+=head1 SYNOPSIS
+
+script to merge multiple mix.log and run analyze on the resulted mix.log
+
+=head1 ARGUMENTS
+
+ -log_path <dir where the mix.log files are>
+ -output_path <output dir>
+
+=cut 
+
+my ($output_dir, $log_path, $hlp);
+
+GetOptions(
+        "output_path=s" => \$output_path,
+        "log_path=s" => \$log_path,
+        "help" => \$hlp
+	);
+
+
+if ($hlp) { pod2usage(1); }
+
+my @file_list = glob("$log_path/mix.log.*");
+my $start_time = 0;
+my $fmix_in = new FileHandle;
+my $fmix_out = new FileHandle;
+my (@mix_fields);
+
+#find the latest START time
+for (my $i=0; $i<=$#file_list; $i++)
+{
+        unless ( $fmix_in->open( "< $file_list[$i]" ) ) {
+                die "Can not open mix.log $file_list[$i] $!";
+	}
+        while (<$fmix_in>)
+        {
+                next if (! /START/);
+                @mix_fields = split /,/, $_;
+                if ( ($mix_fields[0] > $start_time)) 
+		{ 
+			$start_time = $mix_fields[0]; 
+		}
+		last;
+	}
+	close($fmix_in);
+}
+
+for (my $i=0; $i<=$#file_list; $i++)
+{
+        unless ( $fmix_in->open( "< $file_list[$i]" ) ) {
+                die "Can not open mix.log $file_list[$i] $!";
+        }
+        unless ( $fmix_out->open( "> $output_path/result.mix.log.$i" ) ) {
+                die "Can not open mix.log $output_path/mix.log.$i to write $!";
+        }
+        while (<$fmix_in>)
+        {
+                @mix_fields = split /,/, $_;
+		#get rid of the records before the start time
+                next if ( $mix_fields[0] < $start_time );
+                print $fmix_out $_;
+        }
+        close($fmix_in);
+        close($fmix_out);
+}
+
+system("cat $output_path/result.mix.log.* | sort -n > $output_path/result.mix.log");
+system("../tools/results -f $output_path/result.mix.log > $output_path/BT");
+

@@ -30,10 +30,12 @@ struct db_context_t
 };
 
 /* Prototypes */
-int odbc_connect(struct db_context_t *odbcc);
-int odbc_disconnect(struct db_context_t *odbcc);
+int _db_connect(struct db_context_t *odbcc);
+int _db_disconnect(struct db_context_t *odbcc);
 int odbc_error(char *filename, int line, SQLSMALLINT handle_type,
 	SQLHANDLE handle);
-int odbc_init(char *sname, char *uname, char *auth);
+int _db_init(char *sname, char *uname, char *auth);
+int commit_transaction(struct db_context_t *dbc);
+int rollback_transaction(struct db_context_t *dbc);
 
 #endif /* _ODBC_INTERACTION_H_ */

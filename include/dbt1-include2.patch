@@ -1,0 +1,2948 @@
+===== include/app_threadpool.h 1.5 vs 1.6 =====
+--- 1.5/include/app_threadpool.h	Sat Mar 15 05:28:58 2003
++++ 1.6/include/app_threadpool.h	Wed Aug  6 17:49:50 2003
+@@ -12,7 +12,13 @@
+ #ifndef _APP_THREADPOOL_H
+ #define _APP_THREADPOOL_H_
+ 
++#ifdef USE_ODBC
+ #include <odbc_interaction.h>
++#endif
++#ifdef USE_PGSQL
++#include <pgsql_interaction.h>
++#endif
++
+ #include <app_txn_queue.h>
+ 
+ struct condition_bundle_t {
+===== include/eu.h 1.6 vs 1.7 =====
+--- 1.6/include/eu.h	Sat Mar 15 05:42:20 2003
++++ 1.7/include/eu.h	Wed Aug  6 17:49:50 2003
+@@ -15,7 +15,12 @@
+ 
+ #include <semaphore.h>
+ 
++#ifdef USE_ODBC
+ #include <odbc_interaction.h>
++#endif
++#ifdef USE_PGSQL
++#include <pgsql_interaction.h>
++#endif
+ 
+ #include <common.h>
+ 
+@@ -30,8 +35,10 @@
+ struct eu_context_t
+ {
+ #ifdef PHASE1
+-	struct odbc_context_t odbcc;
++	struct db_context_t odbcc;
++#ifdef NOT_USED
+ 	union odbc_data_t odbcd;
++#endif
+ #ifdef SEARCH_RESULTS_CACHE
+ 	int cache_s;
+ #endif
+ 
+===== include/db.h 1.1 vs 1.2 =====
+--- 1.1/include/db.h	Sat Mar 15 05:40:05 2003
++++ 1.2/include/db.h	Wed Aug  6 17:49:50 2003
+@@ -14,8 +14,14 @@
+ 
+ #include <interaction_data.h>
+ 
++#ifdef USE_ODBC
+ /* ODBC include files. */
+ #include <odbc_interaction.h>
++#endif
++
++#ifdef USE_PGSQL
++#include <pgsql_interaction.h>
++#endif
+ 
+ #define STATUS_ROLLBACK 4
+ 
+===== include/pgsql_interaction_buy_confirm.h 1.0 vs 1.1 =====
+--- /dev/null	Thu Jan 30 19:24:37 2003
++++ 1.1/include/pgsql_interaction_buy_confirm.h	Wed Aug  6 14:27:48 2003
+@@ -0,0 +1,154 @@
++/*
++ * pgsql_interaction_buy_confirm.h
++ *
++ * This file is released under the terms of the Artistic License.  Please see
++ * the file LICENSE, included in this package, for details.
++ *
++ * Copyright (C) 2002 Mark Wong & Jenny Zhang &
++ *                    Open Source Development Lab, Inc.
++ * Copyright (C) 2003 Satoshi Nagayasu & Hideyuki Kawashima &
++ *                    Sachi Osawa & Hirokazu Kondo & Satoru Satake
++ *
++ * $Id$
++ */
++
++#ifndef _PGSQL_INTERACTION_BUY_CONFIRM_H
++#define _PGSQL_INTERACTION_BUY_CONFIRM_H
++
++#include <pgsql_interaction.h>
++
++#define STMT_BUYCONF \
++  "SELECT * FROM buy_confirm( '%s',%lld,'%s','%s',%lld,%lld," \
++                             "%d,'%s','%s'," \
++                             "'%s','%s','%s','%s','%s','%s' )" \
++  " AS l( " \
++     "c_discount NUMERIC(5,2)," \
++     "sc_sub_total NUMERIC(17,2)," \
++     "sc_tax NUMERIC(17,2)," \
++     "sc_ship_cost NUMERIC(17,2)," \
++     "sc_total NUMERIC(17,2)," \
++     "num_item NUMERIC(2)," \
++     "scl_i_id1 NUMERIC(10)," \
++     "scl_title1 VARCHAR(60)," \
++     "scl_cost1 NUMERIC(17,2)," \
++     "scl_srp1 NUMERIC(17,2)," \
++     "scl_backing1 VARCHAR(15)," \
++     "scl_qty1 NUMERIC(3)," \
++     "scl_i_id2 NUMERIC(10)," \
++     "scl_title2 VARCHAR(60)," \
++     "scl_cost2 NUMERIC(17,2)," \
++     "scl_srp2 NUMERIC(17,2)," \
++     "scl_backing2 VARCHAR(15)," \
++     "scl_qty2 NUMERIC(3)," \
++     "scl_i_id3 NUMERIC(10)," \
++     "scl_title3 VARCHAR(60)," \
++     "scl_cost3 NUMERIC(17,2)," \
++     "scl_srp3 NUMERIC(17,2)," \
++     "scl_backing3 VARCHAR(15)," \
++     "scl_qty3 NUMERIC(3)," \
++     "scl_i_id4 NUMERIC(10)," \
++     "scl_title4 VARCHAR(60)," \
++     "scl_cost4 NUMERIC(17,2)," \
++     "scl_srp4 NUMERIC(17,2)," \
++     "scl_backing4 VARCHAR(15)," \
++     "scl_qty4 NUMERIC(3)," \
++     "scl_i_id5 NUMERIC(10)," \
++     "scl_title5 VARCHAR(60)," \
++     "scl_cost5 NUMERIC(17,2)," \
++     "scl_srp5 NUMERIC(17,2)," \
++     "scl_backing5 VARCHAR(15)," \
++     "scl_qty5 NUMERIC(3)," \
++     "scl_i_id6 NUMERIC(10)," \
++     "scl_title6 VARCHAR(60)," \
++     "scl_cost6 NUMERIC(17,2)," \
++     "scl_srp6 NUMERIC(17,2)," \
++     "scl_backing6 VARCHAR(15)," \
++     "scl_qty6 NUMERIC(3)," \
++     "scl_i_id7 NUMERIC(10)," \
++     "scl_title7 VARCHAR(60)," \
++     "scl_cost7 NUMERIC(17,2)," \
++     "scl_srp7 NUMERIC(17,2)," \
++     "scl_backing7 VARCHAR(15)," \
++     "scl_qty7 NUMERIC(3)," \
++     "scl_i_id8 NUMERIC(10)," \
++     "scl_title8 VARCHAR(60)," \
++     "scl_cost8 NUMERIC(17,2)," \
++     "scl_srp8 NUMERIC(17,2)," \
++     "scl_backing8 VARCHAR(15)," \
++     "scl_qty8 NUMERIC(3)," \
++     "scl_i_id9 NUMERIC(10)," \
++     "scl_title9 VARCHAR(60)," \
++     "scl_cost9 NUMERIC(17,2)," \
++     "scl_srp9 NUMERIC(17,2)," \
++     "scl_backing9 VARCHAR(15)," \
++     "scl_qty9 NUMERIC(3)," \
++     "scl_i_id10 NUMERIC(10)," \
++     "scl_title10 VARCHAR(60)," \
++     "scl_cost10 NUMERIC(17,2)," \
++     "scl_srp10 NUMERIC(17,2)," \
++     "scl_backing10 VARCHAR(15)," \
++     "scl_qty10 NUMERIC(3)," \
++     "scl_i_id11 NUMERIC(10)," \
++     "scl_title11 VARCHAR(60)," \
++     "scl_cost11 NUMERIC(17,2)," \
++     "scl_srp11 NUMERIC(17,2)," \
++     "scl_backing11 VARCHAR(15)," \
++     "scl_qty11 NUMERIC(3)," \
++     "scl_i_id12 NUMERIC(10)," \
++     "scl_title12 VARCHAR(60)," \
++     "scl_cost12 NUMERIC(17,2)," \
++     "scl_srp12 NUMERIC(17,2)," \
++     "scl_backing12 VARCHAR(15)," \
++     "scl_qty12 NUMERIC(3)," \
++     "scl_i_id13 NUMERIC(10)," \
++     "scl_title13 VARCHAR(60)," \
++     "scl_cost13 NUMERIC(17,2)," \
++     "scl_srp13 NUMERIC(17,2)," \
++     "scl_backing13 VARCHAR(15)," \
++     "scl_qty13 NUMERIC(3)," \
++     "scl_i_id14 NUMERIC(10)," \
++     "scl_title14 VARCHAR(60)," \
++     "scl_cost14 NUMERIC(17,2)," \
++     "scl_srp14 NUMERIC(17,2)," \
++     "scl_backing14 VARCHAR(15)," \
++     "scl_qty14 NUMERIC(3)," \
++     "scl_i_id15 NUMERIC(10)," \
++     "scl_title15 VARCHAR(60)," \
++     "scl_cost15 NUMERIC(17,2)," \
++     "scl_srp15 NUMERIC(17,2)," \
++     "scl_backing15 VARCHAR(15)," \
++     "scl_qty15 NUMERIC(3)," \
++     "scl_i_id16 NUMERIC(10)," \
++     "scl_title16 VARCHAR(60)," \
++     "scl_cost16 NUMERIC(17,2)," \
++     "scl_srp16 NUMERIC(17,2)," \
++     "scl_backing16 VARCHAR(15)," \
++     "scl_qty16 NUMERIC(3)," \
++     "scl_i_id17 NUMERIC(10)," \
++     "scl_title17 VARCHAR(60)," \
++     "scl_cost17 NUMERIC(17,2)," \
++     "scl_srp17 NUMERIC(17,2)," \
++     "scl_backing17 VARCHAR(15)," \
++     "scl_qty17 NUMERIC(3)," \
++     "scl_i_id18 NUMERIC(10)," \
++     "scl_title18 VARCHAR(60)," \
++     "scl_cost18 NUMERIC(17,2)," \
++     "scl_srp18 NUMERIC(17,2)," \
++     "scl_backing18 VARCHAR(15)," \
++     "scl_qty18 NUMERIC(3)," \
++     "scl_i_id19 NUMERIC(10)," \
++     "scl_title19 VARCHAR(60)," \
++     "scl_cost19 NUMERIC(17,2)," \
++     "scl_srp19 NUMERIC(17,2)," \
++     "scl_backing19 VARCHAR(15)," \
++     "scl_qty19 NUMERIC(3)," \
++     "scl_i_id20 NUMERIC(10)," \
++     "scl_title20 VARCHAR(60)," \
++     "scl_cost20 NUMERIC(17,2)," \
++     "scl_srp20 NUMERIC(17,2)," \
++     "scl_backing20 VARCHAR(15)," \
++     "scl_qty20 NUMERIC(3) )"
++
++int execute_buy_confirm(struct db_context_t *,struct buy_confirm_t *);
++
++#endif /* _PGSQL_INTERACTION_BUY_CONFIRM_H */
+===== include/pgsql_interaction_admin_confirm.h 1.0 vs 1.1 =====
+--- /dev/null	Thu Jan 30 19:24:37 2003
++++ 1.1/include/pgsql_interaction_admin_confirm.h	Wed Aug  6 14:27:47 2003
+@@ -0,0 +1,40 @@
++/*
++ * pgsql_interaction_admin_confirm.h
++ *
++ * This file is released under the terms of the Artistic License.  Please see
++ * the file LICENSE, included in this package, for details.
++ *
++ * Copyright (C) 2002 Mark Wong & Jenny Zhang &
++ *                    Open Source Development Lab, Inc.
++ * Copyright (C) 2003 Satoshi Nagayasu & Hideyuki Kawashima &
++ *                    Sachi Osawa & Hirokazu Kondo & Satoru Satake
++ *
++ * $Id$
++ */
++
++#ifndef _PGSQL_INTERACTION_ADMIN_CONFIRM_H_
++#define _PGSQL_INTERACTION_ADMIN_CONFIRM_H_
++
++#include <pgsql_interaction.h>
++
++#define STMT_ADMIN_CONFIRM \
++  "SELECT * FROM admin_confirm( %lld, %lld, %lld, %f )" \
++  "  AS l( i_image numeric(8)," \
++  "        i_thumbnail NUMERIC(8)," \
++  "        i_cost NUMERIC (17,2)," \
++  "        i_title VARCHAR(60)," \
++  "        a_fname VARCHAR(20)," \
++  "        a_lname VARCHAR(20)," \
++  "        i_subject VARCHAR(60)," \
++  "        i_desc VARCHAR(500)," \
++  "        i_srp NUMERIC(17,2)," \
++  "        i_backing VARCHAR(15)," \
++  "        i_page NUMERIC(4)," \
++  "        i_publisher VARCHAR(60)," \
++  "        i_pub_date date," \
++  "        i_dimensions VARCHAR(25)," \
++  "        i_isbn CHAR(13) )"
++
++int execute_admin_confirm(struct db_context_t *, struct admin_confirm_t *);
++
++#endif /* _PGSQL_INTERACTION_ADMIN_CONFIRM_H_ */
+===== include/pgsql_interaction_home.h 1.0 vs 1.1 =====
+--- /dev/null	Thu Jan 30 19:24:37 2003
++++ 1.1/include/pgsql_interaction_home.h	Wed Aug  6 14:27:48 2003
+@@ -0,0 +1,38 @@
++/*
++ * pgsql_interaction_home.h
++ *
++ * This file is released under the terms of the Artistic License.  Please see
++ * the file LICENSE, included in this package, for details.
++ *
++ * Copyright (C) 2002 Mark Wong & Jenny Zhang &
++ *                    Open Source Development Lab, Inc.
++ * Copyright (C) 2003 Satoshi Nagayasu & Hideyuki Kawashima &
++ *                    Sachi Osawa & Hirokazu Kondo & Satoru Satake
++ *
++ * $Id$
++ */
++
++#ifndef _PGSQL_INTERACTION_HOME_H_
++#define _PGSQL_INTERACTION_HOME_H_
++
++#include <pgsql_interaction.h>
++
++#define STMT_HOME \
++  "SELECT * FROM home( %lld,%lld )" \
++  " AS l(" \
++  "   C_FName char(15)," \
++  "   C_LName char(15)," \
++  "   pp_i_id1 numeric(10)," \
++  "   pp_t_id1 numeric(10)," \
++  "   pp_i_id2 numeric(10)," \
++  "   pp_t_id2 numeric(10)," \
++  "   pp_i_id3 numeric(10)," \
++  "   pp_t_id3 numeric(10)," \
++  "   pp_i_id4 numeric(10)," \
++  "   pp_t_id4 numeric(10)," \
++  "   pp_i_id5 numeric(10)," \
++  "   pp_t_id5 numeric(10) )"
++
++int execute_home(struct db_context_t *, struct home_t *);
++
++#endif /* _PGSQL_INTERACTION_HOME_H_ */
+===== include/pgsql_interaction_search_results.h 1.0 vs 1.1 =====
+--- /dev/null	Thu Jan 30 19:24:37 2003
++++ 1.1/include/pgsql_interaction_search_results.h	Wed Aug  6 14:27:48 2003
+@@ -0,0 +1,667 @@
++/*
++ * pgsql_interaction_search_results.h
++ *
++ * This file is released under the terms of the Artistic License.  Please see
++ * the file LICENSE, included in this package, for details.
++ *
++ * Copyright (C) 2002 Mark Wong & Jenny Zhang &
++ *                    Open Source Development Lab, Inc.
++ * Copyright (C) 2003 Satoshi Nagayasu & Hideyuki Kawashima &
++ *                    Sachi Osawa & Hirokazu Kondo & Satoru Satake
++ *
++ * $Id$
++ */
++
++#ifndef _PGSQL_INTERACTION_SEARCH_RESULTS_H_
++#define _PGSQL_INTERACTION_SEARCH_RESULTS_H_
++
++#include <pgsql_interaction.h>
++
++#define STMT_SEARCH_RESULTS_AUTHOR \
++  "SELECT * FROM search_results_author( '%s', %lld )" \
++  " AS l(" \
++     "i_related1 numeric(10)," \
++     "i_related2 numeric(10)," \
++     "i_related3 numeric(10)," \
++     "i_related4 numeric(10)," \
++     "i_related5 numeric(10)," \
++     "i_thumbnail1 numeric(10)," \
++     "i_thumbnail2 numeric(10)," \
++     "i_thumbnail3 numeric(10)," \
++     "i_thumbnail4 numeric(10)," \
++     "i_thumbnail5 numeric(10)," \
++     "items numeric(2)," \
++     "i_id1 numeric(10)," \
++     "i_title1 VARCHAR(60)," \
++     "a_fname1 VARCHAR(20)," \
++     "a_lname1 VARCHAR(20)," \
++     "i_id2 numeric(10)," \
++     "i_title2 VARCHAR(60)," \
++     "a_fname2 VARCHAR(20)," \
++     "a_lname2 VARCHAR(20)," \
++     "i_id3 numeric(10)," \
++     "i_title3 VARCHAR(60)," \
++     "a_fname3 VARCHAR(20)," \
++     "a_lname3 VARCHAR(20)," \
++     "i_id4 numeric(10)," \
++     "i_title4 VARCHAR(60)," \
++     "a_fname4 VARCHAR(20)," \
++     "a_lname4 VARCHAR(20)," \
++     "i_id5 numeric(10)," \
++     "i_title5 VARCHAR(60)," \
++     "a_fname5 VARCHAR(20)," \
++     "a_lname5 VARCHAR(20)," \
++     "i_id6 numeric(10)," \
++     "i_title6 VARCHAR(60)," \
++     "a_fname6 VARCHAR(20)," \
++     "a_lname6 VARCHAR(20)," \
++     "i_id7 numeric(10)," \
++     "i_title7 VARCHAR(60)," \
++     "a_fname7 VARCHAR(20)," \
++     "a_lname7 VARCHAR(20)," \
++     "i_id8 numeric(10)," \
++     "i_title8 VARCHAR(60)," \
++     "a_fname8 VARCHAR(20)," \
++     "a_lname8 VARCHAR(20)," \
++     "i_id9 numeric(10)," \
++     "i_title9 VARCHAR(60)," \
++     "a_fname9 VARCHAR(20)," \
++     "a_lname9 VARCHAR(20)," \
++     "i_id10 numeric(10)," \
++     "i_title10 VARCHAR(60)," \
++     "a_fname10 VARCHAR(20)," \
++     "a_lname10 VARCHAR(20)," \
++     "i_id11 numeric(10)," \
++     "i_title11 VARCHAR(60)," \
++     "a_fname11 VARCHAR(20)," \
++     "a_lname11 VARCHAR(20)," \
++     "i_id12 numeric(10)," \
++     "i_title12 VARCHAR(60)," \
++     "a_fname12 VARCHAR(20)," \
++     "a_lname12 VARCHAR(20)," \
++     "i_id13 numeric(10)," \
++     "i_title13 VARCHAR(60)," \
++     "a_fname13 VARCHAR(20)," \
++     "a_lname13 VARCHAR(20)," \
++     "i_id14 numeric(10)," \
++     "i_title14 VARCHAR(60)," \
++     "a_fname14 VARCHAR(20)," \
++     "a_lname14 VARCHAR(20)," \
++     "i_id15 numeric(10)," \
++     "i_title15 VARCHAR(60)," \
++     "a_fname15 VARCHAR(20)," \
++     "a_lname15 VARCHAR(20)," \
++     "i_id16 numeric(10)," \
++     "i_title16 VARCHAR(60)," \
++     "a_fname16 VARCHAR(20)," \
++     "a_lname16 VARCHAR(20)," \
++     "i_id17 numeric(10)," \
++     "i_title17 VARCHAR(60)," \
++     "a_fname17 VARCHAR(20)," \
++     "a_lname17 VARCHAR(20)," \
++     "i_id18 numeric(10)," \
++     "i_title18 VARCHAR(60)," \
++     "a_fname18 VARCHAR(20)," \
++     "a_lname18 VARCHAR(20)," \
++     "i_id19 numeric(10)," \
++     "i_title19 VARCHAR(60)," \
++     "a_fname19 VARCHAR(20)," \
++     "a_lname19 VARCHAR(20)," \
++     "i_id20 numeric(10)," \
++     "i_title20 VARCHAR(60)," \
++     "a_fname20 VARCHAR(20)," \
++     "a_lname20 VARCHAR(20)," \
++     "i_id21 numeric(10)," \
++     "i_title21 VARCHAR(60)," \
++     "a_fname21 VARCHAR(20)," \
++     "a_lname21 VARCHAR(20)," \
++     "i_id22 numeric(10)," \
++     "i_title22 VARCHAR(60)," \
++     "a_fname22 VARCHAR(20)," \
++     "a_lname22 VARCHAR(20)," \
++     "i_id23 numeric(10)," \
++     "i_title23 VARCHAR(60)," \
++     "a_fname23 VARCHAR(20)," \
++     "a_lname23 VARCHAR(20)," \
++     "i_id24 numeric(10)," \
++     "i_title24 VARCHAR(60)," \
++     "a_fname24 VARCHAR(20)," \
++     "a_lname24 VARCHAR(20)," \
++     "i_id25 numeric(10)," \
++     "i_title25 VARCHAR(60)," \
++     "a_fname25 VARCHAR(20)," \
++     "a_lname25 VARCHAR(20)," \
++     "i_id26 numeric(10)," \
++     "i_title26 VARCHAR(60)," \
++     "a_fname26 VARCHAR(20)," \
++     "a_lname26 VARCHAR(20)," \
++     "i_id27 numeric(10)," \
++     "i_title27 VARCHAR(60)," \
++     "a_fname27 VARCHAR(20)," \
++     "a_lname27 VARCHAR(20)," \
++     "i_id28 numeric(10)," \
++     "i_title28 VARCHAR(60)," \
++     "a_fname28 VARCHAR(20)," \
++     "a_lname28 VARCHAR(20)," \
++     "i_id29 numeric(10)," \
++     "i_title29 VARCHAR(60)," \
++     "a_fname29 VARCHAR(20)," \
++     "a_lname29 VARCHAR(20)," \
++     "i_id30 numeric(10)," \
++     "i_title30 VARCHAR(60)," \
++     "a_fname30 VARCHAR(20)," \
++     "a_lname30 VARCHAR(20)," \
++     "i_id31 numeric(10)," \
++     "i_title31 VARCHAR(60)," \
++     "a_fname31 VARCHAR(20)," \
++     "a_lname31 VARCHAR(20)," \
++     "i_id32 numeric(10)," \
++     "i_title32 VARCHAR(60)," \
++     "a_fname32 VARCHAR(20)," \
++     "a_lname32 VARCHAR(20)," \
++     "i_id33 numeric(10)," \
++     "i_title33 VARCHAR(60)," \
++     "a_fname33 VARCHAR(20)," \
++     "a_lname33 VARCHAR(20)," \
++     "i_id34 numeric(10)," \
++     "i_title34 VARCHAR(60)," \
++     "a_fname34 VARCHAR(20)," \
++     "a_lname34 VARCHAR(20)," \
++     "i_id35 numeric(10)," \
++     "i_title35 VARCHAR(60)," \
++     "a_fname35 VARCHAR(20)," \
++     "a_lname35 VARCHAR(20)," \
++     "i_id36 numeric(10)," \
++     "i_title36 VARCHAR(60)," \
++     "a_fname36 VARCHAR(20)," \
++     "a_lname36 VARCHAR(20)," \
++     "i_id37 numeric(10)," \
++     "i_title37 VARCHAR(60)," \
++     "a_fname37 VARCHAR(20)," \
++     "a_lname37 VARCHAR(20)," \
++     "i_id38 numeric(10)," \
++     "i_title38 VARCHAR(60)," \
++     "a_fname38 VARCHAR(20)," \
++     "a_lname38 VARCHAR(20)," \
++     "i_id39 numeric(10)," \
++     "i_title39 VARCHAR(60)," \
++     "a_fname39 VARCHAR(20)," \
++     "a_lname39 VARCHAR(20)," \
++     "i_id40 numeric(10)," \
++     "i_title40 VARCHAR(60)," \
++     "a_fname40 VARCHAR(20)," \
++     "a_lname40 VARCHAR(20)," \
++     "i_id41 numeric(10)," \
++     "i_title41 VARCHAR(60)," \
++     "a_fname41 VARCHAR(20)," \
++     "a_lname41 VARCHAR(20)," \
++     "i_id42 numeric(10)," \
++     "i_title42 VARCHAR(60)," \
++     "a_fname42 VARCHAR(20)," \
++     "a_lname42 VARCHAR(20)," \
++     "i_id43 numeric(10)," \
++     "i_title43 VARCHAR(60)," \
++     "a_fname43 VARCHAR(20)," \
++     "a_lname43 VARCHAR(20)," \
++     "i_id44 numeric(10)," \
++     "i_title44 VARCHAR(60)," \
++     "a_fname44 VARCHAR(20)," \
++     "a_lname44 VARCHAR(20)," \
++     "i_id45 numeric(10)," \
++     "i_title45 VARCHAR(60)," \
++     "a_fname45 VARCHAR(20)," \
++     "a_lname45 VARCHAR(20)," \
++     "i_id46 numeric(10)," \
++     "i_title46 VARCHAR(60)," \
++     "a_fname46 VARCHAR(20)," \
++     "a_lname46 VARCHAR(20)," \
++     "i_id47 numeric(10)," \
++     "i_title47 VARCHAR(60)," \
++     "a_fname47 VARCHAR(20)," \
++     "a_lname47 VARCHAR(20)," \
++     "i_id48 numeric(10)," \
++     "i_title48 VARCHAR(60)," \
++     "a_fname48 VARCHAR(20)," \
++     "a_lname48 VARCHAR(20)," \
++     "i_id49 numeric(10)," \
++     "i_title49 VARCHAR(60)," \
++     "a_fname49 VARCHAR(20)," \
++     "a_lname49 VARCHAR(20)," \
++     "i_id50 numeric(10)," \
++     "i_title50 VARCHAR(60)," \
++     "a_fname50 VARCHAR(20)," \
++     "a_lname50 VARCHAR(20) )"
++
++#define STMT_SEARCH_RESULTS_SUBJECT \
++  "SELECT * FROM search_results_subject( '%s', %lld )" \
++  " AS l(" \
++     "i_related1 numeric(10)," \
++     "i_related2 numeric(10)," \
++     "i_related3 numeric(10)," \
++     "i_related4 numeric(10)," \
++     "i_related5 numeric(10)," \
++     "i_thumbnail1 numeric(10)," \
++     "i_thumbnail2 numeric(10)," \
++     "i_thumbnail3 numeric(10)," \
++     "i_thumbnail4 numeric(10)," \
++     "i_thumbnail5 numeric(10)," \
++     "items numeric(2)," \
++     "i_id1 numeric(10)," \
++     "i_title1 VARCHAR(60)," \
++     "a_fname1 VARCHAR(20)," \
++     "a_lname1 VARCHAR(20)," \
++     "i_id2 numeric(10)," \
++     "i_title2 VARCHAR(60)," \
++     "a_fname2 VARCHAR(20)," \
++     "a_lname2 VARCHAR(20)," \
++     "i_id3 numeric(10)," \
++     "i_title3 VARCHAR(60)," \
++     "a_fname3 VARCHAR(20)," \
++     "a_lname3 VARCHAR(20)," \
++     "i_id4 numeric(10)," \
++     "i_title4 VARCHAR(60)," \
++     "a_fname4 VARCHAR(20)," \
++     "a_lname4 VARCHAR(20)," \
++     "i_id5 numeric(10)," \
++     "i_title5 VARCHAR(60)," \
++     "a_fname5 VARCHAR(20)," \
++     "a_lname5 VARCHAR(20)," \
++     "i_id6 numeric(10)," \
++     "i_title6 VARCHAR(60)," \
++     "a_fname6 VARCHAR(20)," \
++     "a_lname6 VARCHAR(20)," \
++     "i_id7 numeric(10)," \
++     "i_title7 VARCHAR(60)," \
++     "a_fname7 VARCHAR(20)," \
++     "a_lname7 VARCHAR(20)," \
++     "i_id8 numeric(10)," \
++     "i_title8 VARCHAR(60)," \
++     "a_fname8 VARCHAR(20)," \
++     "a_lname8 VARCHAR(20)," \
++     "i_id9 numeric(10)," \
++     "i_title9 VARCHAR(60)," \
++     "a_fname9 VARCHAR(20)," \
++     "a_lname9 VARCHAR(20)," \
++     "i_id10 numeric(10)," \
++     "i_title10 VARCHAR(60)," \
++     "a_fname10 VARCHAR(20)," \
++     "a_lname10 VARCHAR(20)," \
++     "i_id11 numeric(10)," \
++     "i_title11 VARCHAR(60)," \
++     "a_fname11 VARCHAR(20)," \
++     "a_lname11 VARCHAR(20)," \
++     "i_id12 numeric(10)," \
++     "i_title12 VARCHAR(60)," \
++     "a_fname12 VARCHAR(20)," \
++     "a_lname12 VARCHAR(20)," \
++     "i_id13 numeric(10)," \
++     "i_title13 VARCHAR(60)," \
++     "a_fname13 VARCHAR(20)," \
++     "a_lname13 VARCHAR(20)," \
++     "i_id14 numeric(10)," \
++     "i_title14 VARCHAR(60)," \
++     "a_fname14 VARCHAR(20)," \
++     "a_lname14 VARCHAR(20)," \
++     "i_id15 numeric(10)," \
++     "i_title15 VARCHAR(60)," \
++     "a_fname15 VARCHAR(20)," \
++     "a_lname15 VARCHAR(20)," \
++     "i_id16 numeric(10)," \
++     "i_title16 VARCHAR(60)," \
++     "a_fname16 VARCHAR(20)," \
++     "a_lname16 VARCHAR(20)," \
++     "i_id17 numeric(10)," \
++     "i_title17 VARCHAR(60)," \
++     "a_fname17 VARCHAR(20)," \
++     "a_lname17 VARCHAR(20)," \
++     "i_id18 numeric(10)," \
++     "i_title18 VARCHAR(60)," \
++     "a_fname18 VARCHAR(20)," \
++     "a_lname18 VARCHAR(20)," \
++     "i_id19 numeric(10)," \
++     "i_title19 VARCHAR(60)," \
++     "a_fname19 VARCHAR(20)," \
++     "a_lname19 VARCHAR(20)," \
++     "i_id20 numeric(10)," \
++     "i_title20 VARCHAR(60)," \
++     "a_fname20 VARCHAR(20)," \
++     "a_lname20 VARCHAR(20)," \
++     "i_id21 numeric(10)," \
++     "i_title21 VARCHAR(60)," \
++     "a_fname21 VARCHAR(20)," \
++     "a_lname21 VARCHAR(20)," \
++     "i_id22 numeric(10)," \
++     "i_title22 VARCHAR(60)," \
++     "a_fname22 VARCHAR(20)," \
++     "a_lname22 VARCHAR(20)," \
++     "i_id23 numeric(10)," \
++     "i_title23 VARCHAR(60)," \
++     "a_fname23 VARCHAR(20)," \
++     "a_lname23 VARCHAR(20)," \
++     "i_id24 numeric(10)," \
++     "i_title24 VARCHAR(60)," \
++     "a_fname24 VARCHAR(20)," \
++     "a_lname24 VARCHAR(20)," \
++     "i_id25 numeric(10)," \
++     "i_title25 VARCHAR(60)," \
++     "a_fname25 VARCHAR(20)," \
++     "a_lname25 VARCHAR(20)," \
++     "i_id26 numeric(10)," \
++     "i_title26 VARCHAR(60)," \
++     "a_fname26 VARCHAR(20)," \
++     "a_lname26 VARCHAR(20)," \
++     "i_id27 numeric(10)," \
++     "i_title27 VARCHAR(60)," \
++     "a_fname27 VARCHAR(20)," \
++     "a_lname27 VARCHAR(20)," \
++     "i_id28 numeric(10)," \
++     "i_title28 VARCHAR(60)," \
++     "a_fname28 VARCHAR(20)," \
++     "a_lname28 VARCHAR(20)," \
++     "i_id29 numeric(10)," \
++     "i_title29 VARCHAR(60)," \
++     "a_fname29 VARCHAR(20)," \
++     "a_lname29 VARCHAR(20)," \
++     "i_id30 numeric(10)," \
++     "i_title30 VARCHAR(60)," \
++     "a_fname30 VARCHAR(20)," \
++     "a_lname30 VARCHAR(20)," \
++     "i_id31 numeric(10)," \
++     "i_title31 VARCHAR(60)," \
++     "a_fname31 VARCHAR(20)," \
++     "a_lname31 VARCHAR(20)," \
++     "i_id32 numeric(10)," \
++     "i_title32 VARCHAR(60)," \
++     "a_fname32 VARCHAR(20)," \
++     "a_lname32 VARCHAR(20)," \
++     "i_id33 numeric(10)," \
++     "i_title33 VARCHAR(60)," \
++     "a_fname33 VARCHAR(20)," \
++     "a_lname33 VARCHAR(20)," \
++     "i_id34 numeric(10)," \
++     "i_title34 VARCHAR(60)," \
++     "a_fname34 VARCHAR(20)," \
++     "a_lname34 VARCHAR(20)," \
++     "i_id35 numeric(10)," \
++     "i_title35 VARCHAR(60)," \
++     "a_fname35 VARCHAR(20)," \
++     "a_lname35 VARCHAR(20)," \
++     "i_id36 numeric(10)," \
++     "i_title36 VARCHAR(60)," \
++     "a_fname36 VARCHAR(20)," \
++     "a_lname36 VARCHAR(20)," \
++     "i_id37 numeric(10)," \
++     "i_title37 VARCHAR(60)," \
++     "a_fname37 VARCHAR(20)," \
++     "a_lname37 VARCHAR(20)," \
++     "i_id38 numeric(10)," \
++     "i_title38 VARCHAR(60)," \
++     "a_fname38 VARCHAR(20)," \
++     "a_lname38 VARCHAR(20)," \
++     "i_id39 numeric(10)," \
++     "i_title39 VARCHAR(60)," \
++     "a_fname39 VARCHAR(20)," \
++     "a_lname39 VARCHAR(20)," \
++     "i_id40 numeric(10)," \
++     "i_title40 VARCHAR(60)," \
++     "a_fname40 VARCHAR(20)," \
++     "a_lname40 VARCHAR(20)," \
++     "i_id41 numeric(10)," \
++     "i_title41 VARCHAR(60)," \
++     "a_fname41 VARCHAR(20)," \
++     "a_lname41 VARCHAR(20)," \
++     "i_id42 numeric(10)," \
++     "i_title42 VARCHAR(60)," \
++     "a_fname42 VARCHAR(20)," \
++     "a_lname42 VARCHAR(20)," \
++     "i_id43 numeric(10)," \
++     "i_title43 VARCHAR(60)," \
++     "a_fname43 VARCHAR(20)," \
++     "a_lname43 VARCHAR(20)," \
++     "i_id44 numeric(10)," \
++     "i_title44 VARCHAR(60)," \
++     "a_fname44 VARCHAR(20)," \
++     "a_lname44 VARCHAR(20)," \
++     "i_id45 numeric(10)," \
++     "i_title45 VARCHAR(60)," \
++     "a_fname45 VARCHAR(20)," \
++     "a_lname45 VARCHAR(20)," \
++     "i_id46 numeric(10)," \
++     "i_title46 VARCHAR(60)," \
++     "a_fname46 VARCHAR(20)," \
++     "a_lname46 VARCHAR(20)," \
++     "i_id47 numeric(10)," \
++     "i_title47 VARCHAR(60)," \
++     "a_fname47 VARCHAR(20)," \
++     "a_lname47 VARCHAR(20)," \
++     "i_id48 numeric(10)," \
++     "i_title48 VARCHAR(60)," \
++     "a_fname48 VARCHAR(20)," \
++     "a_lname48 VARCHAR(20)," \
++     "i_id49 numeric(10)," \
++     "i_title49 VARCHAR(60)," \
++     "a_fname49 VARCHAR(20)," \
++     "a_lname49 VARCHAR(20)," \
++     "i_id50 numeric(10)," \
++     "i_title50 VARCHAR(60)," \
++     "a_fname50 VARCHAR(20)," \
++     "a_lname50 VARCHAR(20) )"
++
++#define STMT_SEARCH_RESULTS_TITLE \
++  "SELECT * FROM search_results_title( '%s', %lld )" \
++  " AS l(" \
++     "i_related1 numeric(10)," \
++     "i_related2 numeric(10)," \
++     "i_related3 numeric(10)," \
++     "i_related4 numeric(10)," \
++     "i_related5 numeric(10)," \
++     "i_thumbnail1 numeric(10)," \
++     "i_thumbnail2 numeric(10)," \
++     "i_thumbnail3 numeric(10)," \
++     "i_thumbnail4 numeric(10)," \
++     "i_thumbnail5 numeric(10)," \
++     "items numeric(2)," \
++     "i_id1 numeric(10)," \
++     "i_title1 VARCHAR(60)," \
++     "a_fname1 VARCHAR(20)," \
++     "a_lname1 VARCHAR(20)," \
++     "i_id2 numeric(10)," \
++     "i_title2 VARCHAR(60)," \
++     "a_fname2 VARCHAR(20)," \
++     "a_lname2 VARCHAR(20)," \
++     "i_id3 numeric(10)," \
++     "i_title3 VARCHAR(60)," \
++     "a_fname3 VARCHAR(20)," \
++     "a_lname3 VARCHAR(20)," \
++     "i_id4 numeric(10)," \
++     "i_title4 VARCHAR(60)," \
++     "a_fname4 VARCHAR(20)," \
++     "a_lname4 VARCHAR(20)," \
++     "i_id5 numeric(10)," \
++     "i_title5 VARCHAR(60)," \
++     "a_fname5 VARCHAR(20)," \
++     "a_lname5 VARCHAR(20)," \
++     "i_id6 numeric(10)," \
++     "i_title6 VARCHAR(60)," \
++     "a_fname6 VARCHAR(20)," \
++     "a_lname6 VARCHAR(20)," \
++     "i_id7 numeric(10)," \
++     "i_title7 VARCHAR(60)," \
++     "a_fname7 VARCHAR(20)," \
++     "a_lname7 VARCHAR(20)," \
++     "i_id8 numeric(10)," \
++     "i_title8 VARCHAR(60)," \
++     "a_fname8 VARCHAR(20)," \
++     "a_lname8 VARCHAR(20)," \
++     "i_id9 numeric(10)," \
++     "i_title9 VARCHAR(60)," \
++     "a_fname9 VARCHAR(20)," \
++     "a_lname9 VARCHAR(20)," \
++     "i_id10 numeric(10)," \
++     "i_title10 VARCHAR(60)," \
++     "a_fname10 VARCHAR(20)," \
++     "a_lname10 VARCHAR(20)," \
++     "i_id11 numeric(10)," \
++     "i_title11 VARCHAR(60)," \
++     "a_fname11 VARCHAR(20)," \
++     "a_lname11 VARCHAR(20)," \
++     "i_id12 numeric(10)," \
++     "i_title12 VARCHAR(60)," \
++     "a_fname12 VARCHAR(20)," \
++     "a_lname12 VARCHAR(20)," \
++     "i_id13 numeric(10)," \
++     "i_title13 VARCHAR(60)," \
++     "a_fname13 VARCHAR(20)," \
++     "a_lname13 VARCHAR(20)," \
++     "i_id14 numeric(10)," \
++     "i_title14 VARCHAR(60)," \
++     "a_fname14 VARCHAR(20)," \
++     "a_lname14 VARCHAR(20)," \
++     "i_id15 numeric(10)," \
++     "i_title15 VARCHAR(60)," \
++     "a_fname15 VARCHAR(20)," \
++     "a_lname15 VARCHAR(20)," \
++     "i_id16 numeric(10)," \
++     "i_title16 VARCHAR(60)," \
++     "a_fname16 VARCHAR(20)," \
++     "a_lname16 VARCHAR(20)," \
++     "i_id17 numeric(10)," \
++     "i_title17 VARCHAR(60)," \
++     "a_fname17 VARCHAR(20)," \
++     "a_lname17 VARCHAR(20)," \
++     "i_id18 numeric(10)," \
++     "i_title18 VARCHAR(60)," \
++     "a_fname18 VARCHAR(20)," \
++     "a_lname18 VARCHAR(20)," \
++     "i_id19 numeric(10)," \
++     "i_title19 VARCHAR(60)," \
++     "a_fname19 VARCHAR(20)," \
++     "a_lname19 VARCHAR(20)," \
++     "i_id20 numeric(10)," \
++     "i_title20 VARCHAR(60)," \
++     "a_fname20 VARCHAR(20)," \
++     "a_lname20 VARCHAR(20)," \
++     "i_id21 numeric(10)," \
++     "i_title21 VARCHAR(60)," \
++     "a_fname21 VARCHAR(20)," \
++     "a_lname21 VARCHAR(20)," \
++     "i_id22 numeric(10)," \
++     "i_title22 VARCHAR(60)," \
++     "a_fname22 VARCHAR(20)," \
++     "a_lname22 VARCHAR(20)," \
++     "i_id23 numeric(10)," \
++     "i_title23 VARCHAR(60)," \
++     "a_fname23 VARCHAR(20)," \
++     "a_lname23 VARCHAR(20)," \
++     "i_id24 numeric(10)," \
++     "i_title24 VARCHAR(60)," \
++     "a_fname24 VARCHAR(20)," \
++     "a_lname24 VARCHAR(20)," \
++     "i_id25 numeric(10)," \
++     "i_title25 VARCHAR(60)," \
++     "a_fname25 VARCHAR(20)," \
++     "a_lname25 VARCHAR(20)," \
++     "i_id26 numeric(10)," \
++     "i_title26 VARCHAR(60)," \
++     "a_fname26 VARCHAR(20)," \
++     "a_lname26 VARCHAR(20)," \
++     "i_id27 numeric(10)," \
++     "i_title27 VARCHAR(60)," \
++     "a_fname27 VARCHAR(20)," \
++     "a_lname27 VARCHAR(20)," \
++     "i_id28 numeric(10)," \
++     "i_title28 VARCHAR(60)," \
++     "a_fname28 VARCHAR(20)," \
++     "a_lname28 VARCHAR(20)," \
++     "i_id29 numeric(10)," \
++     "i_title29 VARCHAR(60)," \
++     "a_fname29 VARCHAR(20)," \
++     "a_lname29 VARCHAR(20)," \
++     "i_id30 numeric(10)," \
++     "i_title30 VARCHAR(60)," \
++     "a_fname30 VARCHAR(20)," \
++     "a_lname30 VARCHAR(20)," \
++     "i_id31 numeric(10)," \
++     "i_title31 VARCHAR(60)," \
++     "a_fname31 VARCHAR(20)," \
++     "a_lname31 VARCHAR(20)," \
++     "i_id32 numeric(10)," \
++     "i_title32 VARCHAR(60)," \
++     "a_fname32 VARCHAR(20)," \
++     "a_lname32 VARCHAR(20)," \
++     "i_id33 numeric(10)," \
++     "i_title33 VARCHAR(60)," \
++     "a_fname33 VARCHAR(20)," \
++     "a_lname33 VARCHAR(20)," \
++     "i_id34 numeric(10)," \
++     "i_title34 VARCHAR(60)," \
++     "a_fname34 VARCHAR(20)," \
++     "a_lname34 VARCHAR(20)," \
++     "i_id35 numeric(10)," \
++     "i_title35 VARCHAR(60)," \
++     "a_fname35 VARCHAR(20)," \
++     "a_lname35 VARCHAR(20)," \
++     "i_id36 numeric(10)," \
++     "i_title36 VARCHAR(60)," \
++     "a_fname36 VARCHAR(20)," \
++     "a_lname36 VARCHAR(20)," \
++     "i_id37 numeric(10)," \
++     "i_title37 VARCHAR(60)," \
++     "a_fname37 VARCHAR(20)," \
++     "a_lname37 VARCHAR(20)," \
++     "i_id38 numeric(10)," \
++     "i_title38 VARCHAR(60)," \
++     "a_fname38 VARCHAR(20)," \
++     "a_lname38 VARCHAR(20)," \
++     "i_id39 numeric(10)," \
++     "i_title39 VARCHAR(60)," \
++     "a_fname39 VARCHAR(20)," \
++     "a_lname39 VARCHAR(20)," \
++     "i_id40 numeric(10)," \
++     "i_title40 VARCHAR(60)," \
++     "a_fname40 VARCHAR(20)," \
++     "a_lname40 VARCHAR(20)," \
++     "i_id41 numeric(10)," \
++     "i_title41 VARCHAR(60)," \
++     "a_fname41 VARCHAR(20)," \
++     "a_lname41 VARCHAR(20)," \
++     "i_id42 numeric(10)," \
++     "i_title42 VARCHAR(60)," \
++     "a_fname42 VARCHAR(20)," \
++     "a_lname42 VARCHAR(20)," \
++     "i_id43 numeric(10)," \
++     "i_title43 VARCHAR(60)," \
++     "a_fname43 VARCHAR(20)," \
++     "a_lname43 VARCHAR(20)," \
++     "i_id44 numeric(10)," \
++     "i_title44 VARCHAR(60)," \
++     "a_fname44 VARCHAR(20)," \
++     "a_lname44 VARCHAR(20)," \
++     "i_id45 numeric(10)," \
++     "i_title45 VARCHAR(60)," \
++     "a_fname45 VARCHAR(20)," \
++     "a_lname45 VARCHAR(20)," \
++     "i_id46 numeric(10)," \
++     "i_title46 VARCHAR(60)," \
++     "a_fname46 VARCHAR(20)," \
++     "a_lname46 VARCHAR(20)," \
++     "i_id47 numeric(10)," \
++     "i_title47 VARCHAR(60)," \
++     "a_fname47 VARCHAR(20)," \
++     "a_lname47 VARCHAR(20)," \
++     "i_id48 numeric(10)," \
++     "i_title48 VARCHAR(60)," \
++     "a_fname48 VARCHAR(20)," \
++     "a_lname48 VARCHAR(20)," \
++     "i_id49 numeric(10)," \
++     "i_title49 VARCHAR(60)," \
++     "a_fname49 VARCHAR(20)," \
++     "a_lname49 VARCHAR(20)," \
++     "i_id50 numeric(10)," \
++     "i_title50 VARCHAR(60)," \
++     "a_fname50 VARCHAR(20)," \
++     "a_lname50 VARCHAR(20) )"
++
++int execute_search_results(struct db_context_t *, struct search_results_t *);
++
++#endif /* _PGSQL_INTERACTION_SEARCH_RESULTS_H_ */
+===== interfaces/pgsql/Makefile.in 1.0 vs 1.2 =====
+--- /dev/null	Thu Jan 30 19:24:37 2003
++++ 1.2/interfaces/pgsql/Makefile.in	Wed Aug  6 17:49:50 2003
+@@ -0,0 +1,53 @@
++# Makefile
++# 20 february 2002
++
++include @TOPDIR@/make.common
++
++CFLAGS+=-DPHASE1
++
++all: $(PGSQL_OBJS)
++
++pgsql_interaction.o: pgsql_interaction.c
++
++pgsql_interaction_admin_confirm.o: pgsql_interaction_admin_confirm.c
++
++pgsql_interaction_admin_request.o: pgsql_interaction_admin_request.c
++
++pgsql_interaction_best_sellers.o: pgsql_interaction_best_sellers.c
++
++pgsql_interaction_buy_confirm.o: pgsql_interaction_buy_confirm.c
++
++pgsql_interaction_buy_request.o: pgsql_interaction_buy_request.c
++
++pgsql_interaction_home.o: pgsql_interaction_home.c
++
++pgsql_interaction_new_products.o: pgsql_interaction_new_products.c
++
++pgsql_interaction_order_display.o: pgsql_interaction_order_display.c
++
++pgsql_interaction_order_inquiry.o: pgsql_interaction_order_inquiry.c
++
++pgsql_interaction_product_detail.o: pgsql_interaction_product_detail.c
++
++pgsql_interaction_search_request.o: pgsql_interaction_search_request.c
++
++pgsql_interaction_search_results.o: pgsql_interaction_search_results.c
++
++pgsql_interaction_shopping_cart.o: pgsql_interaction_shopping_cart.c
++
++pgsql_test.o: pgsql_test.c
++
++pgsql_test: pgsql_test.o $(PGSQL_OBJS)
++	$(CC) -o $@ $< $(PGSQL_OBJS) ../../common/common.so $(LIBS) $(LDFLAGS)
++
++clean:
++	rm -f $(PGSQL_OBJS) pgsql_test.o pgsql_test
++
++explain:
++	@echo "$(PGSQL_OBJS)"
++
++DBOBJS: \
++	Makefile \
++	$(TOPDIR)/make.common \
++	$(PGSQL_INCLUDE) \
++	$(PGSQL_PRGS)
+===== include/pgsql_interaction_product_detail.h 1.0 vs 1.1 =====
+--- /dev/null	Thu Jan 30 19:24:37 2003
++++ 1.1/include/pgsql_interaction_product_detail.h	Wed Aug  6 14:27:48 2003
+@@ -0,0 +1,40 @@
++/*
++ * pgsql_interaction_product_detail.h
++ *
++ * This file is released under the terms of the Artistic License.  Please see
++ * the file LICENSE, included in this package, for details.
++ *
++ * Copyright (C) 2002 Mark Wong & Jenny Zhang &
++ *                    Open Source Development Lab, Inc.
++ * Copyright (C) 2003 Satoshi Nagayasu & Hideyuki Kawashima &
++ *                    Sachi Osawa & Hirokazu Kondo & Satoru Satake
++ *
++ * $Id$
++ */
++
++#ifndef _PGSQL_INTERACTION_PRODUCT_DETAIL_H_
++#define _PGSQL_INTERACTION_PRODUCT_DETAIL_H_
++
++#include <pgsql_interaction.h>
++
++#define STMT_PRODUCT_DETAIL \
++  "SELECT * FROM product_detail( %lld )" \
++  "  AS l( i_title VARCHAR(60)," \
++  "        a_fname VARCHAR(20)," \
++  "        a_lname VARCHAR(20)," \
++  "        i_pub_date VARCHAR(10)," \
++  "        i_publisher VARCHAR(60)," \
++  "        i_subject VARCHAR(60)," \
++  "        i_desc VARCHAR(500)," \
++  "        i_image NUMERIC(10)," \
++  "        i_cost NUMERIC(17,2)," \
++  "        i_srp NUMERIC(17,2)," \
++  "        i_avail VARCHAR(10)," \
++  "        i_isbn VARCHAR(13)," \
++  "        i_page NUMERIC(4)," \
++  "        i_backing VARCHAR(15)," \
++  "        i_dimensions VARCHAR(25) )"
++
++int execute_product_detail(struct db_context_t *, struct product_detail_t *);
++
++#endif /* _PGSQL_INTERACTION_PRODUCT_DETAIL_H_ */
+===== include/pgsql_interaction_order_inquiry.h 1.0 vs 1.1 =====
+--- /dev/null	Thu Jan 30 19:24:37 2003
++++ 1.1/include/pgsql_interaction_order_inquiry.h	Wed Aug  6 14:27:48 2003
+@@ -0,0 +1,24 @@
++/*
++ * pgsql_interaction_order_inquiry.h
++ *
++ * This file is released under the terms of the Artistic License.  Please see
++ * the file LICENSE, included in this package, for details.
++ *
++ * Copyright (C) 2002 Mark Wong & Jenny Zhang &
++ *                    Open Source Development Lab, Inc.
++ * Copyright (C) 2003 Satoshi Nagayasu & Hideyuki Kawashima &
++ *                    Sachi Osawa & Hirokazu Kondo & Satoru Satake
++ *
++ * $Id$
++ */
++
++#ifndef _PGSQL_INTERACTION_ORDER_INQUIRY_H 
++#define _PGSQL_INTERACTION_ORDER_INQUIRY_H
++
++#include <pgsql_interaction.h>
++
++#define STMT_ORDER_INQUIRY "SELECT order_inquiry(%lld)"
++
++int execute_order_inquiry(struct db_context_t *, struct order_inquiry_t *);
++
++#endif /* _PGSQL_INTERACTION_ORDER_INQUIRY_H */
+===== interfaces/pgsql/pgsql_interaction_buy_confirm.c 1.0 vs 1.1 =====
+--- /dev/null	Thu Jan 30 19:24:37 2003
++++ 1.1/interfaces/pgsql/pgsql_interaction_buy_confirm.c	Wed Aug  6 14:26:59 2003
+@@ -0,0 +1,351 @@
++/*
++ * pgsql_interaction_buy_confirm.c
++ *
++ * This file is released under the terms of the Artistic License.  Please see
++ * the file LICENSE, included in this package, for details.
++ *
++ * Copyright (C) 2002 Mark Wong & Jenny Zhang &
++ *		    Open Source Development Lab, Inc.
++ * Copyright (C) 2003 Satoshi Nagayasu & Hideyuki Kawashima &
++ *                    Sachi Osawa & Hirokazu Kondo & Satoru Satake
++ *
++ * $Id$
++ */
++
++#include <pgsql_interaction_buy_confirm.h>
++
++int
++execute_buy_confirm(struct db_context_t *dbc,
++					struct buy_confirm_t *data)
++{
++	PGresult *res;
++	int i, j;
++	short int ship_day;
++	char ol_comment[OL_COMMENT_LEN + 1];
++	char cx_auth_id[CX_AUTH_ID_LEN + 1];
++	double c_discount;
++
++	/* Generate random day between 1 to 7 for ship_date. */
++	ship_day = get_random_int(7) + 1;
++	/* generate a_string[20..100] as order_line comment */
++	get_a_string(ol_comment, 20, 100);
++	/* get authentication id from PGE */
++	strcpy(cx_auth_id, "012345678912345");
++
++	res = pgsql_execute(dbc->conn, STMT_BUYCONF,
++						data->cx_type,
++						atoll(data->cx_num),
++						data->cx_name,
++						data->cx_expiry,
++						data->sc_id,
++						data->c_id,
++						ship_day,
++						ol_comment,
++						cx_auth_id,
++						data->shipping.addr_street1,
++						data->shipping.addr_street2,
++						data->shipping.addr_city,
++						data->shipping.addr_state,
++						data->shipping.addr_zip,
++						data->shipping.co_name );
++
++	if ( PQresultStatus(res)!=PGRES_TUPLES_OK )
++	{
++		LOG_PGSQL_ERROR(dbc->conn);
++		PQclear(res);
++		return W_ERROR;
++	}
++
++	if ( PQntuples(res)==0 )
++	{
++		PQclear(res);
++		return W_ERROR;
++	}
++
++	j = 0;
++	data->o_id    = atoll(PQgetvalue(res, 0, j++));
++	data->sc_size = atoi(PQgetvalue(res, 0, j++));
++
++	for (i=0 ; i<SHOPPING_CART_ITEMS_MAX ; i++)
++	{
++		data->scl_data[i].scl_i_id = atoll(PQgetvalue(res, 0, j++));
++		data->scl_data[i].scl_qty  = atoi(PQgetvalue(res, 0, j++));
++		data->scl_data[i].scl_cost = atof(PQgetvalue(res, 0, j++));
++		data->scl_data[i].scl_srp  = atof(PQgetvalue(res, 0, j++));
++		strcpy(data->scl_data[i].i_title, PQgetvalue(res, 0, j++));
++		strcpy(data->scl_data[i].i_backing, PQgetvalue(res, 0, j++));
++	}
++
++	data->c_discount   = atof(PQgetvalue(res, 0, j++));
++	data->sc_sub_total = atof(PQgetvalue(res, 0, j++));
++	data->sc_tax       = atof(PQgetvalue(res, 0, j++));
++	data->sc_ship_cost = atof(PQgetvalue(res, 0, j++));
++
++#ifdef NOT_USED
++    /* can't handle over 126 columns in functions? */
++	data->sc_total     = atof(PQgetvalue(res, 0, j++));
++
++	assert(PQnfields(res)==j);
++#endif
++
++	PQclear(res);
++
++#ifdef NOT_USED
++	/* Perpare statement for Buy Confirm interaction. */
++	rc = SQLPrepare(odbcc->hstmt, STMT_BUYCONF, SQL_NTS);
++	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
++	{
++		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
++		return W_ERROR;
++	}
++
++	/* Bind variables for buyconfirm interaction. */
++	j = 1;
++	rc = SQLBindParameter(odbcc->hstmt,
++		j++, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, 0, 0,
++		&data->cx_type, sizeof(data->cx_type), NULL);
++	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
++	{
++		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
++		return W_ERROR;
++	}
++	rc = SQLBindParameter(odbcc->hstmt,
++		j++, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, 0, 0,
++		&data->cx_num, sizeof(data->cx_num), NULL);
++	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
++	{
++		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
++		return W_ERROR;
++	}
++	rc = SQLBindParameter(odbcc->hstmt,
++		j++, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, 0, 0,
++		&data->cx_name, sizeof(data->cx_name), NULL);
++	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
++	{
++		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
++		return W_ERROR;
++	}
++	rc = SQLBindParameter(odbcc->hstmt,
++		j++, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, 0, 0,
++		&data->cx_expiry, sizeof(data->cx_expiry), NULL);
++	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
++	{
++		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
++		return W_ERROR;
++	}
++	rc = SQLBindParameter(odbcc->hstmt,
++		j++, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, 0, 0,
++		&data->o_ship_type, sizeof(data->o_ship_type), NULL);
++	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
++	{
++		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
++		return W_ERROR;
++	}
++	rc = SQLBindParameter(odbcc->hstmt,
++			j++, SQL_PARAM_INPUT, SQL_C_ULONG, SQL_INTEGER, 0, 0,
++			&data->sc_id, 0, NULL);
++	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
++	{
++		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
++		return W_ERROR;
++	}
++	rc = SQLBindParameter(odbcc->hstmt,
++			j++, SQL_PARAM_INPUT, SQL_C_ULONG, SQL_INTEGER, 0, 0,
++			&data->c_id, 0, NULL);
++	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
++	{
++		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
++		return W_ERROR;
++	}
++	rc = SQLBindParameter(odbcc->hstmt,
++			j++, SQL_PARAM_INPUT, SQL_C_SSHORT, SQL_INTEGER, 0, 0,
++			&ship_day, 0, NULL);
++	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
++	{
++		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
++		return W_ERROR;
++	}
++	rc = SQLBindParameter(odbcc->hstmt,
++		j++, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, 0, 0,
++		ol_comment, sizeof(ol_comment), NULL);
++	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
++	{
++		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
++		return W_ERROR;
++	}
++	rc = SQLBindParameter(odbcc->hstmt,
++		j++, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, 0, 0,
++		cx_auth_id, sizeof(cx_auth_id), NULL);
++
++	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
++	{
++		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
++		return W_ERROR;
++	}
++	rc = SQLBindParameter(odbcc->hstmt,
++		j++, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, 0, 0,
++		data->shipping.addr_street1, sizeof(data->shipping.addr_street1), NULL);
++	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
++	{
++		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
++		return W_ERROR;
++	}
++	rc = SQLBindParameter(odbcc->hstmt,
++		j++, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, 0, 0,
++		data->shipping.addr_street2, sizeof(data->shipping.addr_street2), NULL);
++	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
++	{
++		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
++		return W_ERROR;
++	}
++	rc = SQLBindParameter(odbcc->hstmt,
++		j++, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, 0, 0,
++		data->shipping.addr_city, sizeof(data->shipping.addr_city), NULL);
++	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
++	{
++		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
++		return W_ERROR;
++	}
++	rc = SQLBindParameter(odbcc->hstmt,
++		j++, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, 0, 0,
++		data->shipping.addr_state, sizeof(data->shipping.addr_state), NULL);
++	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
++	{
++		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
++		return W_ERROR;
++	}
++	rc = SQLBindParameter(odbcc->hstmt,
++		j++, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, 0, 0,
++		data->shipping.addr_zip, sizeof(data->shipping.addr_zip), NULL);
++	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
++	{
++		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
++		return W_ERROR;
++	}
++	rc = SQLBindParameter(odbcc->hstmt,
++		j++, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_VARCHAR, 0, 0,
++		data->shipping.co_name, sizeof(data->shipping.co_name), NULL);
++	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
++	{
++		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
++		return W_ERROR;
++	}
++	rc = SQLBindParameter(odbcc->hstmt,
++		j++, SQL_PARAM_OUTPUT, SQL_C_DOUBLE, SQL_DOUBLE, 0, 0,
++		&c_discount, 0, NULL);
++	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
++	{
++		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
++		return W_ERROR;
++	}
++	rc = SQLBindParameter(odbcc->hstmt,
++		j++, SQL_PARAM_OUTPUT, SQL_C_DOUBLE, SQL_DOUBLE, 0, 0,
++		&data->sc_sub_total, 0, NULL);
++	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
++	{
++		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
++		return W_ERROR;
++	}
++	rc = SQLBindParameter(odbcc->hstmt,
++		j++, SQL_PARAM_OUTPUT, SQL_C_DOUBLE, SQL_DOUBLE, 0, 0,
++		&data->sc_tax, 0, NULL);
++	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
++	{
++		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
++		return W_ERROR;
++	}
++	rc = SQLBindParameter(odbcc->hstmt,
++		j++, SQL_PARAM_OUTPUT, SQL_C_DOUBLE, SQL_DOUBLE, 0, 0,
++		&data->sc_ship_cost, 0, NULL);
++	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
++	{
++		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
++		return W_ERROR;
++	}
++	rc = SQLBindParameter(odbcc->hstmt,
++		j++, SQL_PARAM_OUTPUT, SQL_C_DOUBLE, SQL_DOUBLE, 0, 0,
++		&data->sc_total, 0, NULL);
++	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
++	{
++		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
++		return W_ERROR;
++	}
++	rc = SQLBindParameter(odbcc->hstmt,
++		j++, SQL_PARAM_OUTPUT, SQL_C_SLONG, SQL_INTEGER, 0, 0,
++		&data->sc_size, 0, NULL);
++	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
++	{
++		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
++		return W_ERROR;
++	}
++	for (i = 0; i < SHOPPING_CART_ITEMS_MAX; i++)
++	{
++		rc = SQLBindParameter(odbcc->hstmt,
++			j++, SQL_PARAM_OUTPUT, SQL_C_ULONG, SQL_INTEGER, 0, 0, 
++			&data->scl_data[i].scl_i_id, 0, NULL);
++		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
++		{
++			LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
++			return W_ERROR;
++		}
++		rc = SQLBindParameter(odbcc->hstmt,
++			j++, SQL_PARAM_OUTPUT, SQL_C_CHAR, SQL_VARCHAR, 0, 0,
++			data->scl_data[i].i_title, sizeof(data->scl_data[i].i_title), NULL);
++		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
++		{
++			LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
++			return W_ERROR;
++		}
++		rc = SQLBindParameter(odbcc->hstmt,
++			j++, SQL_PARAM_OUTPUT, SQL_C_DOUBLE, SQL_DOUBLE, 0, 0,
++			&data->scl_data[i].scl_cost, 0, NULL);
++		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
++		{
++			LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
++			return W_ERROR;
++		}
++		rc = SQLBindParameter(odbcc->hstmt,
++			j++, SQL_PARAM_OUTPUT, SQL_C_DOUBLE, SQL_DOUBLE, 0, 0,
++			&data->scl_data[i].scl_srp, 0, NULL);
++		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
++		{
++			LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
++			return W_ERROR;
++		}
++		rc = SQLBindParameter(odbcc->hstmt,
++			j++, SQL_PARAM_OUTPUT, SQL_C_CHAR, SQL_VARCHAR, 0, 0,
++			data->scl_data[i].i_backing, sizeof(data->scl_data[i].i_backing),
++			NULL);
++		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
++		{
++			LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
++			return W_ERROR;
++		}
++		rc = SQLBindParameter(odbcc->hstmt, j++,
++			SQL_PARAM_OUTPUT, SQL_C_SSHORT, SQL_SMALLINT, 0,0,
++			&data->scl_data[i].scl_qty, 0, NULL);
++		if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
++		{
++			LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
++			return W_ERROR;
++		}
++	}
++
++	/* Generate random day between 1 to 7 for ship_date. */
++	ship_day = get_random_int(7) + 1;
++	/* get authentication id from PGE */
++	strcpy(cx_auth_id, "012345678912345");
++	/* generate a_string[20..100] as order_line comment */
++	get_a_string(ol_comment, 20, 100);
++
++	/* Execute stored procedure. */
++	rc = SQLExecute(odbcc->hstmt);
++	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
++	{
++		LOG_ODBC_ERROR(SQL_HANDLE_STMT, odbcc->hstmt);
++		return W_ERROR;
++	}
++#endif
++
++	return OK;
++}
+===== interfaces/pgsql/pgsql_interaction_debug.c 1.0 vs 1.1 =====
+--- /dev/null	Thu Jan 30 19:24:37 2003
++++ 1.1/interfaces/pgsql/pgsql_interaction_debug.c	Wed Aug  6 14:26:59 2003
+@@ -0,0 +1,315 @@
++/*
++ * pgsql_interaction_debug.c -  debug routines for pgsql interface.
++ *
++ * This file is released under the terms of the Artistic License.  Please see
++ * the file LICENSE, included in this package, for details.
++ *
++ * Copyright (C) 2003 Satoshi Nagayasu & Hideyuki Kawashima &
++ *                    Sachi Osawa & Hirokazu Kondo & Satoru Satake
++ *
++ * $Id$
++ */
++#include <pgsql_interaction.h>
++
++void
++print_admin_request_data(struct admin_request_t *data)
++{
++	fprintf(stderr, "=== admin_request ===\n");
++	fprintf(stderr, "INPUT\n");
++	fprintf(stderr, "  i_id: %lld\n", data->i_id);
++	fprintf(stderr, "OUTPUT\n");
++	fprintf(stderr, "  i_srp: %f\n", data->i_srp);
++	fprintf(stderr, "  i_cost: %f\n", data->i_cost);
++	fprintf(stderr, "  i_title: %s\n", data->i_title);
++	fprintf(stderr, "  i_image: %lld\n", data->i_image);
++	fprintf(stderr, "  i_thumbnail: %lld\n", data->i_thumbnail);
++	fprintf(stderr, "  a_fname: %s\n", data->a_fname);
++	fprintf(stderr, "  a_lname: %s\n", data->a_lname);
++}
++
++void
++print_admin_confirm_data(struct admin_confirm_t *data)
++{
++	fprintf(stderr, "=== admin_confirm ===\n");
++	fprintf(stderr, "INPUT\n");
++	fprintf(stderr, "  i_id: %lld\n", data->i_id);
++	fprintf(stderr, "  i_image: %lld\n", data->i_image);
++	fprintf(stderr, "  i_thumbnail: %lld\n", data->i_thumbnail);
++	fprintf(stderr, "  i_cost: %f\n", data->i_cost);
++	fprintf(stderr, "OUPUT\n");
++	fprintf(stderr, "  i_title: %s\n", data->i_title);
++	fprintf(stderr, "  a_fname: %s\n", data->a_fname);
++	fprintf(stderr, "  a_lname: %s\n", data->a_lname);
++	fprintf(stderr, "  i_subject: %s\n", data->i_subject);
++	fprintf(stderr, "  i_desc: %s\n", data->i_desc);
++	fprintf(stderr, "  i_srp: %f\n", data->i_srp);
++	fprintf(stderr, "  i_backing: %s\n", data->i_backing);
++	fprintf(stderr, "  i_page: %d\n", data->i_page);
++	fprintf(stderr, "  i_publisher: %s\n", data->i_publisher);
++	fprintf(stderr, "  i_pub_date: %s\n", data->i_pub_date);
++	fprintf(stderr, "  i_dimensions: %s\n", data->i_dimensions);
++	fprintf(stderr, "  i_isbn: %s\n", data->i_isbn);
++}
++
++void
++print_product_detail_data(struct product_detail_t *data)
++{
++	fprintf(stderr, "=== product_detail ===\n");
++	fprintf(stderr, "INPUT\n");
++	fprintf(stderr, "  i_id: %lld\n", data->i_id);
++	fprintf(stderr, "OUTPUT\n");
++	fprintf(stderr, "  i_title: %s\n", data->i_title);
++	fprintf(stderr, "  a_fname: %s\n", data->a_fname);
++	fprintf(stderr, "  a_lname: %s\n", data->a_lname);
++	fprintf(stderr, "  i_pub_date: %s\n", data->i_pub_date);
++	fprintf(stderr, "  i_publisher: %s\n", data->i_publisher);
++	fprintf(stderr, "  i_subject: %s\n", data->i_subject);
++	fprintf(stderr, "  i_desc: %s\n", data->i_desc);
++	fprintf(stderr, "  i_image: %lld\n", data->i_image);
++	fprintf(stderr, "  i_cost: %f\n", data->i_cost);
++	fprintf(stderr, "  i_srp: %f\n", data->i_srp);
++	fprintf(stderr, "  i_avail: %s\n", data->i_avail);
++	fprintf(stderr, "  i_isbn: %s\n", data->i_isbn);
++	fprintf(stderr, "  i_page: %d\n", data->i_page);
++	fprintf(stderr, "  i_backing: %s\n", data->i_backing);
++	fprintf(stderr, "  i_dimensions: %s\n", data->i_dimensions);
++}
++
++void
++print_shopping_cart_data(struct shopping_cart_t *data)
++{
++	int i;
++
++	fprintf(stderr, "=== shopping_cart ===\n");
++	fprintf(stderr, "INPUT\n");
++	fprintf(stderr, "  c_id: %lld\n", data->c_id);
++	fprintf(stderr, "  sc_id: %lld\n", data->sc_id);
++	fprintf(stderr, "  sc_size: %d\n", data->sc_size);
++	fprintf(stderr, "  add_flag: %d\n", data->add_flag);
++	fprintf(stderr, "  i_id: %lld\n", data->i_id);
++	fprintf(stderr, "  pp_data.i_id: %lld\n", data->pp_data.i_id);
++	for (i=0 ; i<SHOPPING_CART_ITEMS_MAX ; i++)
++	{
++		fprintf(stderr, "  sc_refresh[%d].scl_i_id: %lld\n", i, data->sc_refresh[i].scl_i_id);
++		fprintf(stderr, "  sc_refresh[%d].scl_qty: %d\n", i, data->sc_refresh[i].scl_qty);
++	}
++
++	fprintf(stderr, "OUTPUT\n");
++	fprintf(stderr, "  sc_id: %lld\n", data->sc_id);
++	fprintf(stderr, "  sc_size: %d\n", data->sc_size);
++
++	for (i=0 ; i<data->sc_size ; i++)
++	{
++		fprintf(stderr, "  scl_data[%d].scl_i_id: %lld\n", i, data->scl_data[i].scl_i_id);
++		fprintf(stderr, "  scl_data[%d].i_title: %s\n", i, data->scl_data[i].i_title);
++		fprintf(stderr, "  scl_data[%d].scl_cost: %f\n", i, data->scl_data[i].scl_cost);
++		fprintf(stderr, "  scl_data[%d].scl_srp: %f\n", i, data->scl_data[i].scl_srp);
++		fprintf(stderr, "  scl_data[%d].i_backing: %s\n", i, data->scl_data[i].i_backing);
++	}
++
++	for (i=0 ; i<PROMOTIONAL_ITEMS_MAX ; i++)
++	{
++		fprintf(stderr, "  pp_data.i_related[%d]: %lld\n", i, data->pp_data.i_related[i]);
++		fprintf(stderr, "  pp_data.i_thumbnail[%d]: %lld\n", i, data->pp_data.i_thumbnail[i]);
++	}
++}
++
++void
++print_home_data(struct home_t *data)
++{
++	int i;
++
++	fprintf(stderr, "=== home ===\n");
++	fprintf(stderr, "INPUT\n");
++	fprintf(stderr, "  c_id: %lld\n", data->c_id);
++	fprintf(stderr, "  pp_data.i_id: %lld\n", data->pp_data.i_id);
++
++	fprintf(stderr, "OUTPUT\n");
++	fprintf(stderr, "  c_fname: %s\n", data->c_fname);
++	fprintf(stderr, "  c_lname: %s\n", data->c_lname);
++
++	for (i = 0; i < PROMOTIONAL_ITEMS_MAX; i++)
++	{
++		fprintf(stderr, "  i_related[%d]: %lld\n", i, data->pp_data.i_related[i]);
++		fprintf(stderr, "  i_thumbnail[%d]: %lld\n", i, data->pp_data.i_thumbnail[i]);
++	}
++}
++
++void
++print_best_sellers_data(struct best_sellers_t *data)
++{
++	int i;
++
++	fprintf(stderr, "=== best_sellers ===\n");
++	fprintf(stderr, "INPUT\n");
++	fprintf(stderr, "  c_subject: %s\n", data->i_subject);
++	fprintf(stderr, "  pp_data.i_id: %lld\n", data->pp_data.i_id);
++
++	fprintf(stderr, "OUTPUT\n");
++	fprintf(stderr, "  items: %d\n", data->items);
++
++	for (i = 0; i < PROMOTIONAL_ITEMS_MAX; i++)
++	{
++		fprintf(stderr, "  data->pp_data.i_related[%d]: %lld\n", i, data->pp_data.i_related[i]);
++		fprintf(stderr, "  data->pp_data.i_thumbnail[%d]: %lld\n", i, data->pp_data.i_thumbnail[i]);
++	}
++
++	for (i = 0; i < SEARCH_RESULT_ITEMS_MAX; i++)
++	{
++		fprintf(stderr, "  data->results_data[%d].i_id: %lld\n", i, data->results_data[i].i_id);
++		fprintf(stderr, "  data->results_data[%d].i_title: %s\n", i, data->results_data[i].i_title);
++		fprintf(stderr, "  data->results_data[%d].a_fname: %s\n", i, data->results_data[i].a_fname);
++		fprintf(stderr, "  data->results_data[%d].a_lname: %s\n", i, data->results_data[i].a_lname);
++	}
++}
++
++void
++print_buy_request_data(struct buy_request_t *data)
++{
++	int i;
++
++	fprintf(stderr, "=== buy_request ===\n");
++
++	fprintf(stderr, "INPUT\n");
++
++	fprintf(stderr, "OUTPUT\n");
++	fprintf(stderr, "  c_discount: %f\n", data->c_discount);
++#ifdef NOT_USED
++	j++; /* c_fname */
++	j++; /* c_lname */
++	j++; /* addr_street1 */
++	j++; /* addr_street2 */
++	j++; /* addr_city */
++	j++; /* addr_state */
++	j++; /* addr_zip */
++	j++; /* co_name */
++	j++; /* c_phone */
++	j++; /* c_email */
++	j++; /* c_birthday */
++	j++; /* c_data */
++	j++; /* c_passwd */
++#endif
++	fprintf(stderr, "  c_id: %lld\n", data->c_id);
++	fprintf(stderr, "  sc_sub_total: %f\n", data->sc_sub_total);
++	fprintf(stderr, "  sc_tax: %f\n", data->sc_tax);
++	fprintf(stderr, "  sc_ship_cost: %f\n", data->sc_ship_cost);
++	fprintf(stderr, "  sc_total: %f\n", data->sc_total);
++	fprintf(stderr, "  sc_size: %d\n", data->sc_size);
++
++	for (i=0 ; i<SHOPPING_CART_ITEMS_MAX ; i++)
++	{
++		fprintf(stderr, "  scl_data[%d].scl_i_id: %lld\n", i, data->scl_data[i].scl_i_id);
++
++		fprintf(stderr, "  scl_data[%d].i_title: %s\n", i, data->scl_data[i].i_title);
++
++		fprintf(stderr, "  scl_data[%d].scl_cost: %f\n", i, data->scl_data[i].scl_cost);
++		fprintf(stderr, "  scl_data[%d].scl_srp: %f\n", i, data->scl_data[i].scl_srp);
++
++		fprintf(stderr, "  scl_data[%d].i_backing: %s\n", i, data->scl_data[i].i_backing);
++
++		fprintf(stderr, "  scl_data[%d].scl_qty: %d\n", i, data->scl_data[i].scl_qty);
++	}
++}
++
++void
++print_buy_confirm_data(struct buy_confirm_t *data)
++{
++	fprintf(stderr, "=== buy_confirm ===\n");
++	fprintf(stderr, "=== NOT IMPLEMENTED YET ===\n");
++}
++
++void
++print_new_products_data(struct new_products_t *data)
++{
++	int i;
++	fprintf(stderr, "=== new_products ===\n");
++	fprintf(stderr, "INPUT\n");
++	fprintf(stderr, "  i_subject: %s\n", data->i_subject);
++	fprintf(stderr, "  pp_data.i_id: %lld\n", data->pp_data.i_id);
++	fprintf(stderr, "OUTPUT\n");
++
++	for (i=0 ; i<PROMOTIONAL_ITEMS_MAX ; i++)
++		fprintf(stderr, "  pp_data.i_related[%d]: %lld\n", i, data->pp_data.i_related[i]);
++
++	for (i=0 ; i<PROMOTIONAL_ITEMS_MAX ; i++)
++		fprintf(stderr, "  pp_data.i_thumbnail[%d]: %lld\n", i, data->pp_data.i_thumbnail[i]);
++
++	fprintf(stderr, "  items: %d\n", data->items);
++
++	for (i=0 ; i<SEARCH_RESULT_ITEMS_MAX ; i++)
++	{
++		fprintf(stderr, "  results_data[%d].i_id: %lld\n", i, data->results_data[i].i_id);
++		fprintf(stderr, "  results_data[%d].i_title: %s\n", i, data->results_data[i].i_title);
++		fprintf(stderr, "  results_data[%d].a_fname: %s\n", i, data->results_data[i].a_fname);
++		fprintf(stderr, "  results_data[%d].a_lname: %s\n", i, data->results_data[i].a_lname);
++	}
++
++}
++
++void
++print_order_display_data(struct order_display_t *data)
++{
++	fprintf(stderr, "=== order_display ===\n");
++	fprintf(stderr, "=== NOT IMPLEMENTED YET ===\n");
++}
++
++void
++print_order_inquiry_data(struct order_inquiry_t *data)
++{
++	fprintf(stderr, "=== order_inquiry ===\n");
++	fprintf(stderr, "INPUT\n");
++	fprintf(stderr, "  c_id: %lld\n", data->c_id);
++
++	fprintf(stderr, "OUTPUT\n");
++	fprintf(stderr, "  c_uname: %s\n", data->c_uname);
++}
++
++void
++print_search_request_data(struct search_request_t *data)
++{
++	int i;
++
++	fprintf(stderr, "=== search_request ===\n");
++	fprintf(stderr, "INPUT\n");
++	fprintf(stderr, "  pp_data.i_id: %lld\n", data->pp_data.i_id);
++
++	fprintf(stderr, "OUTPUT\n");
++
++	for (i=0 ; i<PROMOTIONAL_ITEMS_MAX ; i++)
++	{
++		fprintf(stderr, "  pp_data.i_related[%d]: %lld\n", i, data->pp_data.i_related[i]);
++		fprintf(stderr, "  pp_data.i_thumbnail[%d]: %lld\n", i, data->pp_data.i_thumbnail[i]);
++	}
++
++}
++
++void
++print_search_results_data(struct search_results_t *data)
++{
++	int i;
++
++	fprintf(stderr, "=== search_request ===\n");
++	fprintf(stderr, "INPUT\n");
++	fprintf(stderr, "  (search type): %d\n", data->search_type);
++	fprintf(stderr, "  search_string: %s\n", data->search_string);
++	fprintf(stderr, "  pp_data.i_id: %lld\n", data->pp_data.i_id);
++
++	fprintf(stderr, "OUTPUT\n");
++
++	for (i = 0; i < PROMOTIONAL_ITEMS_MAX; i++)
++		fprintf(stderr, "  pp_data.i_related[%d]: %lld\n", i, data->pp_data.i_related[i]);
++
++	for (i = 0; i < PROMOTIONAL_ITEMS_MAX; i++)
++		fprintf(stderr, "  pp_data.i_thumbnail[%d]: %lld\n", i, data->pp_data.i_thumbnail[i]);
++
++	fprintf(stderr, "  items: %d\n", data->items);
++
++	for (i=0 ; i<SEARCH_RESULT_ITEMS_MAX ; i++)
++	{
++		fprintf(stderr, "  results_data[%d].i_id: %lld\n", i, data->results_data[i].i_id);
++
++		fprintf(stderr, "  results_data[%d].i_title: %s\n", i, data->results_data[i].i_title);
++		fprintf(stderr, "  results_data[%d].a_fname: %s\n", i, data->results_data[i].a_fname);
++		fprintf(stderr, "  results_data[%d].a_lname: %s\n", i, data->results_data[i].a_lname);
++	}
++}
+===== include/pgsql_interaction_shopping_cart.h 1.0 vs 1.1 =====
+--- /dev/null	Thu Jan 30 19:24:37 2003
++++ 1.1/include/pgsql_interaction_shopping_cart.h	Wed Aug  6 14:27:48 2003
+@@ -0,0 +1,158 @@
++/*
++ * pgsql_interaction_shopping_cart.h
++ *
++ * This file is released under the terms of the Artistic License.  Please see
++ * the file LICENSE, included in this package, for details.
++ *
++ * Copyright (C) 2002 Mark Wong & Jenny Zhang &
++ *                    Open Source Development Lab, Inc.
++ * Copyright (C) 2003 Satoshi Nagayasu & Hideyuki Kawashima &
++ *                    Sachi Osawa & Hirokazu Kondo & Satoru Satake
++ *
++ * $Id$
++ */
++
++#ifndef _PGSQL_INTERACTION_SHOPPING_CART_H
++#define _PGSQL_INTERACTION_SHOPPING_CART_H
++
++#include <pgsql_interaction.h>
++
++#define STMT_SC \
++  "SELECT * FROM shopping_cart( %lld, %lld, %d, %d, %lld, %lld )" \
++  "AS l( " \
++  "   sc_id NUMERIC(10)," \
++  "   itemcount NUMERIC(2)," \
++  "   scl_i_id1 NUMERIC(10)," \
++  "   scl_title1 VARCHAR(60)," \
++  "   scl_cost1 NUMERIC(17,2)," \
++  "   scl_srp1 NUMERIC(17,2)," \
++  "   scl_backing1 VARCHAR(15)," \
++  "   scl_qty1 NUMERIC(3)," \
++  "   scl_i_id2 NUMERIC(10)," \
++  "   scl_title2 VARCHAR(60)," \
++  "   scl_cost2 NUMERIC(17,2)," \
++  "   scl_srp2 NUMERIC(17,2)," \
++  "   scl_backing2 VARCHAR(15)," \
++  "   scl_qty2 NUMERIC(3)," \
++  "   scl_i_id3 NUMERIC(10)," \
++  "   scl_title3 VARCHAR(60)," \
++  "   scl_cost3 NUMERIC(17,2)," \
++  "   scl_srp3 NUMERIC(17,2)," \
++  "   scl_backing3 VARCHAR(15)," \
++  "   scl_qty3 NUMERIC(3)," \
++  "   scl_i_id4 NUMERIC(10)," \
++  "   scl_title4 VARCHAR(60)," \
++  "   scl_cost4 NUMERIC(17,2)," \
++  "   scl_srp4 NUMERIC(17,2)," \
++  "   scl_backing4 VARCHAR(15)," \
++  "   scl_qty4 NUMERIC(3)," \
++  "   scl_i_id5 NUMERIC(10)," \
++  "   scl_title5 VARCHAR(60)," \
++  "   scl_cost5 NUMERIC(17,2)," \
++  "   scl_srp5 NUMERIC(17,2)," \
++  "   scl_backing5 VARCHAR(15)," \
++  "   scl_qty5 NUMERIC(3)," \
++  "   scl_i_id6 NUMERIC(10)," \
++  "   scl_title6 VARCHAR(60)," \
++  "   scl_cost6 NUMERIC(17,2)," \
++  "   scl_srp6 NUMERIC(17,2)," \
++  "   scl_backing6 VARCHAR(15)," \
++  "   scl_qty6 NUMERIC(3)," \
++  "   scl_i_id7 NUMERIC(10)," \
++  "   scl_title7 VARCHAR(60)," \
++  "   scl_cost7 NUMERIC(17,2)," \
++  "   scl_srp7 NUMERIC(17,2)," \
++  "   scl_backing7 VARCHAR(15)," \
++  "   scl_qty7 NUMERIC(3)," \
++  "   scl_i_id8 NUMERIC(10)," \
++  "   scl_title8 VARCHAR(60)," \
++  "   scl_cost8 NUMERIC(17,2)," \
++  "   scl_srp8 NUMERIC(17,2)," \
++  "   scl_backing8 VARCHAR(15)," \
++  "   scl_qty8 NUMERIC(3)," \
++  "   scl_i_id9 NUMERIC(10)," \
++  "   scl_title9 VARCHAR(60)," \
++  "   scl_cost9 NUMERIC(17,2)," \
++  "   scl_srp9 NUMERIC(17,2)," \
++  "   scl_backing9 VARCHAR(15)," \
++  "   scl_qty9 NUMERIC(3)," \
++  "   scl_i_id10 NUMERIC(10)," \
++  "   scl_title10 VARCHAR(60)," \
++  "   scl_cost10 NUMERIC(17,2)," \
++  "   scl_srp10 NUMERIC(17,2)," \
++  "   scl_backing10 VARCHAR(15)," \
++  "   scl_qty10 NUMERIC(3)," \
++  "   scl_i_id11 NUMERIC(10)," \
++  "   scl_title11 VARCHAR(60)," \
++  "   scl_cost11 NUMERIC(17,2)," \
++  "   scl_srp11 NUMERIC(17,2)," \
++  "   scl_backing11 VARCHAR(15)," \
++  "   scl_qty11 NUMERIC(3)," \
++  "   scl_i_id12 NUMERIC(10)," \
++  "   scl_title12 VARCHAR(60)," \
++  "   scl_cost12 NUMERIC(17,2)," \
++  "   scl_srp12 NUMERIC(17,2)," \
++  "   scl_backing12 VARCHAR(15)," \
++  "   scl_qty12 NUMERIC(3)," \
++  "   scl_i_id13 NUMERIC(10)," \
++  "   scl_title13 VARCHAR(60)," \
++  "   scl_cost13 NUMERIC(17,2)," \
++  "   scl_srp13 NUMERIC(17,2)," \
++  "   scl_backing13 VARCHAR(15)," \
++  "   scl_qty13 NUMERIC(3)," \
++  "   scl_i_id14 NUMERIC(10)," \
++  "   scl_title14 VARCHAR(60)," \
++  "   scl_cost14 NUMERIC(17,2)," \
++  "   scl_srp14 NUMERIC(17,2)," \
++  "   scl_backing14 VARCHAR(15)," \
++  "   scl_qty14 NUMERIC(3)," \
++  "   scl_i_id15 NUMERIC(10)," \
++  "   scl_title15 VARCHAR(60)," \
++  "   scl_cost15 NUMERIC(17,2)," \
++  "   scl_srp15 NUMERIC(17,2)," \
++  "   scl_backing15 VARCHAR(15)," \
++  "   scl_qty15 NUMERIC(3)," \
++  "   scl_i_id16 NUMERIC(10)," \
++  "   scl_title16 VARCHAR(60)," \
++  "   scl_cost16 NUMERIC(17,2)," \
++  "   scl_srp16 NUMERIC(17,2)," \
++  "   scl_backing16 VARCHAR(15)," \
++  "   scl_qty16 NUMERIC(3)," \
++  "   scl_i_id17 NUMERIC(10)," \
++  "   scl_title17 VARCHAR(60)," \
++  "   scl_cost17 NUMERIC(17,2)," \
++  "   scl_srp17 NUMERIC(17,2)," \
++  "   scl_backing17 VARCHAR(15)," \
++  "   scl_qty17 NUMERIC(3)," \
++  "   scl_i_id18 NUMERIC(10)," \
++  "   scl_title18 VARCHAR(60)," \
++  "   scl_cost18 NUMERIC(17,2)," \
++  "   scl_srp18 NUMERIC(17,2)," \
++  "   scl_backing18 VARCHAR(15)," \
++  "   scl_qty18 NUMERIC(3)," \
++  "   scl_i_id19 NUMERIC(10)," \
++  "   scl_title19 VARCHAR(60)," \
++  "   scl_cost19 NUMERIC(17,2)," \
++  "   scl_srp19 NUMERIC(17,2)," \
++  "   scl_backing19 VARCHAR(15)," \
++  "   scl_qty19 NUMERIC(3)," \
++  "   scl_i_id20 NUMERIC(10)," \
++  "   scl_title20 VARCHAR(60)," \
++  "   scl_cost20 NUMERIC(17,2)," \
++  "   scl_srp20 NUMERIC(17,2)," \
++  "   scl_backing20 VARCHAR(15)," \
++  "   scl_qty20 NUMERIC(3)," \
++  "   pp_i_id1 NUMERIC(10)," \
++  "   pp_i_t1 NUMERIC(10)," \
++  "   pp_i_id2 NUMERIC(10)," \
++  "   pp_i_t2 NUMERIC(10)," \
++  "   pp_i_id3 NUMERIC(10)," \
++  "   pp_i_t3 NUMERIC(10)," \
++  "   pp_i_id4 NUMERIC(10)," \
++  "   pp_i_t4 NUMERIC(10)," \
++  "   pp_i_id5 NUMERIC(10)," \
++  "   pp_i_t5 NUMERIC(10) )"
++
++int execute_shopping_cart(struct db_context_t *, struct shopping_cart_t *);
++
++#endif /* _PGSQL_INTERACTION_SHOPPING_CART_H */
+===== include/pgsql_interaction.h 1.0 vs 1.1 =====
+--- /dev/null	Thu Jan 30 19:24:37 2003
++++ 1.1/include/pgsql_interaction.h	Wed Aug  6 14:27:47 2003
+@@ -0,0 +1,43 @@
++/*
++ * pgsql_interaction.h
++ *
++ * This file is released under the terms of the Artistic License.  Please see
++ * the file LICENSE, included in this package, for details.
++ *
++ * Copyright (C) 2002 Mark Wong & Jenny Zhang &
++ *                    Open Source Development Lab, Inc.
++ * Copyright (C) 2003 Satoshi Nagayasu & Hideyuki Kawashima &
++ *                    Sachi Osawa & Hirokazu Kondo & Satoru Satake
++ *
++ * $Id$
++ */
++
++#ifndef _PGSQL_INTERACTION_H_
++#define _PGSQL_INTERACTION_H_
++
++#include <stdlib.h>
++#include <string.h>
++#include <libpq-fe.h>
++
++#include <assert.h>
++
++#include <common.h>
++#include <interaction_data.h>
++
++#include <pgsql_interaction_debug.h>
++
++#define LOG_PGSQL_ERROR(M_CONN) pgsql_error(__FILE__, __LINE__, M_CONN)
++
++struct db_context_t
++{
++	PGconn *conn;
++};
++
++/* Prototypes */
++int pgsql_connect(struct db_context_t *pgsqlc);
++int pgsql_disconnect(struct db_context_t *pgsqlc);
++int pgsql_error(const char *filename, int line, PGconn *);
++int pgsql_init(const char *, const char *, const char *);
++PGresult *pgsql_execute(PGconn *, const char *, ...);
++
++#endif /* _PGSQL_INTERACTION_H_ */
+===== include/pgsql_interaction_debug.h 1.0 vs 1.1 =====
+--- /dev/null	Thu Jan 30 19:24:37 2003
++++ 1.1/include/pgsql_interaction_debug.h	Wed Aug  6 14:27:48 2003
+@@ -0,0 +1,31 @@
++/*
++ * pgsql_interaction_debug.h
++ *
++ * This file is released under the terms of the Artistic License.  Please see
++ * the file LICENSE, included in this package, for details.
++ *
++ * Copyright (C) 2003 Satoshi Nagayasu & Hideyuki Kawashima &
++ *                    Sachi Osawa & Hirokazu Kondo & Satoru Satake
++ *
++ * $Id$
++ */
++
++#ifndef _PGSQL_INTERACTION_DEBUG_
++#define _PGSQL_INTERACTION_DEBUG_
++
++#include <interaction_data.h>
++
++void print_admin_request_data(struct admin_request_t *);
++void print_admin_confirm_data(struct admin_confirm_t *);
++void print_product_detail_data(struct product_detail_t *);
++void print_shopping_cart_data(struct shopping_cart_t *);
++void print_home_data(struct home_t *);
++void print_best_sellers_data(struct best_sellers_t *);
++void print_buy_confirm_data(struct buy_confirm_t *);
++void print_new_products_data(struct new_products_t *);
++void print_order_display_data(struct order_display_t *);
++void print_order_inquiry_data(struct order_inquiry_t *);
++void print_search_request_data(struct search_request_t *);
++void print_search_result_data(struct search_results_t *);
++
++#endif /* _PGSQL_INTERACTION_DEBUG_ */
+===== include/pgsql_interaction_new_products.h 1.0 vs 1.1 =====
+--- /dev/null	Thu Jan 30 19:24:37 2003
++++ 1.1/include/pgsql_interaction_new_products.h	Wed Aug  6 14:27:48 2003
+@@ -0,0 +1,236 @@
++/*
++ * pgsql_interaction_new_products.h
++ *
++ * This file is released under the terms of the Artistic License.  Please see
++ * the file LICENSE, included in this package, for details.
++ *
++ * Copyright (C) 2002 Mark Wong & Jenny Zhang &
++ *                    Open Source Development Lab, Inc.
++ * Copyright (C) 2003 Satoshi Nagayasu & Hideyuki Kawashima &
++ *                    Sachi Osawa & Hirokazu Kondo & Satoru Satake
++ *
++ * $Id$
++ */
++
++#ifndef _PGSQL_INTERACTION_NEW_PRODUCTS_H_
++#define _PGSQL_INTERACTION_NEW_PRODUCTS_H_
++
++#include <pgsql_interaction.h>
++
++#define STMT_NEW_PRODUCTS \
++  "SELECT * FROM best_sellers( '%s', %lld )" \
++   " AS l( i_related1 NUMERIC(10)," \
++          "i_related2 NUMERIC(10)," \
++          "i_related3 NUMERIC(10)," \
++          "i_related4 NUMERIC(10)," \
++          "i_related5 NUMERIC(10)," \
++          "i_thumbnail1 NUMERIC(10)," \
++          "i_thumbnail2 NUMERIC(10)," \
++          "i_thumbnail3 NUMERIC(10)," \
++          "i_thumbnail4 NUMERIC(10)," \
++          "i_thumbnail5 NUMERIC(10)," \
++          "items NUMERIC(2)," \
++          "i_id1 NUMERIC(10)," \
++          "i_title1 VARCHAR(60)," \
++          "a_fname1 VARCHAR(20)," \
++          "a_lname1 VARCHAR(20)," \
++          "i_id2 NUMERIC(10)," \
++          "i_title2 VARCHAR(60)," \
++          "a_fname2 VARCHAR(20)," \
++          "a_lname2 VARCHAR(20)," \
++          "i_id3 NUMERIC(10)," \
++          "i_title3 VARCHAR(60)," \
++          "a_fname3 VARCHAR(20)," \
++          "a_lname3 VARCHAR(20)," \
++          "i_id4 NUMERIC(10)," \
++          "i_title4 VARCHAR(60)," \
++          "a_fname4 VARCHAR(20)," \
++          "a_lname4 VARCHAR(20)," \
++          "i_id5 NUMERIC(10)," \
++          "i_title5 VARCHAR(60)," \
++          "a_fname5 VARCHAR(20)," \
++          "a_lname5 VARCHAR(20)," \
++          "i_id6 NUMERIC(10)," \
++          "i_title6 VARCHAR(60)," \
++          "a_fname6 VARCHAR(20)," \
++          "a_lname6 VARCHAR(20)," \
++          "i_id7 NUMERIC(10)," \
++          "i_title7 VARCHAR(60)," \
++          "a_fname7 VARCHAR(20)," \
++          "a_lname7 VARCHAR(20)," \
++          "i_id8 NUMERIC(10)," \
++          "i_title8 VARCHAR(60)," \
++          "a_fname8 VARCHAR(20)," \
++          "a_lname8 VARCHAR(20)," \
++          "i_id9 NUMERIC(10)," \
++          "i_title9 VARCHAR(60)," \
++          "a_fname9 VARCHAR(20)," \
++          "a_lname9 VARCHAR(20)," \
++          "i_id10 NUMERIC(10)," \
++          "i_title10 VARCHAR(60)," \
++          "a_fname10 VARCHAR(20)," \
++          "a_lname10 VARCHAR(20)," \
++          "i_id11 NUMERIC(10)," \
++          "i_title11 VARCHAR(60)," \
++          "a_fname11 VARCHAR(20)," \
++          "a_lname11 VARCHAR(20)," \
++          "i_id12 NUMERIC(10)," \
++          "i_title12 VARCHAR(60)," \
++          "a_fname12 VARCHAR(20)," \
++          "a_lname12 VARCHAR(20)," \
++          "i_id13 NUMERIC(10)," \
++          "i_title13 VARCHAR(60)," \
++          "a_fname13 VARCHAR(20)," \
++          "a_lname13 VARCHAR(20)," \
++          "i_id14 NUMERIC(10)," \
++          "i_title14 VARCHAR(60)," \
++          "a_fname14 VARCHAR(20)," \
++          "a_lname14 VARCHAR(20)," \
++          "i_id15 NUMERIC(10)," \
++          "i_title15 VARCHAR(60)," \
++          "a_fname15 VARCHAR(20)," \
++          "a_lname15 VARCHAR(20)," \
++          "i_id16 NUMERIC(10)," \
++          "i_title16 VARCHAR(60)," \
++          "a_fname16 VARCHAR(20)," \
++          "a_lname16 VARCHAR(20)," \
++          "i_id17 NUMERIC(10)," \
++          "i_title17 VARCHAR(60)," \
++          "a_fname17 VARCHAR(20)," \
++          "a_lname17 VARCHAR(20)," \
++          "i_id18 NUMERIC(10)," \
++          "i_title18 VARCHAR(60)," \
++          "a_fname18 VARCHAR(20)," \
++          "a_lname18 VARCHAR(20)," \
++          "i_id19 NUMERIC(10)," \
++          "i_title19 VARCHAR(60)," \
++          "a_fname19 VARCHAR(20)," \
++          "a_lname19 VARCHAR(20)," \
++          "i_id20 NUMERIC(10)," \
++          "i_title20 VARCHAR(60)," \
++          "a_fname20 VARCHAR(20)," \
++          "a_lname20 VARCHAR(20)," \
++          "i_id21 NUMERIC(10)," \
++          "i_title21 VARCHAR(60)," \
++          "a_fname21 VARCHAR(20)," \
++          "a_lname21 VARCHAR(20)," \
++          "i_id22 NUMERIC(10)," \
++          "i_title22 VARCHAR(60)," \
++          "a_fname22 VARCHAR(20)," \
++          "a_lname22 VARCHAR(20)," \
++          "i_id23 NUMERIC(10)," \
++          "i_title23 VARCHAR(60)," \
++          "a_fname23 VARCHAR(20)," \
++          "a_lname23 VARCHAR(20)," \
++          "i_id24 NUMERIC(10)," \
++          "i_title24 VARCHAR(60)," \
++          "a_fname24 VARCHAR(20)," \
++          "a_lname24 VARCHAR(20)," \
++          "i_id25 NUMERIC(10)," \
++          "i_title25 VARCHAR(60)," \
++          "a_fname25 VARCHAR(20)," \
++          "a_lname25 VARCHAR(20)," \
++          "i_id26 NUMERIC(10)," \
++          "i_title26 VARCHAR(60)," \
++          "a_fname26 VARCHAR(20)," \
++          "a_lname26 VARCHAR(20)," \
++          "i_id27 NUMERIC(10)," \
++          "i_title27 VARCHAR(60)," \
++          "a_fname27 VARCHAR(20)," \
++          "a_lname27 VARCHAR(20)," \
++          "i_id28 NUMERIC(10)," \
++          "i_title28 VARCHAR(60)," \
++          "a_fname28 VARCHAR(20)," \
++          "a_lname28 VARCHAR(20)," \
++          "i_id29 NUMERIC(10)," \
++          "i_title29 VARCHAR(60)," \
++          "a_fname29 VARCHAR(20)," \
++          "a_lname29 VARCHAR(20)," \
++          "i_id30 NUMERIC(10)," \
++          "i_title30 VARCHAR(60)," \
++          "a_fname30 VARCHAR(20)," \
++          "a_lname30 VARCHAR(20)," \
++          "i_id31 NUMERIC(10)," \
++          "i_title31 VARCHAR(60)," \
++          "a_fname31 VARCHAR(20)," \
++          "a_lname31 VARCHAR(20)," \
++          "i_id32 NUMERIC(10)," \
++          "i_title32 VARCHAR(60)," \
++          "a_fname32 VARCHAR(20)," \
++          "a_lname32 VARCHAR(20)," \
++          "i_id33 NUMERIC(10)," \
++          "i_title33 VARCHAR(60)," \
++          "a_fname33 VARCHAR(20)," \
++          "a_lname33 VARCHAR(20)," \
++          "i_id34 NUMERIC(10)," \
++          "i_title34 VARCHAR(60)," \
++          "a_fname34 VARCHAR(20)," \
++          "a_lname34 VARCHAR(20)," \
++          "i_id35 NUMERIC(10)," \
++          "i_title35 VARCHAR(60)," \
++          "a_fname35 VARCHAR(20)," \
++          "a_lname35 VARCHAR(20)," \
++          "i_id36 NUMERIC(10)," \
++          "i_title36 VARCHAR(60)," \
++          "a_fname36 VARCHAR(20)," \
++          "a_lname36 VARCHAR(20)," \
++          "i_id37 NUMERIC(10)," \
++          "i_title37 VARCHAR(60)," \
++          "a_fname37 VARCHAR(20)," \
++          "a_lname37 VARCHAR(20)," \
++          "i_id38 NUMERIC(10)," \
++          "i_title38 VARCHAR(60)," \
++          "a_fname38 VARCHAR(20)," \
++          "a_lname38 VARCHAR(20)," \
++          "i_id39 NUMERIC(10)," \
++          "i_title39 VARCHAR(60)," \
++          "a_fname39 VARCHAR(20)," \
++          "a_lname39 VARCHAR(20)," \
++          "i_id40 NUMERIC(10)," \
++          "i_title40 VARCHAR(60)," \
++          "a_fname40 VARCHAR(20)," \
++          "a_lname40 VARCHAR(20)," \
++          "i_id41 NUMERIC(10)," \
++          "i_title41 VARCHAR(60)," \
++          "a_fname41 VARCHAR(20)," \
++          "a_lname41 VARCHAR(20)," \
++          "i_id42 NUMERIC(10)," \
++          "i_title42 VARCHAR(60)," \
++          "a_fname42 VARCHAR(20)," \
++          "a_lname42 VARCHAR(20)," \
++          "i_id43 NUMERIC(10)," \
++          "i_title43 VARCHAR(60)," \
++          "a_fname43 VARCHAR(20)," \
++          "a_lname43 VARCHAR(20)," \
++          "i_id44 NUMERIC(10)," \
++          "i_title44 VARCHAR(60)," \
++          "a_fname44 VARCHAR(20)," \
++          "a_lname44 VARCHAR(20)," \
++          "i_id45 NUMERIC(10)," \
++          "i_title45 VARCHAR(60)," \
++          "a_fname45 VARCHAR(20)," \
++          "a_lname45 VARCHAR(20)," \
++          "i_id46 NUMERIC(10)," \
++          "i_title46 VARCHAR(60)," \
++          "a_fname46 VARCHAR(20)," \
++          "a_lname46 VARCHAR(20)," \
++          "i_id47 NUMERIC(10)," \
++          "i_title47 VARCHAR(60)," \
++          "a_fname47 VARCHAR(20)," \
++          "a_lname47 VARCHAR(20)," \
++          "i_id48 NUMERIC(10)," \
++          "i_title48 VARCHAR(60)," \
++          "a_fname48 VARCHAR(20)," \
++          "a_lname48 VARCHAR(20)," \
++          "i_id49 NUMERIC(10)," \
++          "i_title49 VARCHAR(60)," \
++          "a_fname49 VARCHAR(20)," \
++          "a_lname49 VARCHAR(20)," \
++          "i_id50 NUMERIC(10)," \
++          "i_title50 VARCHAR(60)," \
++          "a_fname50 VARCHAR(20)," \
++          "a_lname50 VARCHAR(20) )"
++
++int execute_new_products(struct db_context_t *,	struct new_products_t *);
++
++#endif /* _PGSQL_INTERACTION_NEW_PRODUCTS_H_ */
+===== include/pgsql_interaction_order_display.h 1.0 vs 1.1 =====
+--- /dev/null	Thu Jan 30 19:24:37 2003
++++ 1.1/include/pgsql_interaction_order_display.h	Wed Aug  6 14:27:48 2003
+@@ -0,0 +1,192 @@
++/*
++ * pgsql_interaction_order_display.h
++ *
++ * This file is released under the terms of the Artistic License.  Please see
++ * the file LICENSE, included in this package, for details.
++ *
++ * Copyright (C) 2002 Mark Wong & Jenny Zhang &
++ *                    Open Source Development Lab, Inc.
++ * Copyright (C) 2003 Satoshi Nagayasu & Hideyuki Kawashima &
++ *                    Sachi Osawa & Hirokazu Kondo & Satoru Satake
++ *
++ * $Id$
++ */
++
++#ifndef _PGSQL_INTERACTION_ORDER_DISPLAY_H_
++#define _PGSQL_INTERACTION_ORDER_DISPLAY_H_
++
++#include <pgsql_interaction.h>
++
++#define STMT_ORDER_DISPLAY \
++  "SELECT * FROM order_display( '%s', '%s' ) " \
++  "AS l( c_fname VARCHAR(15)," \
++        "c_lname VARCHAR(15)," \
++        "c_phone VARCHAR(16)," \
++        "c_email VARCHAR(50)," \
++        "o_id NUMERIC(10)," \
++        "o_date CHAR(26)," \
++        "o_sub_total NUMERIC(17, 2)," \
++        "o_tax NUMERIC(17, 2)," \
++        "o_total NUMERIC(17, 2)," \
++        "o_ship_type VARCHAR(10)," \
++        "o_ship_date CHAR(26)," \
++        "o_status VARCHAR(15)," \
++        "cx_type VARCHAR(10)," \
++        "cx_auth_id VARCHAR(15)," \
++        "bill_addr_street1 VARCHAR(40)," \
++        "bill_addr_street2 VARCHAR(40)," \
++        "bill_addr_city VARCHAR(30)," \
++        "bill_addr_state VARCHAR(20)," \
++        "bill_addr_zip VARCHAR(10)," \
++        "bill_co_name VARCHAR(50)," \
++        "ship_addr_street1 VARCHAR(40)," \
++        "ship_addr_street2 VARCHAR(40)," \
++        "ship_addr_city VARCHAR(30)," \
++        "ship_addr_state VARCHAR(20)," \
++        "ship_addr_zip VARCHAR(10)," \
++        "ship_co_name VARCHAR(50)," \
++        "num_item NUMERIC(3,0)," \
++        "i_id1 NUMERIC(10)," \
++        "i_title1 VARCHAR(60)," \
++        "i_publisher1 VARCHAR(60)," \
++        "i_cost1 NUMERIC(17, 2)," \
++        "ol_qty1 NUMERIC(3)," \
++        "ol_discount1 NUMERIC(17, 2)," \
++        "ol_comments1 VARCHAR(100)," \
++        "i_id2 NUMERIC(10)," \
++        "i_title2 VARCHAR(60)," \
++        "i_publisher2 VARCHAR(60)," \
++        "i_cost2 NUMERIC(17, 2)," \
++        "ol_qty2 NUMERIC(3)," \
++        "ol_discount2 NUMERIC(17, 2)," \
++        "ol_comments2 VARCHAR(100)," \
++        "i_id3 NUMERIC(10)," \
++        "i_title3 VARCHAR(60)," \
++        "i_publisher3 VARCHAR(60)," \
++        "i_cost3 NUMERIC(17, 2)," \
++        "ol_qty3 NUMERIC(3)," \
++        "ol_discount3 NUMERIC(17, 2)," \
++        "ol_comments3 VARCHAR(100)," \
++        "i_id4 NUMERIC(10)," \
++        "i_title4 VARCHAR(60)," \
++        "i_publisher4 VARCHAR(60)," \
++        "i_cost4 NUMERIC(17, 2)," \
++        "ol_qty4 NUMERIC(3)," \
++        "ol_discount4 NUMERIC(17, 2)," \
++        "ol_comments4 VARCHAR(100)," \
++        "i_id5 NUMERIC(10)," \
++        "i_title5 VARCHAR(60)," \
++        "i_publisher5 VARCHAR(60)," \
++        "i_cost5 NUMERIC(17, 2)," \
++        "ol_qty5 NUMERIC(3)," \
++        "ol_discount5 NUMERIC(17, 2)," \
++        "ol_comments5 VARCHAR(100)," \
++        "i_id6 numeric(10)," \
++        "i_title6 VARCHAR(60)," \
++        "i_publisher6 VARCHAR(60)," \
++        "i_cost6 numeric(17, 2)," \
++        "ol_qty6 numeric(3)," \
++        "ol_discount6 numeric(17, 2)," \
++        "ol_comments6 VARCHAR(100)," \
++        "i_id7 numeric(10)," \
++        "i_title7 VARCHAR(60)," \
++        "i_publisher7 VARCHAR(60)," \
++        "i_cost7 numeric(17, 2)," \
++        "ol_qty7 numeric(3)," \
++        "ol_discount7 numeric(17, 2)," \
++        "ol_comments7 VARCHAR(100)," \
++        "i_id8 numeric(10)," \
++        "i_title8 VARCHAR(60)," \
++        "i_publisher8 VARCHAR(60)," \
++        "i_cost8 numeric(17, 2)," \
++        "ol_qty8 numeric(3)," \
++        "ol_discount8 numeric(17, 2)," \
++        "ol_comments8 VARCHAR(100)," \
++        "i_id9 numeric(10)," \
++        "i_title9 VARCHAR(60)," \
++        "i_publisher9 VARCHAR(60)," \
++        "i_cost9 numeric(17, 2)," \
++        "ol_qty9 numeric(3)," \
++        "ol_discount9 numeric(17, 2)," \
++        "ol_comments9 VARCHAR(100)," \
++        "i_id10 numeric(10)," \
++        "i_title10 VARCHAR(60)," \
++        "i_publisher10 VARCHAR(60)," \
++        "i_cost10 numeric(17, 2)," \
++        "ol_qty10 numeric(3)," \
++        "ol_discount10 numeric(17, 2)," \
++        "ol_comments10 VARCHAR(100)," \
++        "i_id11 numeric(10)," \
++        "i_title11 VARCHAR(60)," \
++        "i_publisher11 VARCHAR(60)," \
++        "i_cost11 numeric(17, 2)," \
++        "ol_qty11 numeric(3)," \
++        "ol_discount11 numeric(17, 2)," \
++        "ol_comments11 VARCHAR(100)," \
++        "i_id12 numeric(10)," \
++        "i_title12 VARCHAR(60)," \
++        "i_publisher12 VARCHAR(60)," \
++        "i_cost12 numeric(17, 2)," \
++        "ol_qty12 numeric(3)," \
++        "ol_discount12 numeric(17, 2)," \
++        "ol_comments12 VARCHAR(100)," \
++        "i_id13 numeric(10)," \
++        "i_title13 VARCHAR(60)," \
++        "i_publisher13 VARCHAR(60)," \
++        "i_cost13 numeric(17, 2)," \
++        "ol_qty13 numeric(3)," \
++        "ol_discount13 numeric(17, 2)," \
++        "ol_comments13 VARCHAR(100)," \
++        "i_id14 numeric(10)," \
++        "i_title14 VARCHAR(60)," \
++        "i_publisher14 VARCHAR(60)," \
++        "i_cost14 numeric(17, 2)," \
++        "ol_qty14 numeric(3)," \
++        "ol_discount14 numeric(17, 2)," \
++        "ol_comments14 VARCHAR(100)," \
++        "i_id15 numeric(10)," \
++        "i_title15 VARCHAR(60)," \
++        "i_publisher15 VARCHAR(60)," \
++        "i_cost15 numeric(17, 2)," \
++        "ol_qty15 numeric(3)," \
++        "ol_discount15 numeric(17, 2)," \
++        "ol_comments15 VARCHAR(100)," \
++        "i_id16 numeric(10)," \
++        "i_title16 VARCHAR(60)," \
++        "i_publisher16 VARCHAR(60)," \
++        "i_cost16 numeric(17, 2)," \
++        "ol_qty16 numeric(3)," \
++        "ol_discount16 numeric(17, 2)," \
++        "ol_comments16 VARCHAR(100)," \
++        "i_id17 numeric(10)," \
++        "i_title17 VARCHAR(60)," \
++        "i_publisher17 VARCHAR(60)," \
++        "i_cost17 numeric(17, 2)," \
++        "ol_qty17 numeric(3)," \
++        "ol_discount17 numeric(17, 2)," \
++        "ol_comments17 VARCHAR(100)," \
++        "i_id18 numeric(10)," \
++        "i_title18 VARCHAR(60)," \
++        "i_publisher18 VARCHAR(60)," \
++        "i_cost18 numeric(17, 2)," \
++        "ol_qty18 numeric(3)," \
++        "ol_discount18 numeric(17, 2)," \
++        "ol_comments18 VARCHAR(100)," \
++        "i_id19 numeric(10)," \
++        "i_title19 VARCHAR(60)," \
++        "i_publisher19 VARCHAR(60)," \
++        "i_cost19 numeric(17, 2)," \
++        "ol_qty19 numeric(3)," \
++        "ol_discount19 numeric(17, 2)," \
++        "ol_comments19 VARCHAR(100)," \
++        "i_id20 numeric(10)," \
++        "i_title20 VARCHAR(60)," \
++        "i_publisher20 VARCHAR(60)," \
++        "i_cost20 numeric(17, 2)," \
++        "ol_qty20 numeric(3)," \
++        "ol_discount20 numeric(17, 2)," \
++        "ol_comments20 VARCHAR(100) )"
++
++int execute_order_display(struct db_context_t *, struct order_display_t *);
++
++#endif /* _PGSQL_INTERACTION_ORDER_DISPLAY_H_ */
+===== include/pgsql_interaction_best_sellers.h 1.0 vs 1.1 =====
+--- /dev/null	Thu Jan 30 19:24:37 2003
++++ 1.1/include/pgsql_interaction_best_sellers.h	Wed Aug  6 14:27:48 2003
+@@ -0,0 +1,236 @@
++/*
++ * pgsql_interaction_best_sellers.h
++ *
++ * This file is released under the terms of the Artistic License.  Please see
++ * the file LICENSE, included in this package, for details.
++ *
++ * Copyright (C) 2002 Mark Wong & Jenny Zhang &
++ *                    Open Source Development Lab, Inc.
++ * Copyright (C) 2003 Satoshi Nagayasu & Hideyuki Kawashima &
++ *                    Sachi Osawa & Hirokazu Kondo & Satoru Satake
++ *
++ * $Id$
++ */
++
++#ifndef _PGSQL_INTERACTION_BEST_SELLERS_H_
++#define _PGSQL_INTERACTION_BEST_SELLERS_H_
++
++#include <pgsql_interaction.h>
++
++#define STMT_BEST_SELLERS \
++  "SELECT * FROM best_sellers( '%s',%d ) " \
++  "  AS l( i_related1 NUMERIC(10)," \
++  "        i_related2 NUMERIC(10)," \
++  "        i_related3 NUMERIC(10)," \
++  "        i_related4 NUMERIC(10)," \
++  "        i_related5 NUMERIC(10)," \
++  "        i_thumbnail1 NUMERIC(10)," \
++  "        i_thumbnail2 NUMERIC(10)," \
++  "        i_thumbnail3 NUMERIC(10)," \
++  "        i_thumbnail4 NUMERIC(10)," \
++  "        i_thumbnail5 NUMERIC(10)," \
++  "        items NUMERIC(2)," \
++  "        i_id1 NUMERIC(10)," \
++  "        i_title1 VARCHAR(60)," \
++  "        a_fname1 VARCHAR(20)," \
++  "        a_lname1 VARCHAR(20)," \
++  "        i_id2 NUMERIC(10)," \
++  "        i_title2 VARCHAR(60)," \
++  "        a_fname2 VARCHAR(20)," \
++  "        a_lname2 VARCHAR(20)," \
++  "        i_id3 NUMERIC(10)," \
++  "        i_title3 VARCHAR(60)," \
++  "        a_fname3 VARCHAR(20)," \
++  "        a_lname3 VARCHAR(20)," \
++  "        i_id4 NUMERIC(10)," \
++  "        i_title4 VARCHAR(60)," \
++  "        a_fname4 VARCHAR(20)," \
++  "        a_lname4 VARCHAR(20)," \
++  "        i_id5 NUMERIC(10)," \
++  "        i_title5 VARCHAR(60)," \
++  "        a_fname5 VARCHAR(20)," \
++  "        a_lname5 VARCHAR(20)," \
++  "        i_id6 NUMERIC(10)," \
++  "        i_title6 VARCHAR(60)," \
++  "        a_fname6 VARCHAR(20)," \
++  "        a_lname6 VARCHAR(20)," \
++  "        i_id7 NUMERIC(10)," \
++  "        i_title7 VARCHAR(60)," \
++  "        a_fname7 VARCHAR(20)," \
++  "        a_lname7 VARCHAR(20)," \
++  "        i_id8 NUMERIC(10)," \
++  "        i_title8 VARCHAR(60)," \
++  "        a_fname8 VARCHAR(20)," \
++  "        a_lname8 VARCHAR(20)," \
++  "        i_id9 NUMERIC(10)," \
++  "        i_title9 VARCHAR(60)," \
++  "        a_fname9 VARCHAR(20)," \
++  "        a_lname9 VARCHAR(20)," \
++  "        i_id10 NUMERIC(10)," \
++  "        i_title10 VARCHAR(60)," \
++  "        a_fname10 VARCHAR(20)," \
++  "        a_lname10 VARCHAR(20)," \
++  "        i_id11 NUMERIC(10)," \
++  "        i_title11 VARCHAR(60)," \
++  "        a_fname11 VARCHAR(20)," \
++  "        a_lname11 VARCHAR(20)," \
++  "        i_id12 NUMERIC(10)," \
++  "        i_title12 VARCHAR(60)," \
++  "        a_fname12 VARCHAR(20)," \
++  "        a_lname12 VARCHAR(20)," \
++  "        i_id13 NUMERIC(10)," \
++  "        i_title13 VARCHAR(60)," \
++  "        a_fname13 VARCHAR(20)," \
++  "        a_lname13 VARCHAR(20)," \
++  "        i_id14 NUMERIC(10)," \
++  "        i_title14 VARCHAR(60)," \
++  "        a_fname14 VARCHAR(20)," \
++  "        a_lname14 VARCHAR(20)," \
++  "        i_id15 NUMERIC(10)," \
++  "        i_title15 VARCHAR(60)," \
++  "        a_fname15 VARCHAR(20)," \
++  "        a_lname15 VARCHAR(20)," \
++  "        i_id16 NUMERIC(10)," \
++  "        i_title16 VARCHAR(60)," \
++  "        a_fname16 VARCHAR(20)," \
++  "        a_lname16 VARCHAR(20)," \
++  "        i_id17 NUMERIC(10)," \
++  "        i_title17 VARCHAR(60)," \
++  "        a_fname17 VARCHAR(20)," \
++  "        a_lname17 VARCHAR(20)," \
++  "        i_id18 NUMERIC(10)," \
++  "        i_title18 VARCHAR(60)," \
++  "        a_fname18 VARCHAR(20)," \
++  "        a_lname18 VARCHAR(20)," \
++  "        i_id19 NUMERIC(10)," \
++  "        i_title19 VARCHAR(60)," \
++  "        a_fname19 VARCHAR(20)," \
++  "        a_lname19 VARCHAR(20)," \
++  "        i_id20 NUMERIC(10)," \
++  "        i_title20 VARCHAR(60)," \
++  "        a_fname20 VARCHAR(20)," \
++  "        a_lname20 VARCHAR(20)," \
++  "        i_id21 NUMERIC(10)," \
++  "        i_title21 VARCHAR(60)," \
++  "        a_fname21 VARCHAR(20)," \
++  "        a_lname21 VARCHAR(20)," \
++  "        i_id22 NUMERIC(10)," \
++  "        i_title22 VARCHAR(60)," \
++  "        a_fname22 VARCHAR(20)," \
++  "        a_lname22 VARCHAR(20)," \
++  "        i_id23 NUMERIC(10)," \
++  "        i_title23 VARCHAR(60)," \
++  "        a_fname23 VARCHAR(20)," \
++  "        a_lname23 VARCHAR(20)," \
++  "        i_id24 NUMERIC(10)," \
++  "        i_title24 VARCHAR(60)," \
++  "        a_fname24 VARCHAR(20)," \
++  "        a_lname24 VARCHAR(20)," \
++  "        i_id25 NUMERIC(10)," \
++  "        i_title25 VARCHAR(60)," \
++  "        a_fname25 VARCHAR(20)," \
++  "        a_lname25 VARCHAR(20)," \
++  "        i_id26 NUMERIC(10)," \
++  "        i_title26 VARCHAR(60)," \
++  "        a_fname26 VARCHAR(20)," \
++  "        a_lname26 VARCHAR(20)," \
++  "        i_id27 NUMERIC(10)," \
++  "        i_title27 VARCHAR(60)," \
++  "        a_fname27 VARCHAR(20)," \
++  "        a_lname27 VARCHAR(20)," \
++  "        i_id28 NUMERIC(10)," \
++  "        i_title28 VARCHAR(60)," \
++  "        a_fname28 VARCHAR(20)," \
++  "        a_lname28 VARCHAR(20)," \
++  "        i_id29 NUMERIC(10)," \
++  "        i_title29 VARCHAR(60)," \
++  "        a_fname29 VARCHAR(20)," \
++  "        a_lname29 VARCHAR(20)," \
++  "        i_id30 NUMERIC(10)," \
++  "        i_title30 VARCHAR(60)," \
++  "        a_fname30 VARCHAR(20)," \
++  "        a_lname30 VARCHAR(20)," \
++  "        i_id31 NUMERIC(10)," \
++  "        i_title31 VARCHAR(60)," \
++  "        a_fname31 VARCHAR(20)," \
++  "        a_lname31 VARCHAR(20)," \
++  "        i_id32 NUMERIC(10)," \
++  "        i_title32 VARCHAR(60)," \
++  "        a_fname32 VARCHAR(20)," \
++  "        a_lname32 VARCHAR(20)," \
++  "        i_id33 NUMERIC(10)," \
++  "        i_title33 VARCHAR(60)," \
++  "        a_fname33 VARCHAR(20)," \
++  "        a_lname33 VARCHAR(20)," \
++  "        i_id34 NUMERIC(10)," \
++  "        i_title34 VARCHAR(60)," \
++  "        a_fname34 VARCHAR(20)," \
++  "        a_lname34 VARCHAR(20)," \
++  "        i_id35 NUMERIC(10)," \
++  "        i_title35 VARCHAR(60)," \
++  "        a_fname35 VARCHAR(20)," \
++  "        a_lname35 VARCHAR(20)," \
++  "        i_id36 NUMERIC(10)," \
++  "        i_title36 VARCHAR(60)," \
++  "        a_fname36 VARCHAR(20)," \
++  "        a_lname36 VARCHAR(20)," \
++  "        i_id37 NUMERIC(10)," \
++  "        i_title37 VARCHAR(60)," \
++  "        a_fname37 VARCHAR(20)," \
++  "        a_lname37 VARCHAR(20)," \
++  "        i_id38 NUMERIC(10)," \
++  "        i_title38 VARCHAR(60)," \
++  "        a_fname38 VARCHAR(20)," \
++  "        a_lname38 VARCHAR(20)," \
++  "        i_id39 NUMERIC(10)," \
++  "        i_title39 VARCHAR(60)," \
++  "        a_fname39 VARCHAR(20)," \
++  "        a_lname39 VARCHAR(20)," \
++  "        i_id40 NUMERIC(10)," \
++  "        i_title40 VARCHAR(60)," \
++  "        a_fname40 VARCHAR(20)," \
++  "        a_lname40 VARCHAR(20)," \
++  "        i_id41 NUMERIC(10)," \
++  "        i_title41 VARCHAR(60)," \
++  "        a_fname41 VARCHAR(20)," \
++  "        a_lname41 VARCHAR(20)," \
++  "        i_id42 NUMERIC(10)," \
++  "        i_title42 VARCHAR(60)," \
++  "        a_fname42 VARCHAR(20)," \
++  "        a_lname42 VARCHAR(20)," \
++  "        i_id43 NUMERIC(10)," \
++  "        i_title43 VARCHAR(60)," \
++  "        a_fname43 VARCHAR(20)," \
++  "        a_lname43 VARCHAR(20)," \
++  "        i_id44 NUMERIC(10)," \
++  "        i_title44 VARCHAR(60)," \
++  "        a_fname44 VARCHAR(20)," \
++  "        a_lname44 VARCHAR(20)," \
++  "        i_id45 NUMERIC(10)," \
++  "        i_title45 VARCHAR(60)," \
++  "        a_fname45 VARCHAR(20)," \
++  "        a_lname45 VARCHAR(20)," \
++  "        i_id46 NUMERIC(10)," \
++  "        i_title46 VARCHAR(60)," \
++  "        a_fname46 VARCHAR(20)," \
++  "        a_lname46 VARCHAR(20)," \
++  "        i_id47 NUMERIC(10)," \
++  "        i_title47 VARCHAR(60)," \
++  "        a_fname47 VARCHAR(20)," \
++  "        a_lname47 VARCHAR(20)," \
++  "        i_id48 NUMERIC(10)," \
++  "        i_title48 VARCHAR(60)," \
++  "        a_fname48 VARCHAR(20)," \
++  "        a_lname48 VARCHAR(20)," \
++  "        i_id49 NUMERIC(10)," \
++  "        i_title49 VARCHAR(60)," \
++  "        a_fname49 VARCHAR(20)," \
++  "        a_lname49 VARCHAR(20)," \
++  "        i_id50 NUMERIC(10)," \
++  "        i_title50 VARCHAR(60)," \
++  "        a_fname50 VARCHAR(20)," \
++  "        a_lname50 VARCHAR(20) )"
++
++int execute_best_sellers(struct db_context_t *, struct best_sellers_t *);
++
++#endif /* _PGSQL_INTERACTION_BEST_SELLERS_H_ */
+===== include/pgsql_interaction_search_request.h 1.0 vs 1.1 =====
+--- /dev/null	Thu Jan 30 19:24:37 2003
++++ 1.1/include/pgsql_interaction_search_request.h	Wed Aug  6 14:27:48 2003
+@@ -0,0 +1,35 @@
++/*
++ * pgsql_interaction_search_request.h
++ *
++ * This file is released under the terms of the Artistic License.  Please see
++ * the file LICENSE, included in this package, for details.
++ *
++ * Copyright (C) 2002 Mark Wong & Jenny Zhang &
++ *                    Open Source Development Lab, Inc.
++ * Copyright (C) 2003 Satoshi Nagayasu & Hideyuki Kawashima &
++ *                    Sachi Osawa & Hirokazu Kondo & Satoru Satake
++ *
++ * $Id$
++ */
++
++#ifndef _PGSQL_INTERACTION_SEARCH_REQUEST_H_
++#define _PGSQL_INTERACTION_SEARCH_REQUEST_H_
++
++#include <pgsql_interaction.h>
++
++#define STMT_SEARCH_REQUEST \
++  "SELECT * FROM GetPromoImages( %lld )" \
++   " AS l( I_ID1 numeric(10)," \
++          "I_T1 numeric(10)," \
++          "I_ID2 numeric(10)," \
++          "I_T2 numeric(10)," \
++          "I_ID3 numeric(10)," \
++          "I_T3 numeric(10)," \
++          "I_ID4 numeric(10)," \
++          "I_T4 numeric(10)," \
++          "I_ID5 numeric(10)," \
++          "I_T5 numeric(10) )"
++
++int execute_search_request(struct db_context_t *, struct search_request_t *);
++
++#endif /* _PGSQL_INTERACTION_SEARCH_REQUEST_H_ */
+===== include/pgsql_interaction_admin_request.h 1.0 vs 1.1 =====
+--- /dev/null	Thu Jan 30 19:24:37 2003
++++ 1.1/include/pgsql_interaction_admin_request.h	Wed Aug  6 14:27:47 2003
+@@ -0,0 +1,32 @@
++/*
++ * pgsql_interaction_admin_request.h
++ *
++ * This file is released under the terms of the Artistic License.  Please see
++ * the file LICENSE, included in this package, for details.
++ *
++ * Copyright (C) 2002 Mark Wong & Jenny Zhang &
++ *                    Open Source Development Lab, Inc.
++ * Copyright (C) 2003 Satoshi Nagayasu & Hideyuki Kawashima &
++ *                    Sachi Osawa & Hirokazu Kondo & Satoru Satake
++ *
++ * $Id$
++ */
++
++#ifndef _PGSQL_INTERACTION_ADMIN_REQUEST_H_
++#define _PGSQL_INTERACTION_ADMIN_REQUEST_H_
++
++#include <pgsql_interaction.h>
++
++#define STMT_ADMIN_REQUEST \
++  "SELECT * FROM admin_request( %lld )" \
++  "    AS l( i_srp NUMERIC(17,2)," \
++  "        i_cost NUMERIC(17,2)," \
++  "        i_title VARCHAR(60)," \
++  "        i_image numeric(10)," \
++  "        i_thumbnail numeric(10)," \
++  "        a_fname VARCHAR(20)," \
++  "        a_lname VARCHAR(20) )"
++
++int execute_admin_request(struct db_context_t *, struct admin_request_t *);
++
++#endif /* _PGSQL_INTERACTION_ADMIN_REQUEST_H_ */
+===== include/pgsql_interaction_buy_request.h 1.0 vs 1.1 =====
+--- /dev/null	Thu Jan 30 19:24:37 2003
++++ 1.1/include/pgsql_interaction_buy_request.h	Wed Aug  6 14:27:48 2003
+@@ -0,0 +1,167 @@
++/*
++ * pgsql_interaction_buy_request.h
++ *
++ * This file is released under the terms of the Artistic License.  Please see
++ * the file LICENSE, included in this package, for details.
++ *
++ * Copyright (C) 2002 Mark Wong & Jenny Zhang &
++ *                    Open Source Development Lab, Inc.
++ * Copyright (C) 2003 Satoshi Nagayasu & Hideyuki Kawashima &
++ *                    Sachi Osawa & Hirokazu Kondo & Satoru Satake
++ *
++ * $Id$
++ */
++
++#ifndef _PGSQL_INTERACTION_BUY_REQUEST_H_
++#define _PGSQL_INTERACTION_BUY_REQUEST_H_
++
++#include <pgsql_interaction.h>
++
++#define STMT_BUYREQ "SELECT * FROM buy_request( %d,'%s',%lld,%f,'%s','%s'," \
++                                    "'%s','%s','%s'," \
++                                    "'%s','%s','%s','%s','%s','%s','%s' ) " \
++  "AS l(" \
++  "   local_c_discount NUMERIC(5,2)," \
++  "   c_fname VARCHAR(15)," \
++  "   c_lname VARCHAR(15)," \
++  "   addr_street1 VARCHAR(40)," \
++  "   addr_street2 VARCHAR(40)," \
++  "   addr_city VARCHAR(30)," \
++  "   addr_state VARCHAR(20)," \
++  "   addr_zip VARCHAR(10)," \
++  "   co_name VARCHAR(50)," \
++  "   c_phone VARCHAR(16)," \
++  "   c_email VARCHAR(50)," \
++  "   c_birthday CHAR(10)," \
++  "   c_data VARCHAR(500)," \
++  "   c_passwd VARCHAR(20)," \
++  "   c_id NUMERIC(10)," \
++  "   sc_sub_total NUMERIC(17,2)," \
++  "   sc_tax NUMERIC(17,2)," \
++  "   sc_ship_cost NUMERIC(5,2)," \
++  "   sc_total NUMERIC(17,2)," \
++  "   num_item NUMERIC(2)," \
++  "   scl_i_id1 NUMERIC(10)," \
++  "   scl_title1 VARCHAR(60)," \
++  "   scl_cost1 NUMERIC(17,2)," \
++  "   scl_srp1 NUMERIC(17,2)," \
++  "   scl_backing1 VARCHAR(15)," \
++  "   scl_qty1 NUMERIC(3)," \
++  "   scl_i_id2 NUMERIC(10)," \
++  "   scl_title2 VARCHAR(60)," \
++  "   scl_cost2 NUMERIC(17,2)," \
++  "   scl_srp2 NUMERIC(17,2)," \
++  "   scl_backing2 VARCHAR(15)," \
++  "   scl_qty2 NUMERIC(3)," \
++  "   scl_i_id3 NUMERIC(10)," \
++  "   scl_title3 VARCHAR(60)," \
++  "   scl_cost3 NUMERIC(17,2)," \
++  "   scl_srp3 NUMERIC(17,2)," \
++  "   scl_backing3 VARCHAR(15)," \
++  "   scl_qty3 NUMERIC(3)," \
++  "   scl_i_id4 NUMERIC(10)," \
++  "   scl_title4 VARCHAR(60)," \
++  "   scl_cost4 NUMERIC(17,2)," \
++  "   scl_srp4 NUMERIC(17,2)," \
++  "   scl_backing4 VARCHAR(15)," \
++  "   scl_qty4 NUMERIC(3)," \
++  "   scl_i_id5 NUMERIC(10)," \
++  "   scl_title5 VARCHAR(60)," \
++  "   scl_cost5 NUMERIC(17,2)," \
++  "   scl_srp5 NUMERIC(17,2)," \
++  "   scl_backing5 VARCHAR(15)," \
++  "   scl_qty5 NUMERIC(3)," \
++  "   scl_i_id6 NUMERIC(10)," \
++  "   scl_title6 VARCHAR(60)," \
++  "   scl_cost6 NUMERIC(17,2)," \
++  "   scl_srp6 NUMERIC(17,2)," \
++  "   scl_backing6 VARCHAR(15)," \
++  "   scl_qty6 NUMERIC(3)," \
++  "   scl_i_id7 NUMERIC(10)," \
++  "   scl_title7 VARCHAR(60)," \
++  "   scl_cost7 NUMERIC(17,2)," \
++  "   scl_srp7 NUMERIC(17,2)," \
++  "   scl_backing7 VARCHAR(15)," \
++  "   scl_qty7 NUMERIC(3)," \
++  "   scl_i_id8 NUMERIC(10)," \
++  "   scl_title8 VARCHAR(60)," \
++  "   scl_cost8 NUMERIC(17,2)," \
++  "   scl_srp8 NUMERIC(17,2)," \
++  "   scl_backing8 VARCHAR(15)," \
++  "   scl_qty8 NUMERIC(3)," \
++  "   scl_i_id9 NUMERIC(10)," \
++  "   scl_title9 VARCHAR(60)," \
++  "   scl_cost9 NUMERIC(17,2)," \
++  "   scl_srp9 NUMERIC(17,2)," \
++  "   scl_backing9 VARCHAR(15)," \
++  "   scl_qty9 NUMERIC(3)," \
++  "   scl_i_id10 NUMERIC(10)," \
++  "   scl_title10 VARCHAR(60)," \
++  "   scl_cost10 NUMERIC(17,2)," \
++  "   scl_srp10 NUMERIC(17,2)," \
++  "   scl_backing10 VARCHAR(15)," \
++  "   scl_qty10 NUMERIC(3)," \
++  "   scl_i_id11 NUMERIC(10)," \
++  "   scl_title11 VARCHAR(60)," \
++  "   scl_cost11 NUMERIC(17,2)," \
++  "   scl_srp11 NUMERIC(17,2)," \
++  "   scl_backing11 VARCHAR(15)," \
++  "   scl_qty11 NUMERIC(3)," \
++  "   scl_i_id12 NUMERIC(10)," \
++  "   scl_title12 VARCHAR(60)," \
++  "   scl_cost12 NUMERIC(17,2)," \
++  "   scl_srp12 NUMERIC(17,2)," \
++  "   scl_backing12 VARCHAR(15)," \
++  "   scl_qty12 NUMERIC(3)," \
++  "   scl_i_id13 NUMERIC(10)," \
++  "   scl_title13 VARCHAR(60)," \
++  "   scl_cost13 NUMERIC(17,2)," \
++  "   scl_srp13 NUMERIC(17,2)," \
++  "   scl_backing13 VARCHAR(15)," \
++  "   scl_qty13 NUMERIC(3)," \
++  "   scl_i_id14 NUMERIC(10)," \
++  "   scl_title14 VARCHAR(60)," \
++  "   scl_cost14 NUMERIC(17,2)," \
++  "   scl_srp14 NUMERIC(17,2)," \
++  "   scl_backing14 VARCHAR(15)," \
++  "   scl_qty14 NUMERIC(3)," \
++  "   scl_i_id15 NUMERIC(10)," \
++  "   scl_title15 VARCHAR(60)," \
++  "   scl_cost15 NUMERIC(17,2)," \
++  "   scl_srp15 NUMERIC(17,2)," \
++  "   scl_backing15 VARCHAR(15)," \
++  "   scl_qty15 NUMERIC(3)," \
++  "   scl_i_id16 NUMERIC(10)," \
++  "   scl_title16 VARCHAR(60)," \
++  "   scl_cost16 NUMERIC(17,2)," \
++  "   scl_srp16 NUMERIC(17,2)," \
++  "   scl_backing16 VARCHAR(15)," \
++  "   scl_qty16 NUMERIC(3)," \
++  "   scl_i_id17 NUMERIC(10)," \
++  "   scl_title17 VARCHAR(60)," \
++  "   scl_cost17 NUMERIC(17,2)," \
++  "   scl_srp17 NUMERIC(17,2)," \
++  "   scl_backing17 VARCHAR(15)," \
++  "   scl_qty17 NUMERIC(3)," \
++  "   scl_i_id18 NUMERIC(10)," \
++  "   scl_title18 VARCHAR(60)," \
++  "   scl_cost18 NUMERIC(17,2)," \
++  "   scl_srp18 NUMERIC(17,2)," \
++  "   scl_backing18 VARCHAR(15)," \
++  "   scl_qty18 NUMERIC(3)," \
++  "   scl_i_id19 NUMERIC(10)," \
++  "   scl_title19 VARCHAR(60)," \
++  "   scl_cost19 NUMERIC(17,2)," \
++  "   scl_srp19 NUMERIC(17,2)," \
++  "   scl_backing19 VARCHAR(15)," \
++  "   scl_qty19 NUMERIC(3)," \
++  "   scl_i_id20 NUMERIC(10)," \
++  "   scl_title20 VARCHAR(60)," \
++  "   scl_cost20 NUMERIC(17,2)," \
++  "   scl_srp20 NUMERIC(17,2)," \
++  "   scl_backing20 VARCHAR(15)," \
++  "   scl_qty20 NUMERIC(3) )"
++
++int execute_buy_request(struct db_context_t *, struct buy_request_t *);
++
++#endif /* _ODBC_INTERACTION_BUY_REQUEST_H_ */

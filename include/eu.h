@@ -15,13 +15,25 @@
 
 #include <semaphore.h>
 
-#include <odbc_interaction.h>
+#include <interaction_data.h>
 
 #include <common.h>
+#ifdef odbc
+#include <odbc_interaction.h>
+#endif
+#ifdef libpq
+#include <libpq_interaction.h>
+#endif
 
 #define MIX_SHOPPING 0
 #define MIX_BROWSING 1
 #define MIX_ORDERING 2
+
+#define MODE_APPSERVER 0
+#define MODE_DIRECT 1
+
+#define MODE_CACHE_OFF 0
+#define MODE_CACHE_ON 1
 
 #ifdef REALTIME_STATS
 #define STAT_INTERVAL 30
@@ -29,17 +41,10 @@
 
 struct eu_context_t
 {
-#ifdef PHASE1
-	struct odbc_context_t odbcc;
-	union odbc_data_t odbcd;
-#ifdef SEARCH_RESULTS_CACHE
+	struct db_context_t dbc;
 	int cache_s;
-#endif
-#endif /* PHASE1 */
 
-#ifdef PHASE2
 	int s;
-#endif /* PHASE2 */
 
 	int interaction; /* Current interaction. */
 	int previous_interaction; /* The previous interaction. */
@@ -69,28 +74,22 @@ struct eu_context_t
 
 /* Prototypes */
 
-#ifdef PHASE1
-#ifdef SEARCH_RESULTS_CACHE
-int init_eus(char *sname, char *uname, char *auth, int eus,
-	int interaction_mix, int rampuprate, int duration, double tt_mean,
-	int item_scale, char *host, int port);
-#else
-int init_eus(char *sname, char *uname, char *auth, int eus,
-	int interaction_mix, int ramptuprate, int duration, double tt_mean,
-	int item_scale);
-#endif
-#endif /* PHASE1 */
-
-#ifdef PHASE2
-int init_eus(char *sname, int port, int eus,
-	int interaction_mix, int ramptuprate, int duration, double tt_mean,
-	int item_scale);
-#endif /* PHASE2 */
+int init_eus(int eus, int interaction_mix, int rampuprate, int duration, 
+	double tt_mean, int item_scale);
 int mark_logs(char *mark);
 
 extern int customers;
 extern sem_t running_eu_count;
 extern sem_t running_interactions[INTERACTION_TOTAL];
 extern int altered;
+extern int mode_access;
+extern int mode_cache;
+extern char cache_host[32];
+extern int cache_port;
+extern char sname[32];
+extern char dbname[32];
+extern char uname[32];
+extern char auth[32];
+extern int port;
 
 #endif /* _EU_H_ */

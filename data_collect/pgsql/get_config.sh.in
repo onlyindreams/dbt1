@@ -1,0 +1,85 @@
+# get_config.sh: get dbt3 run configuration
+#
+# This file is released under the terms of the Artistic License.  Please see
+# the file LICENSE, included in this package, for details.
+#
+# Copyright (C) 2003 Open Source Development Lab, Inc.
+#
+# Author: Jenny Zhang
+# Dec 2003
+
+#!/bin/sh
+
+set -x
+if [ $# -lt 4 ]; then
+        echo "usage: $0.sh <db_param> <redirect_tmp> <redirect_xlog> <output_dir>"
+        exit
+fi
+
+db_param=$1
+redirect_tmp=$2
+redirect_xlog=$3
+output_dir=$4
+
+. @TOPDIR@/scripts/pgsql/set_run_env.sh
+kernel=`uname -r`
+pgsql=`psql --version | grep PostgreSQL | awk '{print $3}'`
+procps=`vmstat -V|grep version| awk '{print $3}'`
+sar -V &> .sar.tmp
+sysstat=`cat .sar.tmp |grep version | awk '{print $3}'`
+rm .sar.tmp
+
+NODE=`hostname`
+CPUS=`grep -c '^processor' /proc/cpuinfo`
+MHz=`grep 'cpu MHz' /proc/cpuinfo|head -1|awk -F: '{print $2}'`
+model=`grep 'model name' /proc/cpuinfo|head -1|awk -F: '{print $2}'`
+
+if [ -f /etc/redhat-release ]; then
+	DISTRO=`cat /etc/redhat-release`
+fi
+if [ -f /etc/SuSE-release-release ]; then
+	DISTRO=`cat /etc/SuSE-release-release`
+fi
+
+memory=`grep 'MemTotal' /proc/meminfo | awk -F: '{print $2 $3}'`
+
+shmmax_value=`/sbin/sysctl -e -a |grep shmmax|awk '{print $3}'`
+
+dbitems=`grep 'items' @TOPDIR@/data_collect/pgsql/run.config | awk -F: '{print $2}'`
+dbcustomers=`grep 'gcustomers' @TOPDIR@/data_collect/pgsql/run.config | awk -F: '{print $2}'`
+let "dbcustomers=$dbcustomers/2880"
+cachedbconnection=`grep 'mconnection' @TOPDIR@/data_collect/pgsql/run.config | awk -F: '{print $2}'`
+numcache=1
+numserver=`grep '^server_host' @TOPDIR@/data_collect/pgsql/run.config | wc -l`
+serverdbconnection=`grep 'rconnection' @TOPDIR@/data_collect/pgsql/run.config | awk -F: '{print $2}'`
+numdriver=`grep '^ydriver_host' @TOPDIR@/data_collect/pgsql/run.config | wc -l`
+rampuprate=`grep 'vrate' @TOPDIR@/data_collect/pgsql/run.config | awk -F: '{print $2}'`
+eus=`grep 'eus' @TOPDIR@/data_collect/pgsql/run.config | awk -F: '{print $2}'`
+duration=`grep 'zduration' @TOPDIR@/data_collect/pgsql/run.config | awk -F: '{print $2}'`
+thinktime=`grep 'think_time' @TOPDIR@/data_collect/pgsql/run.config | awk -F: '{print $2}'`
+
+echo "node: $NODE" > $output_dir/config.txt
+echo "kernel: $kernel" >> $output_dir/config.txt
+echo "distribution: $DISTRO" >> $output_dir/config.txt
+echo "pgsql: $pgsql">> $output_dir/config.txt
+echo "procps: $procps">> $output_dir/config.txt
+echo "sysstat: $sysstat">> $output_dir/config.txt
+echo "CPUS: $CPUS">> $output_dir/config.txt
+echo "MHz: $MHz">> $output_dir/config.txt
+echo "model: $model">> $output_dir/config.txt
+echo "memory: $memory">> $output_dir/config.txt
+echo "redirect_tmp: $redirect_tmp">> $output_dir/config.txt
+echo "redirect_xlog: $redirect_xlog">> $output_dir/config.txt
+echo "db_param: $db_param">> $output_dir/config.txt
+echo "shmmax: $shmmax_value" >> $output_dir/config.txt
+echo "dbitems: $dbitems" >> $output_dir/config.txt
+echo "dbcustomers: $dbcustomers" >> $output_dir/config.txt
+echo "numcache: $numcache" >> $output_dir/config.txt
+echo "cachedbconnection: $cachedbconnection" >> $output_dir/config.txt
+echo "numserver: $numserver" >> $output_dir/config.txt
+echo "serverdbconnection: $serverdbconnection" >> $output_dir/config.txt
+echo "numdriver: $numdriver" >> $output_dir/config.txt
+echo "eus: $eus" >> $output_dir/config.txt
+echo "rampuprate: $rampuprate" >> $output_dir/config.txt
+echo "duration: $duration" >> $output_dir/config.txt
+echo "thinktime: $thinktime" >> $output_dir/config.txt

@@ -4,11 +4,13 @@
  * This file is released under the terms of the Artistic License.  Please see
  * the file LICENSE, included in this package, for details.
  *
- * Copyright (C) 2002 Mark Wong & Jenny Zhang &
- *                    Open Source Development Lab, Inc.
+ * Copyright (C) 2002 Open Source Development Lab, Inc.
  *
- * 30 january 2002
+ * History:
+ * 30-Jan-2002 Created by Mark Wong & Jenny Zhang
  * Based on TPC-W v1.6
+ * 20-Aug-2003 Replaced PHASE1 and PHASE2 definition by command line parameter
+ *		by Jenny Zhang
  */
 
 #include <pthread.h>
@@ -23,34 +25,13 @@
 
 #include <common.h>
 #include <eu.h>
+
+#include <db.h>
+#include <cache_interface.h>
 #include <cache.h>
 
-#ifdef PHASE1
-#include <odbc_interaction.h>
-#include <odbc_interaction_admin_confirm.h>
-#include <odbc_interaction_admin_request.h>
-#include <odbc_interaction_best_sellers.h>
-#include <odbc_interaction_buy_confirm.h>
-#include <odbc_interaction_buy_request.h>
-#include <odbc_interaction_home.h>
-#include <odbc_interaction_new_products.h>
-#include <odbc_interaction_order_display.h>
-#include <odbc_interaction_order_inquiry.h>
-#include <odbc_interaction_product_detail.h>
-#include <odbc_interaction_shopping_cart.h>
-#include <odbc_interaction_search_request.h>
-#include <odbc_interaction_search_results.h>
-#endif /* PHASE1 */
-
 #include <_socket.h>
-
-#ifdef PHASE2
 #include <tm_interface.h>
-#endif /* PHASE2 */
-
-#ifdef SEARCH_RESULTS_CACHE
-#include <cache_interface.h>
-#endif /* SEARCH_RESULTS_CACHE */
 
 /* Defined some log file names. */
 #define MIX_LOG_NAME "mix.log"
@@ -123,15 +104,8 @@ double cumulative_response_time[INTERACTION_TOTAL];
 pthread_mutex_t mutex_stats[INTERACTION_TOTAL]; 
 #endif /* RUNTIME_STATS */
 
-#ifdef PHASE2
 /* IP or hostname of the middle tier system. */
 char tm_address[32];
-#endif /* PHASE2 */
-
-#ifdef PHASE1
-char cache_host[32];
-int cache_port;
-#endif
 
 sem_t running_interactions[INTERACTION_TOTAL];
 
@@ -145,89 +119,34 @@ int do_interaction(struct eu_context_t *euc)
 {
 	int rc = OK;
 
-#ifdef PHASE1
+	if (mode_access == MODE_DIRECT)
+	{
 	/*
 	 * Zero out the memory because of union odbc_data_t to prevent data
 	 * overflow from lingering data when the stored procedure is called.
      */
-	bzero(&euc->odbcd, sizeof(union odbc_data_t));
-#endif /* PHASE1 */
+	//	bzero(&euc->dbc, sizeof(union odbc_data_t));
+
+		void *data = NULL;
+	}
 
 	/* Call the appropriate function to generate the input data. */
 	switch (euc->interaction)
 	{
 		case ADMIN_CONFIRM:
 			prepare_admin_confirm(euc);
-#ifdef PHASE1
-			rc = copy_in_admin_confirm(euc, &euc->odbcd);
-			if (rc != OK)
-			{
-				return W_ERROR;
-			}
-			rc = execute_admin_confirm(&euc->odbcc, &euc->odbcd);
-			if (rc != OK)
-			{
-				return W_ERROR;
-			}
-			copy_out_admin_confirm(euc, &euc->odbcd);
-#endif /* PHASE1 */
 			break;
 		case ADMIN_REQUEST:
 			prepare_admin_request(euc);
-#ifdef PHASE1
-			rc = copy_in_admin_request(euc, &euc->odbcd);
-			if (rc != OK)
-			{
-				return W_ERROR;
-			}
-			rc = execute_admin_request(&euc->odbcc, &euc->odbcd);
-			if (rc == OK)
-			{
-				copy_out_admin_request(euc, &euc->odbcd);
-			}
-#endif /* PHASE1 */
 			break;
 		case BEST_SELLERS:
 			prepare_best_sellers(euc);
-#ifdef PHASE1
-			copy_in_best_sellers(euc, &euc->odbcd);
-			rc = execute_best_sellers(&euc->odbcc, &euc->odbcd);
-			switch (rc)
-			{
-				case W_ZERO_ITEMS:
-					LOG_ERROR_MESSAGE("%s returned %d items for %s.\n",
-						interaction_short_name[euc->interaction],
-						euc->best_sellers_data.items,
-						euc->best_sellers_data.i_subject);
-				case W_ERROR:
-					return W_ERROR;
-			}
-			copy_out_best_sellers(euc, &euc->odbcd);
-#endif /* PHASE1 */
 			break;
 		case BUY_CONFIRM:
 			prepare_buy_confirm(euc);
-#ifdef PHASE1
-			copy_in_buy_confirm(euc, &euc->odbcd);
-			rc = execute_buy_confirm(&euc->odbcc, &euc->odbcd);
-			if (rc == OK)
-			{
-				copy_out_buy_confirm(euc, &euc->odbcd);
-			}
-			euc->sc_id = UNKNOWN_SHOPPING_CART;
-#endif /* PHASE1 */
 			break;
 		case BUY_REQUEST:
 			prepare_buy_request(euc);
-#ifdef PHASE1
-			copy_in_buy_request(euc, &euc->odbcd);
-			rc = execute_buy_request(&euc->odbcc, &euc->odbcd);
-			if (rc == OK)
-			{
-				copy_out_buy_request(euc, &euc->odbcd);
-			}
-			euc->c_id = euc->buy_request_data.c_id;
-#endif /* PHASE1 */
 			break;
 		case CUSTOMER_REGISTRATION:
 			/*
@@ -239,49 +158,18 @@ int do_interaction(struct eu_context_t *euc)
 			rc = prepare_home(euc);
 			if (rc != OK)
 			{
-				return W_ERROR;
+				return ERROR;
 			}
-#ifdef PHASE1
-			copy_in_home(euc, &euc->odbcd);
-			rc = execute_home(&euc->odbcc, &euc->odbcd);
-			if (rc == OK)
-			{
-				copy_out_home(euc, &euc->odbcd);
-			}
-#endif /* PHASE1 */
 			break;
 		case NEW_PRODUCTS:
 			prepare_new_products(euc);
-#ifdef PHASE1
-			copy_in_new_products(euc, &euc->odbcd);
-			rc = execute_new_products(&euc->odbcc, &euc->odbcd);
-			switch (rc)
-			{
-				case W_ZERO_ITEMS:
-					LOG_ERROR_MESSAGE("%s returned %d items for %s.\n",
-						interaction_short_name[euc->interaction],
-						euc->new_products_data.items,
-						euc->new_products_data.i_subject);
-				case W_ERROR:
-					return W_ERROR;
-			}
-			copy_out_new_products(euc, &euc->odbcd);
-#endif /* PHASE1 */
 			break;
 		case ORDER_DISPLAY:
 			rc = prepare_order_display(euc);
 			if (rc != OK)
 			{
-				return W_ERROR;
+				return ERROR;
 			}
-#ifdef PHASE1
-			copy_in_order_display(euc, &euc->odbcd);
-			rc = execute_order_display(&euc->odbcc, &euc->odbcd);
-			if (rc == OK)
-			{
-				copy_out_order_display(euc, &euc->odbcd);
-			}
-#endif /* PHASE1 */
 			break;
 		case ORDER_INQUIRY:
 			if (euc->c_id == UNKNOWN_CUSTOMER)
@@ -289,141 +177,135 @@ int do_interaction(struct eu_context_t *euc)
 				return OK;
 			}
 			prepare_order_inquiry(euc);
-#ifdef PHASE1
-			copy_in_order_inquiry(euc, &euc->odbcd);
-			rc = execute_order_inquiry(&euc->odbcc, &euc->odbcd);
-			if (rc == OK)
-			{
-				copy_out_order_inquiry(euc, &euc->odbcd);
-			}
-#endif /* PHASE1 */
 			break;
 		case PRODUCT_DETAIL:
 			rc = prepare_product_detail(euc);
-/*
-#ifdef DEBUG
-			DEBUGMSG("product detail id %lld", euc->product_detail_data.i_id);
-#endif
-*/
 			if (rc != OK)
 			{
-				return W_ERROR;
+				return ERROR;
 			}
-#ifdef PHASE1
-			copy_in_product_detail(euc, &euc->odbcd);
-			rc = execute_product_detail(&euc->odbcc, &euc->odbcd);
-			if (rc == OK)
-			{
-				copy_out_product_detail(euc, &euc->odbcd);
-			}
-#endif /* PHASE1 */
 			break;
 		case SEARCH_REQUEST:
-#ifdef PHASE1
-			rc = execute_search_request(&euc->odbcc, &euc->odbcd);
-			if (rc == OK)
-			{
-				copy_out_search_request(euc, &euc->odbcd);
-			}
-#endif /* PHASE1 */
-			break;
+			return OK;
 		case SEARCH_RESULTS:
 			rc = prepare_search_results(euc);
 			if (rc != OK)
 			{
-				return W_ERROR;
+				return ERROR;
 			}
-#ifdef PHASE1
-#ifdef SEARCH_RESULTS_CACHE
-			if (euc->search_results_data.search_type != SEARCH_SUBJECT)
-			{
-				rc = send_search_results(euc->cache_s, &euc->search_results_data);
-				/* if send fails, reopen a new socket */
-				if (rc!=OK)
-				{
-					LOG_ERROR_MESSAGE("send search_results to cache host failed");
-					close(euc->cache_s);
-					euc->cache_s=_connect(cache_host, cache_port);
-					if (euc->cache_s==-1)
-					{
-						LOG_ERROR_MESSAGE("connect to cache failed\n");
-						return W_ERROR;
-					}
-					return W_ERROR;
-				}
-				rc = receive_search_results(euc->cache_s, &euc->search_results_data);
-				if (rc!=OK)
-				{
-					LOG_ERROR_MESSAGE("receive search_results from cache host failed");
-					close(euc->cache_s);
-					euc->cache_s=_connect(cache_host, cache_port);
-					if (euc->cache_s==-1)
-					{
-						LOG_ERROR_MESSAGE("connect to cache failed\n");
-						return W_ERROR;
-					}
-					return W_ERROR;
-				}
-/*
-				if (rc==0)
-				{
-					LOG_ERROR_MESSAGE("cache host closed socket");
-					return SOCKET_CLOSE;
-				}
-*/
-			}
-			else
-			{
-				copy_in_search_results(euc, &euc->odbcd);
-				rc = execute_search_results(&euc->odbcc, &euc->odbcd);
-				if (rc == OK)
-				{
-					copy_out_search_results(euc, &euc->odbcd);
-				}
-			}
-#else
-			copy_in_search_results(euc, &euc->odbcd);
-			rc = execute_search_results(&euc->odbcc, &euc->odbcd);
-			if (rc == OK)
-			{
-				copy_out_search_results(euc, &euc->odbcd);
-			}
-#endif /*SEARCH_RESULTS_CACHE*/
-#endif /* PHASE1 */
 			break;
 		case SHOPPING_CART:
 			prepare_shopping_cart(euc);
-#ifdef PHASE1
-			copy_in_shopping_cart(euc, &euc->odbcd);
-			rc = execute_shopping_cart(&euc->odbcc, &euc->odbcd);
-			if (rc == OK)
-			{
-				copy_out_shopping_cart(euc, &euc->odbcd);
-			}
-			euc->sc_id = euc->shopping_cart_data.sc_id;
-#endif /* PHASE1 */
 			break;
 		default:
 			LOG_ERROR_MESSAGE("unknown interaction %d\n", euc->interaction);
-			rc = W_ERROR;
+			rc = ERROR;
 			break;
 	}
-#ifdef PHASE2
-	/* Send and receive data to the middle tier program. */
-	if (send_interaction_packet(euc->s, euc) == W_ERROR)
+	
+	if (mode_access == MODE_APPSERVER)
 	{
-		LOG_ERROR_MESSAGE("send failed");
-		return W_ERROR;
+		/* Send and receive data to the middle tier program. */
+		if (send_interaction_packet(euc->s, euc) == ERROR)
+		{
+			LOG_ERROR_MESSAGE("send failed");
+			return ERROR;
+		}
+		if ( (rc=receive_interaction_packet(euc->s, euc)) == ERROR)
+		{
+			LOG_ERROR_MESSAGE("receive failed");
+			return ERROR;
+		}
+		if (rc==SOCKET_CLOSE)
+		{
+			LOG_ERROR_MESSAGE("appServer socket closed");
+			return SOCKET_CLOSE;
+		}
 	}
-	if ( (rc=receive_interaction_packet(euc->s, euc)) == W_ERROR)
+	else
 	{
-		LOG_ERROR_MESSAGE("receive failed");
-		return W_ERROR;
-	}
-	if (rc==SOCKET_CLOSE)
-	{
-		LOG_ERROR_MESSAGE("appServer socket closed");
-		return SOCKET_CLOSE;
+		void *data = NULL;
+		switch (euc->interaction)
+		{
+			case ADMIN_CONFIRM:
+				data = &euc->admin_confirm_data;
+				break;
+			case ADMIN_REQUEST:
+				data = &euc->admin_request_data;
+				break;
+			case BEST_SELLERS:
+				data = &euc->best_sellers_data;
+				break;
+			case BUY_CONFIRM:
+				data = &euc->buy_confirm_data;
+				break;
+			case BUY_REQUEST:
+				data = &euc->buy_request_data;
+				break;
+			case HOME:
+				data = &euc->home_data;
+				break;
+			case NEW_PRODUCTS:
+				data = &euc->new_products_data;
+				break;
+			case ORDER_DISPLAY:
+				data = &euc->order_display_data;
+				break;
+			case ORDER_INQUIRY:
+				data = &euc->order_inquiry_data;
+				break;
+			case PRODUCT_DETAIL:
+				data = &euc->product_detail_data;
+				break;
+			case SEARCH_REQUEST:
+				data = &euc->search_request_data;
+				break;
+			case SEARCH_RESULTS:
+				data = &euc->search_results_data;
+				break;
+			case SHOPPING_CART:
+				data = &euc->shopping_cart_data;
+				break;
+		}
+		if (euc->interaction == SEARCH_RESULTS && 
+			mode_cache == MODE_CACHE_ON &&
+			euc->search_results_data.search_type != SEARCH_SUBJECT)
+		{
+			rc = send_search_results(euc->cache_s, &euc->search_results_data);
+			/* if send fails, reopen a new socket */
+			if (rc!=OK)
+			{
+				LOG_ERROR_MESSAGE("send search_results to cache host failed");
+				close(euc->cache_s);
+				euc->cache_s=_connect(cache_host, cache_port);
+	
+				if (euc->cache_s==-1)
+				{
+					LOG_ERROR_MESSAGE("connect to cache failed\n");
+					return ERROR;
+				}
+				return ERROR;
+			}
+			rc = receive_search_results(euc->cache_s, &euc->search_results_data);
+			if (rc!=OK)
+			{
+				LOG_ERROR_MESSAGE("receive search_results from cache host failed");
+				close(euc->cache_s);
+				euc->cache_s=_connect(cache_host, cache_port);
+	
+				if (euc->cache_s==-1)
+				{
+					LOG_ERROR_MESSAGE("connect to cache failed\n");
+					return ERROR;
+				}
+				return ERROR;
+			}
+		}
+		else if (process_interaction(euc->interaction, &euc->dbc, data) != OK)
+		{
+			LOG_ERROR_MESSAGE("process_interaction error\n");
+			return ERROR;
+		}
 	}
 
 	if (euc->interaction == SHOPPING_CART) 
@@ -440,11 +322,9 @@ int do_interaction(struct eu_context_t *euc)
 		euc->search_results_data.search_type != SEARCH_SUBJECT)
 	{	
 		if (euc->search_results_data.items == 0) 
-			rc = W_ERROR;
+			rc = ERROR;
 	}
 		                
-#endif /* PHASE2 */
-
 	return rc;
 }
 
@@ -1190,34 +1070,12 @@ void init_shopping_mix()
 /* 
  * Initialize a semaphore and create a thread per user to run.
  */
-#ifdef PHASE1
-#ifdef SEARCH_RESULTS_CACHE
-int init_eus(char *sname, char *uname, char *auth, int eus,
-	int interaction_mix, int rampuprate, int duration, double tt_mean,
-	int item_scale, char *host, int port)
-#else
-int init_eus(char *sname, char *uname, char *auth, int eus,
-	int interaction_mix, int rampuprate, int duration, double tt_mean,
-	int item_scale)
-
-#endif /*SEARCH_RESULTS_CACHE */
-#endif /*PHASE1*/
-#ifdef PHASE2
-int init_eus(char *sname, int port, int eus,
-	int interaction_mix, int rampuprate, int duration, double tt_mean,
-	int item_scale)
-#endif
+int init_eus(int eus, int interaction_mix, int rampuprate, int duration, 
+	double tt_mean, int item_scale)
 {
 	int i, rc;
 	struct timespec ts;
 	char filename[512];
-
-#ifdef PHASE1
-#ifdef SEARCH_RESULTS_CACHE
-	strcpy(cache_host, host);
-	cache_port = port;
-#endif
-#endif
 
 	/*
 	 * Initialize the semaphore that keeps count of what interactions are
@@ -1228,7 +1086,7 @@ int init_eus(char *sname, int port, int eus,
 		if (sem_init(&running_interactions[i], 0, 0) != 0)
 		{
 			LOG_ERROR_MESSAGE("cannot init running_interactions[%d]\n", i);
-			return W_ERROR;
+			return ERROR;
 		}
 	}
 
@@ -1239,7 +1097,7 @@ int init_eus(char *sname, int port, int eus,
 	if (sem_init(&running_eu_count, 0, 0) != 0)
 	{
 		LOG_ERROR_MESSAGE("cannot init running_eu_count\n");
-		return W_ERROR;
+		return ERROR;
 	}
 
 	/*
@@ -1251,7 +1109,7 @@ int init_eus(char *sname, int port, int eus,
 	if (log_mix == NULL)
 	{
 		fprintf(stderr, "cannot open %s\n", MIX_LOG_NAME);
-		return W_ERROR;
+		return ERROR;
 	}
 
 	sprintf(filename, "%s%s", output_path, THINK_TIME_LOG_NAME);
@@ -1259,7 +1117,7 @@ int init_eus(char *sname, int port, int eus,
 	if (log_think_time == NULL)
 	{
 		fprintf(stderr, "cannot open %s\n", THINK_TIME_LOG_NAME);
-		return W_ERROR;
+		return ERROR;
 	}
 
 	sprintf(filename, "%s%s", output_path, USMD_LOG_NAME);
@@ -1267,7 +1125,7 @@ int init_eus(char *sname, int port, int eus,
 	if (log_usmd == NULL)
 	{
 		fprintf(stderr, "cannot open %s\n", USMD_LOG_NAME);
-		return W_ERROR;
+		return ERROR;
 	}
 
 #ifdef RUNTIME_STATS
@@ -1343,18 +1201,23 @@ int init_eus(char *sname, int port, int eus,
 	else
 	{
 		LOG_ERROR_MESSAGE("customer cardinality error %d\n", customers);
-		return W_ERROR;
+		return ERROR;
 	}
 	think_time_mean = tt_mean * 1000.0;
 
-#ifdef PHASE1
-	/* Set the ODBC connect string, username and password. */
-	odbc_init(sname, uname, auth);
-#endif /* PHASE1 */
-
-#ifdef PHASE2
-	strcpy(tm_address, sname);
-#endif /* PHASE2 */
+	if ( mode_access == MODE_DIRECT )
+	{
+#ifdef odbc
+		db_init(sname, uname, auth);
+#endif
+#ifdef libpq
+		db_init(sname, dbname, uname, auth);
+#endif
+	}
+	else
+	{
+		strcpy(tm_address, sname);
+	}
 
 	/*
 	 * Calculate the stop time from this point, right before the EB threads
@@ -1376,18 +1239,21 @@ printf("ramp: %d\n", ((eus / rampuprate) * 60));
 		sem_post(&running_eu_count);
 
 		/* Start a thread. */
-#ifdef PHASE1
-		if (pthread_create(&tid, NULL, &start_eu,NULL) != 0)
-#endif /* PHASE1 */
-#ifdef PHASE2
-		if (pthread_create(&tid, NULL, &start_eu, &port) != 0)
-#endif /* PHASE2 */
+		if ( mode_access == MODE_DIRECT )
+		{
+			rc = pthread_create(&tid, NULL, &start_eu,NULL);
+		}
+		else
+		{
+			rc = pthread_create(&tid, NULL, &start_eu, &port);
+		}
+		if ( rc != 0 )
 		{
 			if (altered == 0)
 			{
 				/* Just bail if a thread cannot start. */
 				LOG_ERROR_MESSAGE("error creating thread\n");
-				return W_ERROR;
+				return ERROR;
 			}
 			else
 			{
@@ -1409,6 +1275,8 @@ printf("ramp: %d\n", ((eus / rampuprate) * 60));
 			break;
 		}
 	}
+	printf("All users started\n");
+	fflush(stdout);
 
 	return OK;
 }
@@ -1618,7 +1486,7 @@ int prepare_home(struct eu_context_t *euc)
 			if (euc->c_id < 1 || euc->c_id > customers)
 			{
 				LOG_ERROR_MESSAGE("invalid c_id generated %lld", euc->c_id);
-				return W_ERROR;
+				return ERROR;
 			}
 		}
 		else
@@ -1657,7 +1525,7 @@ int prepare_order_display(struct eu_context_t *euc)
 	if (temp_c_id < 0)
 	{
 		LOG_ERROR_MESSAGE("invalid c_id %lld", euc->c_id);
-		return W_ERROR;
+		return ERROR;
 	}
 
 	/*
@@ -1716,12 +1584,12 @@ int prepare_product_detail(struct eu_context_t *euc)
 		LOG_ERROR_MESSAGE(
 			"unknown transition from interaction %d to product details\n",
 			euc->previous_search_interaction);
-		return W_ERROR;
+		return ERROR;
 	}
 	if (euc->product_detail_data.i_id==0)
         {
 		LOG_ERROR_MESSAGE("PD i_id is 0, previous_interaction %s, previous_search_interaction %s", interaction_short_name[euc->previous_interaction], interaction_short_name[euc->previous_search_interaction]);
-		return W_ERROR;
+		return ERROR;
         }
 
 	return OK;
@@ -1752,7 +1620,7 @@ int prepare_search_results(struct eu_context_t *euc)
 		default:
 			LOG_ERROR_MESSAGE("invalid search type %d\n",
 				euc->search_results_data.search_type);
-			return W_ERROR;
+			return ERROR;
 	}
 
 	return OK;
@@ -1837,6 +1705,7 @@ int prepare_shopping_cart(struct eu_context_t *euc)
 		 */
 		euc->shopping_cart_data.add_flag = TRUE;
 		euc->shopping_cart_data.i_id = euc->product_detail_data.i_id;
+		euc->shopping_cart_data.sc_size = 1;
 	}
 
 	return OK;
@@ -1856,10 +1725,8 @@ void *start_eu(void *data)
 	struct timespec think_time, rem;
 	int retry;
 	extern int errno;
-#ifdef PHASE2
 	int *port;
 	port = (int *) data;
-#endif /* PHASE2 */
 
 	/* Random number generator must be seeded per thread in Linux. */
 	srand(time(NULL) + pthread_self());
@@ -1871,37 +1738,39 @@ void *start_eu(void *data)
 	 */
 	bzero(&euc, sizeof(euc));
 
-#ifdef PHASE1
-	/* Connect to the database. */
-	while (odbc_connect(&euc.odbcc) != OK)
+	if ( mode_access == MODE_DIRECT )
 	{
-		/*
-		 * Attempt to connect to the database every 10 seconds, if there
-		 * is a failure.
-		 */
-		sleep(10);
-		LOG_ERROR_MESSAGE("cannot connect to database");
+		/* Connect to the database. */
+		while (db_connect(&euc.dbc) != OK)
+		{
+			/*
+			 * Attempt to connect to the database every 10 seconds,
+			 * if there * is a failure.
+			 */
+			sleep(10);
+			LOG_ERROR_MESSAGE("cannot connect to database");
+		}
+		if ( mode_cache == MODE_CACHE_ON )
+		{
+			if ((euc.cache_s = _connect(cache_host, cache_port)) == -1)
+			{
+				printf("connect to cache failed\n");
+				LOG_ERROR_MESSAGE("connect to cache failed");
+				return NULL;
+			}
+		}
 	}
-#ifdef SEARCH_RESULTS_CACHE
-	if ((euc.cache_s = _connect(cache_host, cache_port)) == -1)
+	else
 	{
-		printf("connect to cache failed\n");
-		LOG_ERROR_MESSAGE("connect to cache failed");
-		return NULL;
+		if ((euc.s = _connect(tm_address, *port)) == -1)
+		{
+			stop_connecting = 1;
+			printf("connect to appServer failed\n");
+			LOG_ERROR_MESSAGE("connect failed");
+			sem_wait(&running_eu_count);
+			return NULL;
+		}
 	}
-#endif
-#endif /* PHASE1 */
-
-#ifdef PHASE2
-	if ((euc.s = _connect(tm_address, *port)) == -1)
-	{
-		stop_connecting = 1;
-		printf("connect to appServer failed\n");
-		LOG_ERROR_MESSAGE("connect failed");
-		sem_wait(&running_eu_count);
-		return NULL;
-	}
-#endif /* PHASE2 */
 
 	/* Main loop for the user logic. */
 	retry = 0;
@@ -1933,7 +1802,7 @@ void *start_eu(void *data)
 			{
 				perror("gettimeofday");
 			}
-			if (rc == W_ERROR)
+			if (rc == ERROR)
 			{
 				LOG_ERROR_MESSAGE("error executing %s",
 					interaction_short_name[euc.interaction]);
@@ -1946,44 +1815,50 @@ void *start_eu(void *data)
 				fflush(log_mix);
 				pthread_mutex_unlock(&mutex_mix_log);
 
-#ifdef PHASE1
-				/*
-				 * If an error occurs, reconnect since it could be a dropped
-				 * connection causing the error.
-				 */
-				odbc_disconnect(&euc.odbcc);
-				odbc_connect(&euc.odbcc);
-#endif /* PHASE1 */
+				if ( mode_access == MODE_DIRECT )
+				{
+					/*
+					 * If an error occurs, reconnect since it could be a dropped
+					 * connection causing the error.
+					 */
+					db_disconnect(&euc.dbc);
+					db_connect(&euc.dbc);
+				}
+				else
+				{
 				/* an error can be caused by db transaction 
 				 * failure, or socket error 
 				 */
 				/* If an error occurs, sleep for 10 seconds and try again. */
-				sleep(10);
+					sleep(10);
+				}
 			}
 			retry++;
-		} while (rc == W_ERROR && retry<RETRY);
-#ifdef PHASE2
+		} while (rc == ERROR && retry<RETRY);
+
 		/* if retry fails, start from the beginning */
-		if (rc == W_ERROR && retry==RETRY) 
+		if (rc == ERROR && retry==RETRY) 
 		{
 			LOG_ERROR_MESSAGE("retry Home interaction failed");
 			continue;
 		}
 
 		/* if appServer close this socket, reconnect */
-		if (rc == SOCKET_CLOSE)
+		if ( mode_access == MODE_APPSERVER )
 		{
-			close(euc.s);
-
-			if ((euc.s = _connect(tm_address, *port)) == -1)
+			if (rc == SOCKET_CLOSE)
 			{
-				LOG_ERROR_MESSAGE("re-connect failed");
-				return NULL;
+				close(euc.s);
+	
+				if ((euc.s = _connect(tm_address, *port)) == -1)
+				{
+					LOG_ERROR_MESSAGE("re-connect failed");
+					return NULL;
+				}
+				LOG_ERROR_MESSAGE("re-connect");
+				continue;
 			}
-			LOG_ERROR_MESSAGE("re-connect");
-			continue;
 		}
-#endif
 		response_time = time_diff(rt0, rt1);
 
 		/* Log the response time and the interaction that was just executed. */
@@ -2046,7 +1921,7 @@ void *start_eu(void *data)
 				{
 					perror("gettimeofday");
 				}
-				if (rc == W_ERROR)
+				if (rc == ERROR)
 				{
 					LOG_ERROR_MESSAGE("error executing %s",
 						interaction_short_name[euc.interaction]);
@@ -2058,39 +1933,41 @@ void *start_eu(void *data)
 					pthread_mutex_unlock(&mutex_mix_log);
 
 					dump_interaction_data(&euc);
-#ifdef PHASE1
-					/*
-					 * If an error occurs, reconnect since it could be a
-					 * dropped connection causing the error.
-				 	 */
-					odbc_disconnect(&euc.odbcc);
-					odbc_connect(&euc.odbcc);
-#endif /* PHASE1 */
+					if ( mode_access == MODE_DIRECT )
+					{
+						/*
+						 * If an error occurs, reconnect since it could be a
+						 * dropped connection causing the error.
+					 	 */
+					db_disconnect(&euc.dbc);
+					db_connect(&euc.dbc);
+					}
 					/*
 					 * If an error occurs, sleep for 10 seconds and try again.
 					 */
 					sleep(10);
 				}
 				retry++;
-			} while (rc == W_ERROR && retry < RETRY);
-#ifdef PHASE2
-			/* if retry fails, try other interaction or the same 
-                         * interaction with different data */
-			if (rc == W_ERROR && retry == RETRY) continue;
-
-	                /* if appServer close this socket, reconnect */
-        	        if (rc == SOCKET_CLOSE)
+			} while (rc == ERROR && retry < RETRY);
+			if ( mode_access == MODE_APPSERVER )
 			{
-                        	close(euc.s);
-                        	if ((euc.s = _connect(tm_address, *port)) == -1)
-                        	{
-                               		LOG_ERROR_MESSAGE("re-connect failed");
-                                	return NULL;
-                        	}
-                        	LOG_ERROR_MESSAGE("re-connect");
-                        	continue;
-                	}
-#endif
+				/* if retry fails, try other interaction or the same 
+				* interaction with different data */
+				if (rc == ERROR && retry == RETRY) continue;
+
+		                /* if appServer close this socket, reconnect */
+       		 	        if (rc == SOCKET_CLOSE)
+				{
+					close(euc.s);
+					if ((euc.s = _connect(tm_address, *port)) == -1)
+					{
+						LOG_ERROR_MESSAGE("re-connect failed");
+						return NULL;
+                        		}
+	                        	LOG_ERROR_MESSAGE("re-connect");
+       		                 	continue;
+               		 	}
+			}
 
 			response_time =
 				(double) (rt1.tv_sec - rt0.tv_sec) + (double) (rt1.tv_usec - rt0.tv_usec) / 1000000.0;
@@ -2138,6 +2015,10 @@ void *start_eu(void *data)
 	}
 	while (time(NULL) < stop_time);
 
+	if (mode_access == MODE_DIRECT)
+	{
+		db_disconnect(&euc.dbc);
+	}
 	sem_wait(&running_eu_count);
 	return NULL;
 }

@@ -108,3 +108,4 @@ RETURN cust_discount;
 
 END;
 ' LANGUAGE 'plpgsql';
+commit;

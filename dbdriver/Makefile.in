@@ -1,36 +1,58 @@
+# Generated automatically from Makefile.in by configure.
 # Makefile
 # 30 january 2002
 
 include @TOPDIR@/make.common
 
-CFLAGS_P1 = $(CFLAGS) -DPHASE1
-CFLAGS_P2 = $(CFLAGS) -DPHASE2
+EXE = dbdriver
+DBDRIVER_PRGS = eu.c main.c tm_interface.c
+DBDRIVER_OBJS = $(DBDRIVER_PRGS:.c=.so)
 
-all: eu_p2.so tm_interface.so dbdriver_p2
+OBJS = $(DBDRIVER_OBJS) $(COMMON_OBJS) $(CACHE_DIR)/cache_interface.so \
+	$(TOPDIR)/interfaces/db.so $(DBI_OBJS)
+PRGS = $(COMMON_PRGS) $(DBDRIVER_PRGS) \
+	$(CACHE_DIR)/cache_interface.c $(TOPDIR)/interfaces/db.c
 
-eu_p1.so: $(TOPDIR)/make.common Makefile eu.c $(INCLUDE_DIR)/eu.h \
-	$(INCLUDE_DIR)/common.h
-	$(CC) -c $(CFLAGS_P1) eu.c -o eu_p1.so
+all: $(EXE)
 
-eu_p2.so: $(TOPDIR)/make.common Makefile eu.c $(INCLUDE_DIR)/eu.h \
-	$(INCLUDE_DIR)/common.h
-	$(CC) -c $(CFLAGS_P2) eu.c -o eu_p2.so
+$(EXE): $(OBJS)
+	$(CC) -o $@ $(OBJS) $(LDFLAGS)
 
-tm_interface.so: $(TOPDIR)/make.common Makefile tm_interface.c \
-	$(INCLUDE_DIR)/tm_interface.h \
-	$(COMMON_PRGS) $(INCLUDE_DIR)/common.h $(INCLUDE_DIR)/_socket.h
-	$(CC) -c $(CFLAGS_P2) -I$(SAPDBROOT)/incl tm_interface.c -o tm_interface.so
+$(COMMON_OBJS):$(COMMON_PRGS) \
+		$(TOPDIR)/make.common \
+		$(INCLUDE_DIR)/common.h \
+		$(COMMON_DIR)/Makefile
+	cd $(COMMON_DIR); $(MAKE)
 
-dbdriver_p1: $(TOPDIR)/make.common Makefile main.c eu_p1.so \
-	$(COMMON_DIR)/common.so $(ODBC_OBJS) ../cache/cache_interface.so 
-	$(CC) $(CFLAGS_P1) main.c -o dbdriver_p1 eu_p1.so \
-		../common/common.so  $(ODBC_OBJS) ../cache/cache_interface.so \
-		$(COMMON_DIR)/_socket.so $(LDFLAGS)
+$(DBI_OBJS): $(DBI_PRGS) \
+		$(TOPDIR)/make.common \
+		$(INCLUDE_DIR)/common.h $(INCLUDE_DIR)/interaction_data.h \
+		$(DBI_INCLUDE) \
+		$(DBI_PRGS) \
+		$(DBI_DIR)/Makefile
+	cd $(DBI_DIR); $(MAKE)
 
-dbdriver_p2: $(TOPDIR)/make.common Makefile eu.c main.c tm_interface.so \
-	$(COMMON_OBJS)
-	$(CC) $(CFLAGS_P2) main.c -o dbdriver_p2 eu_p2.so \
-		$(COMMON_OBJS) tm_interface.so $(LDFLAGS)
+$(TOPDIR)/interfaces/db.so: $(TOPDIR)/interfaces/db.c \
+		$(INCLUDE_DIR)/db.h \
+		$(DBI_INCLUDE) \
+		$(TOPDIR)/interfaces/Makefile
+	cd $(TOPDIR)/interfaces; $(MAKE)
 
+$(CACHE_DIR)/cache_interface.so: $(CACHE_DIR)/cache_interface.c \
+		$(INCLUDE_DIR)/cache_interface.h \
+		$(CACHE_DIR)/Makefile
+	cd $(CACHE_DIR); $(MAKE)
+		
+$(EXE): \
+	$(TOPDIR)/make.common \
+	Makefile \
+	$(OBJS) \
+	$(INCLUDE_DIR)/common.h \
+	$(INCLUDE_DIR)/db.h \
+	$(INCLUDE_DIR)/app_interface.h \
+	$(INCLUDE_DIR)/app_threadpool.h \
+	$(INCLUDE_DIR)/app_txn_array.h \
+	$(INCLUDE_DIR)/app_txn_queue.h \
+	$(DBI_INCLUDE)
 clean:
-	rm -f *.so dbdriver_p1 dbdriver_p2 error.log mix.log think_time.log usmd.log
+	rm -f $(EXE) *.so

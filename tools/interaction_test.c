@@ -4,10 +4,10 @@
  * This file is released under the terms of the Artistic License.  Please see
  * the file LICENSE, included in this package, for details.
  *
- * Copyright (C) 2002 Mark Wong & Jenny Zhang &
- *                    Open Source Development Lab, Inc.
+ * Copyright (C) Open Source Development Lab, Inc.
  *
- * 19 february 2002
+ * History:
+ * Feb-2002 Created by Mark Wong & Jenny Zhang
  */
 
 #include <stdio.h>
@@ -47,9 +47,17 @@ char subject[I_SUBJECT_LEN + 1] = "ARTS";
 int mode_access = MODE_APPSERVER;
 int mode_cache = MODE_CACHE_OFF;
 
+#ifdef odbc
 char sname2[32] = "localhost:DBT1";
-char uname2[32] = "dbt";
-char auth2[32] = "dbt";
+char uname2[32] = "pgsql";
+char auth2[32] = "pgsql";
+#endif
+#ifdef libpq
+char sname2[32] = "localhost";
+char dbname2[32] = "DBT1";
+char uname2[32] = "pgsql";
+char auth2[32] = "pgsql";
+#endif
 
 /* Prototypes */
 int display_data(int interaction, int inout, void *data);
@@ -118,7 +126,6 @@ int main(int argc, char *argv[])
 			{ "host", required_argument, 0, 0 },
 			{ "i_id", required_argument, 0, 0 },
 			{ "interaction", required_argument, 0, 0 },
-			{ "new_cart", no_argument, &cart_mode, 1 },
 			{ "new_customer", no_argument, &new_customer, 1 },
 			{ "port", required_argument, 0, 0 },
 			{ "search_by_author", no_argument, &search, SEARCH_AUTHOR },
@@ -229,8 +236,14 @@ int main(int argc, char *argv[])
 	}
 	else
 	{
+#ifdef odbc
 		if (db_init(sname2, uname2, auth2) != OK)
+#endif
+#ifdef libpq
+		if (db_init(sname2, dbname2, uname2, auth2) != OK)
+#endif
 		{
+			printf("sname2 %s, dbname2 %s, uname2 %s, auth2 %s\n", sname2, dbname2, uname2, auth2);
 			printf("db environment initialization failed\n");
 			return -1;
 		}
@@ -356,16 +369,16 @@ int main(int argc, char *argv[])
 	{
 		/* Send and retrieve the interaction data to the application server. */
 		printf("Sending interaction data...\n");
-		if (send_interaction_packet(euc.s, &euc) == W_ERROR)
+		if (send_interaction_packet(euc.s, &euc) == ERROR)
 		{
 			LOG_ERROR_MESSAGE("send failed");
-			return W_ERROR;
+			return ERROR;
 		}
 		printf("Waiting to receive interaction results...\n");
-		if (receive_interaction_packet(euc.s, &euc) == W_ERROR)
+		if (receive_interaction_packet(euc.s, &euc) == ERROR)
 		{
 			LOG_ERROR_MESSAGE("receive failed");
-			return W_ERROR;
+			return ERROR;
 		}
 	}
 	else
@@ -502,6 +515,7 @@ int main(int argc, char *argv[])
 
 	printf("\ndone.\n");
 
+	db_disconnect(&dbc);
 	return 0;
 }
 
@@ -662,6 +676,17 @@ int display_buy_confirm_data(int inout, struct buy_confirm_t *data)
 
 	if (inout == DISPLAY_INPUT_DATA)
 	{
+		printf("cx_type: %s\n", data->cx_type);
+		printf("cx_num: %s\n", data->cx_num);
+		printf("cx_expiry: %s\n", data->cx_expiry);
+		printf("cx_name: %s\n", data->cx_name);
+		printf("o_ship_type: %s\n", data->o_ship_type);
+		printf("shipping.addr_street1: %s\n", data->shipping.addr_street1);
+		printf("shipping.addr_street2: %s\n", data->shipping.addr_street2);
+		printf("shipping.addr_city: %s\n", data->shipping.addr_city);
+		printf("shipping.addr_state: %s\n", data->shipping.addr_state);
+		printf("shipping.addr_zip: %s\n", data->shipping.addr_zip);
+		printf("shipping.co_name: %s\n", data->shipping.co_name);
 	}
 	else if (inout == DISPLAY_OUTPUT_DATA)
 	{
@@ -690,6 +715,31 @@ int display_buy_request_data(int inout, struct buy_request_t *data)
 
 	if (inout == DISPLAY_INPUT_DATA)
 	{
+		printf("returning_flag: %d\n", data->returning_flag);
+		/* if it is old customer */
+		if (data->returning_flag)
+		{
+			printf("c_uname: %s\n", data->c_uname);
+			printf("c_passwd: %s\n", data->c_passwd);
+			printf("sc_id: %lld\n", data->sc_id);
+		}
+		/* new user */
+		else
+		{
+			printf("sc_id: %lld\n", data->sc_id);
+			printf("c_fname: %s\n", data->c_fname);
+			printf("c_lname: %s\n", data->c_lname);
+			printf("address.street1: %s\n", data->address.addr_street1);
+			printf("address.street2: %s\n", data->address.addr_street2);
+			printf("address.city: %s\n", data->address.addr_city);
+			printf("address.state: %s\n", data->address.addr_state);
+			printf("address.zip: %s\n", data->address.addr_zip);
+			printf("address.co_name: %s\n", data->address.co_name);
+			printf("c_phone %s\n", data->c_phone);
+			printf("c_email %s\n", data->c_email);
+			printf("c_birthdate %s\n", data->c_birthdate);
+			printf("c_data %s\n", data->c_data);
+		}
 	}
 	else if (inout == DISPLAY_OUTPUT_DATA)
 	{
@@ -1167,7 +1217,7 @@ int generate_shopping_cart_data(struct shopping_cart_t *data)
 			data->add_flag = 0;
 			data->sc_size = 0;
 			/* sc_id must not be > 0 else this case will fail. */
-			data->sc_id = 0;
+			data->sc_id = sc_id;
 			break;
 		case 1:
 			/* add_flag=1, add an item to shopping_cart */
@@ -1203,7 +1253,17 @@ int usage(char *name)
 	int i;
 
 	printf(
+		"to use the application server:\n"
 		"usage: %s --host <servername> --port <port>\n"
+		"	--interaction <interaction>\n\n", name);
+	printf(
+		"to connect to the database directly without using cache:\n"
+		"usage: %s --access_direct --host <dbhost>\n"
+		"	--interaction <interaction>\n\n", name);
+	printf(
+		"to connect to the database directly with using cache:\n"
+		"usage: %s --access_direct --host <dbhost> --access_cache\n"
+		"	--cache_host <cachehost> --cache_port <cache_port>\n"
 		"	--interaction <interaction>\n\n", name);
 	printf("  <interaction>:  ac  - Admin Confirm\n");
 	printf("                        [--i_id <#>], default 1\n");
@@ -1237,7 +1297,7 @@ int usage(char *name)
 	printf("                         or --search_by_title]\n");
 	printf("                        [--subject <search_string>], default ARTS\n");
 	printf("                  sc  - Shopping Cart\n");
-	printf("                        [--view_cart or --new_cart or --update_cart],\n");
+	printf("                        [--view_cart or --add_item or --update_cart],\n");
 	printf("                         default --view_cart\n");
 	printf("                        [--c_id <#>], default 1\n");
 	printf("                        [--sc_id <#>], default 1\n");

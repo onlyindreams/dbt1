@@ -65,14 +65,14 @@ int main(int argc, char *argv[])
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
 		LOG_ERROR_MESSAGE("alloc env handle failed");
-		return W_ERROR;
+		return ERROR;
 	}
 
 	rc = SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc);
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
 		LOG_ODBC_ERROR(SQL_HANDLE_DBC, hdbc);
-		return W_ERROR;
+		return ERROR;
 	}
 
 	/* Open connection to the database. */
@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
 		LOG_ODBC_ERROR(SQL_HANDLE_DBC, hdbc);
-		return W_ERROR;
+		return ERROR;
 	}
 
 	/* allocate statement handle*/
@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
 	if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
 	{
 		LOG_ODBC_ERROR(SQL_HANDLE_STMT, hstmt);
-		return W_ERROR;
+		return ERROR;
 	}
 
 	rc = SQLPrepare(hstmt, dbproc, SQL_NTS);
@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
 	{
 		LOG_ODBC_ERROR(SQL_HANDLE_STMT, hstmt);
 		printf("load failed\n");
-		return W_ERROR;
+		return ERROR;
 	}
 	printf("loaded %s\n", argv[4]);
 

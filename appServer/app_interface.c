@@ -43,7 +43,7 @@ int receive_transaction_packet(int s, struct QItem *TxnQItem)
 	if ((rec = _receive(s, (void *) &interaction, sizeof(interaction))) == -1)
 	{
 		LOG_ERROR_MESSAGE("cannot receive interaction type");
-		return W_ERROR;
+		return ERROR;
 	}
 	if (rec == SOCKET_CLOSE) return SOCKET_CLOSE;
 
@@ -56,7 +56,7 @@ int receive_transaction_packet(int s, struct QItem *TxnQItem)
 			if (interaction_q_slot_id == -1)
 			{
 				LOG_ERROR_MESSAGE("PinSlot failed");
-				return W_ERROR;
+				return ERROR;
 			}
 			data = &(app_admin_confirm_array.data_array[interaction_q_slot_id].admin_confirm_data);
 			length = sizeof(struct admin_confirm_t);
@@ -66,7 +66,7 @@ int receive_transaction_packet(int s, struct QItem *TxnQItem)
 			if (interaction_q_slot_id == -1)
 			{
 				LOG_ERROR_MESSAGE("PinSlot failed");
-				return W_ERROR;
+				return ERROR;
 			}
 			data = &(app_admin_request_array.data_array[interaction_q_slot_id].admin_request_data);
 			length = sizeof(struct admin_request_t);
@@ -76,7 +76,7 @@ int receive_transaction_packet(int s, struct QItem *TxnQItem)
 			if (interaction_q_slot_id == -1)
 			{
 				LOG_ERROR_MESSAGE("PinSlot failed");
-				return W_ERROR;
+				return ERROR;
 			}
 			data = &(app_best_sellers_array.data_array[interaction_q_slot_id].best_sellers_data);
 			length = sizeof(struct best_sellers_t);
@@ -86,7 +86,7 @@ int receive_transaction_packet(int s, struct QItem *TxnQItem)
 			if (interaction_q_slot_id == -1)
 			{
 				LOG_ERROR_MESSAGE("PinSlot failed");
-				return W_ERROR;
+				return ERROR;
 			}
 			data = &(app_buy_confirm_array.data_array[interaction_q_slot_id].buy_confirm_data);
 			length = sizeof(struct buy_confirm_t);
@@ -96,7 +96,7 @@ int receive_transaction_packet(int s, struct QItem *TxnQItem)
 			if (interaction_q_slot_id == -1)
 			{
 				LOG_ERROR_MESSAGE("PinSlot failed");
-				return W_ERROR;
+				return ERROR;
 			}
 			data = &(app_buy_request_array.data_array[interaction_q_slot_id].buy_request_data);
 			length = sizeof(struct buy_request_t);
@@ -106,7 +106,7 @@ int receive_transaction_packet(int s, struct QItem *TxnQItem)
 			if (interaction_q_slot_id == -1)
 			{
 				LOG_ERROR_MESSAGE("PinSlot failed");
-				return W_ERROR;
+				return ERROR;
 			}
 			data = &(app_home_array.data_array[interaction_q_slot_id].home_data);
 			length = sizeof(struct home_t);
@@ -116,7 +116,7 @@ int receive_transaction_packet(int s, struct QItem *TxnQItem)
 			if (interaction_q_slot_id == -1)
 			{
 				LOG_ERROR_MESSAGE("PinSlot failed");
-				return W_ERROR;
+				return ERROR;
 			}
 			data = &(app_new_products_array.data_array[interaction_q_slot_id].new_products_data);
 			length = sizeof(struct new_products_t);
@@ -126,7 +126,7 @@ int receive_transaction_packet(int s, struct QItem *TxnQItem)
 			if (interaction_q_slot_id == -1)
 			{
 				LOG_ERROR_MESSAGE("PinSlot failed");
-				return W_ERROR;
+				return ERROR;
 			}
 			data = &(app_order_display_array.data_array[interaction_q_slot_id].order_display_data);
 			length = sizeof(struct order_display_t);
@@ -136,7 +136,7 @@ int receive_transaction_packet(int s, struct QItem *TxnQItem)
 			if (interaction_q_slot_id == -1)
 			{
 				LOG_ERROR_MESSAGE("PinSlot failed");
-				return W_ERROR;
+				return ERROR;
 			}
 			data = &(app_order_inquiry_array.data_array[interaction_q_slot_id].order_inquiry_data);
 			length = sizeof(struct order_inquiry_t);
@@ -146,7 +146,7 @@ int receive_transaction_packet(int s, struct QItem *TxnQItem)
 			if (interaction_q_slot_id == -1)
 			{
 				LOG_ERROR_MESSAGE("PinSlot failed");
-				return W_ERROR;
+				return ERROR;
 			}
 			data = &(app_product_detail_array.data_array[interaction_q_slot_id].product_detail_data);
 			length = sizeof(struct product_detail_t);
@@ -156,7 +156,7 @@ int receive_transaction_packet(int s, struct QItem *TxnQItem)
 			if (interaction_q_slot_id == -1)
 			{
 				LOG_ERROR_MESSAGE("PinSlot failed");
-				return W_ERROR;
+				return ERROR;
 			}
 			data = &(app_search_request_array.data_array[interaction_q_slot_id].search_request_data);
 			length = sizeof(struct search_request_t);
@@ -166,7 +166,7 @@ int receive_transaction_packet(int s, struct QItem *TxnQItem)
 			if (interaction_q_slot_id == -1)
 			{
 				LOG_ERROR_MESSAGE("PinSlot failed");
-				return W_ERROR;
+				return ERROR;
 			}
 			data = &(app_search_results_array.data_array[interaction_q_slot_id].search_results_data);
 			length = sizeof(struct search_results_t);
@@ -176,7 +176,7 @@ int receive_transaction_packet(int s, struct QItem *TxnQItem)
 			if (interaction_q_slot_id == -1)
 			{
 				LOG_ERROR_MESSAGE("PinSlot failed");
-				return W_ERROR;
+				return ERROR;
 			}
 			data = &(app_shopping_cart_array.data_array[interaction_q_slot_id].shopping_cart_data);
 			length = sizeof(struct shopping_cart_t);
@@ -186,7 +186,7 @@ int receive_transaction_packet(int s, struct QItem *TxnQItem)
 	if (_receive(s, data, length) == -1)
 	{
 		LOG_ERROR_MESSAGE("cannot receive interaction data");
-		return W_ERROR;
+		return ERROR;
 	}
 
 	return OK;
@@ -203,7 +203,7 @@ int send_transaction_packet(int s, struct QItem TxnQItem)
 	if (_send(s, &interaction, sizeof(int)) == -1)
 	{
 		LOG_ERROR_MESSAGE("cannot send interaction type");
-		return W_ERROR;
+		return ERROR;
 	}
 	switch (interaction)
 	{
@@ -250,7 +250,7 @@ int send_transaction_packet(int s, struct QItem TxnQItem)
 	if (_send(s, &result, sizeof(int)) == -1)
 	{
 		LOG_ERROR_MESSAGE("cannot send interaction result");
-		return W_ERROR;
+		return ERROR;
 	}
 	
 	if (result == OK)
@@ -313,7 +313,7 @@ int send_transaction_packet(int s, struct QItem TxnQItem)
 		if (_send(s, data, length) == -1)
 		{
 			LOG_ERROR_MESSAGE("cannot send interaction data, errno %d", errno);
-			return W_ERROR;
+			return ERROR;
 		}
 	}
 

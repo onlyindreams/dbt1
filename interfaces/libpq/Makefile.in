@@ -1,0 +1,19 @@
+# Makefile
+# 20 february 2002
+
+include @TOPDIR@/make.common
+
+all: $(DBI_OBJS)
+
+clean:
+	rm -f $(DBI_OBJS) libpq_test.o libpq_test
+
+explain:
+	@echo "$(DBI_OBJS)"
+
+PGSQL_OBJS: \
+	Makefile \
+	$(TOPDIR)/make.common \
+	$(INCLUDE_DIR)/common.h $(INCLUDE_DIR)/interaction_data.h \
+	$(DBI_INCLUDE) \
+	$(DBI_PRGS)

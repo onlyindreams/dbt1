@@ -3,9 +3,10 @@
  * This file is released under the terms of the Artistic License.  Please see
  * the file LICENSE, included in this package, for details.
  *
- * Copyright (C) 2002 Mark Wong & Jenny Zhang &
- *                    Open Source Development Lab, Inc.
- *
+ * Copyright (C) 2002 Open Source Development Lab, Inc.
+ * History:
+ * 2002 Created by Mark Wong & Jenny Zhang &
+ * Aug-2003: Rewrote parsing the command line part by Jenny Zhang
  */
 
 #include <pthread.h>
@@ -19,6 +20,7 @@
 #include <ctype.h>
 #include <sys/types.h>
 #include <signal.h>
+#include <getopt.h>
 
 #include <common.h>
 #include <_socket.h>
@@ -34,18 +36,32 @@ void sighandler(int signum);
 
 pthread_mutex_t mutex_cache_server = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_counter = PTHREAD_MUTEX_INITIALIZER;
-int db_thread;
-int sanity_check = 0;
-char sname2[32], uname2[32], auth2[32];
 int i_id_max, a_id_max;
+#ifdef odbc
+	char sname2[32] = "localhost:DBT1";
+	char uname2[32] = "dbt";
+	char auth2[32] = "dbt";
+#endif
+#ifdef libpq
+	char sname2[32] = "localhost";
+	char dbname2[32] = "DBT1";
+	char uname2[32] = "pgsql";
+	char auth2[32] = "pgsql";
+#endif
+int db_thread=10;
+int sanity_check = 0;
 int cache_ready = 0;
 int warm_up = 0;
 int counter = 0;
+int item_count = 1000;
+int port = 9999;
+int help = 0;
 
 void *init_cache(void *data);
 void *warm_up_thread(void *fd);
 void status();
 int undo_digsyl(char *search_string);
+int usage(char *name);
 
 int main(int argc, char *argv[])
 {
@@ -53,7 +69,7 @@ int main(int argc, char *argv[])
 	struct sockaddr_in socketaddr;
 	pthread_t tid;
 	pthread_t connect_thread;
-	int port, connectioncount;
+	int connectioncount;
 	int addrlen;
 	int rec;
 	struct sigaction sa;
@@ -78,61 +94,96 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	if (argc < 13)
+	if (argc < 1)
 	{
-		printf("usage: %s -d <dbnodename> -u <username> -p <password> -l <port>\n", argv[0]);
-		printf("          -c <db_connection> -i <items> [-o <output_dir>] [-s 1]\n");
-		return -1;
+		return usage(argv[0]);
 	}
 
-	opterr = 0;
-	while ((c = getopt(argc, argv, "c:d:i:l:o:p:s:u:")) != -1)
+	while (1)
 	{
-		switch (c)
+		static struct option long_options[] = {
+			{ "host", required_argument, 0, 0 },
+			{ "dbname", required_argument, 0, 0 },
+			{ "dbnodename", required_argument, 0, 0 },
+			{ "username", required_argument, 0, 0 },
+			{ "password", required_argument, 0, 0 },
+			{ "output_path", required_argument, 0, 0 },
+			{ "port", required_argument, 0, 0 },
+			{ "db_connection", required_argument, 0, 0 },
+			{ "item_count", required_argument, 0, 0 },
+			{ "help", no_argument, &help, 1},
+			{ "sanity_check", no_argument, &sanity_check, 1},
+			{ 0, 0, 0, 0 }
+		};
+		int option_index = 0;
+		c = getopt_long_only(argc, argv, "", long_options, &option_index);
+		if (c == -1)
 		{
-			case 'c':
-				db_thread = atoi(optarg);
+			 break;
+		}
+
+		switch (c)
+        	{
+                case 0:
+			if (long_options[option_index].flag != 0)
+			{
 				break;
-			case 'd':
+			}
+			if (strcmp(long_options[option_index].name, "host") == 0)
+			{
 				strcpy(sname2, optarg);
+			}
+			else if (strcmp(long_options[option_index].name, "help") == 0)
+			{
 				break;
-			case 'i':
-				/* item_count is a global variable      *
-				 * it is used in execute_search_results */
-				item_count = atoi(optarg);
-				a_id_max = item_count / 10;
-				i_id_max = item_count / 5;
-				break;
-			case 'l':
-				port = atoi(optarg);
-				break;
-			case 'o':
-				strcpy(output_path, optarg);
-				break;
-			case 'p':
-				strcpy(auth2, optarg);
-				break;
-			case 's':
-				sanity_check = 1;
-				break;
-			case 'u':
+			}
+			else if (strcmp(long_options[option_index].name, "dbnodename") == 0)
+			{
+				strcpy(sname2, optarg);
+			}
+           		else if (strcmp(long_options[option_index].name, "dbname") == 0)
+			{
+				strcpy(dbname2, optarg);
+			}
+            		else if (strcmp(long_options[option_index].name, "username") == 0)
+			{
 				strcpy(uname2, optarg);
-				break;
-			case '?':
-				if (isprint(optopt))
-				{
-					fprintf(stderr, "Unknown option `-%c'.\n", optopt);
-				}
-				else
-				{
-					fprintf (stderr, "Unknown option character `\\x%x'.\n",
-						optopt);
-				}
-				return 1;
-			default:
-				return -1;
+			}
+			else if (strcmp(long_options[option_index].name, "password") == 0)
+			{
+				strcpy(auth2, optarg);
+			}
+			else if (strcmp(long_options[option_index].name, "output_path") == 0)
+			{
+				strcpy(output_path, optarg);
+			}
+			else if (strcmp(long_options[option_index].name, "port") == 0)
+			{
+				port = atoi(optarg);
+			}
+			else if (strcmp(long_options[option_index].name, "db_connection") == 0)
+			{
+				db_thread = atoi(optarg);
+			}
+			else if (strcmp(long_options[option_index].name, "item_count") == 0)
+			{
+				item_count = atoi(optarg);
+			}
+			break;
+		default:
+			printf ("?? getopt returned character code 0%o ??\n", c);
+			exit(1);
 		}
 	}
+
+	if ( help == 1)
+	{
+		return usage(argv[0]);
+	}
+
+	a_id_max = item_count / 10;
+	i_id_max = item_count / 5;
+
 	init_common();
 	
 	/* Start the listenter. */
@@ -201,7 +252,13 @@ void *init_cache(void *data)
 	struct table_range *range;
 	int author_step, title_step;
 
+#ifdef odbc
 	if (db_init(sname2, uname2, auth2) != OK)
+#endif
+#ifdef libpq
+	if (db_init(sname2, dbname2, uname2, auth2) != OK)
+#endif
+	
 	{
 		printf("db environment initialization failed\n");
 		return NULL;
@@ -284,6 +341,8 @@ void *init_cache(void *data)
 	}
 
 	printf("Cache is warm.\n");
+	fflush(stdout);
+
 	pthread_mutex_destroy(&mutex_counter);
 	cache_ready = 1;
 
@@ -368,7 +427,7 @@ void *warm_up_cache(void *fd)
 	srand(time(NULL) + pthread_self());
 
 	rc = db_connect(&dbc);
-	if (rc == W_ERROR)
+	if (rc == ERROR)
 	{
 		LOG_ERROR_MESSAGE("could not connect to the database");
 		kill(0, SIGUSR1);
@@ -387,7 +446,7 @@ void *warm_up_cache(void *fd)
 		digsyl2(data.search_results_data.search_string,
 			(long long) i + 1, (long long) 7);
 		rc = process_interaction(SEARCH_RESULTS, &dbc, &data);
-		if (rc == W_ERROR)
+		if (rc == ERROR)
 		{
 			kill(0, SIGUSR2);
 			pthread_exit(NULL);
@@ -425,7 +484,7 @@ void *warm_up_cache(void *fd)
 		digsyl2(data.search_results_data.search_string,
 			(long long) i + 1, (long long) 7);
 		rc = process_interaction(SEARCH_RESULTS, &dbc, &data);
-		if (rc == W_ERROR)
+		if (rc == ERROR)
 		{
 			kill(0, SIGUSR2);
 			pthread_exit(NULL);
@@ -455,7 +514,7 @@ void *warm_up_cache(void *fd)
 		}
 		status();
 	}
-	odbc_disconnect(&dbc);
+	db_disconnect(&dbc);
 	return NULL;
 }
 
@@ -479,7 +538,7 @@ void *cache_thread(void *fd)
 	while (1)
 	{
 		/* receive search results request */
-		if ((rec=receive_search_results(workersock, &search_results)) == W_ERROR)
+		if ((rec=receive_search_results(workersock, &search_results)) == ERROR)
 		{
 			LOG_ERROR_MESSAGE("receive_search_results_request failed");
 			close(workersock);
@@ -566,7 +625,7 @@ void *cache_thread(void *fd)
 		
 		
 		/* send results back */
-		if ((rec = send_search_results(workersock, &search_results)) == W_ERROR)
+		if ((rec = send_search_results(workersock, &search_results)) == ERROR)
 		{
 			LOG_ERROR_MESSAGE("send_search_results_response failed");
 			close(workersock);
@@ -645,4 +704,31 @@ int undo_digsyl(char *search_string)
 		j++;
 	}
 	return rec;
+}
+
+int usage(char *name)
+{
+#ifdef odbc
+	printf("usage: %s --dbnodename <dbnodename> \n", name);
+#endif
+#ifdef libpq
+	printf("usage: %s --host <hostname> --dbname <dbname> \n", name);
+#endif
+	printf("--username <username> --password <password>\n");
+	printf("--port <port> --db_connection <connections>\n");
+	printf("--item_count <items> --output_path <output_path>\n");
+	printf("if you want sanity_check, add: ");
+	printf("--sanity_check\n\n");
+
+	printf("if not defined, the default values are:\n");
+#ifdef odbc
+        printf("--dbnodename %s ", sname2);
+#endif
+#ifdef libpq
+        printf("--host %s --dbname %s ", sname2, dbname2);
+#endif
+	printf("--username %s --password %s\n", uname2, auth2);
+	printf("--port %d --db_connection %d\n", port, db_thread);
+	printf("--item_count %d --output_path %s\n", item_count, output_path );
+	return 1;
 }

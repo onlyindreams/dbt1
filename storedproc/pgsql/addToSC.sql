@@ -1,64 +1,91 @@
-/*
- *
- * This file is released under the terms of the Artistic License.  Please see
- * the file LICENSE, included in this package, for details.
- *
- * Copyright (C) 2002 Open Source Development Lab, Inc.
- * History:
- * Feb 2001: Created by Mark Wong & Jenny Zhang
- * Apr 2003: Rewritten for PostgreSQL by Virginie Megy & Thierry Missimilly
- *		  Bull, Linux Competence Center
- *
- */
-CREATE FUNCTION addToSC (NUMERIC(10), NUMERIC(1), NUMERIC(10)) RETURNS INTEGER AS'
-DECLARE
-	shop_cart_id	alias for $1;
-	flag		alias for $2;
-	item_id		alias for $3;
+--
+--
+-- This file is released under the terms of the Artistic License.	Please see
+-- the file LICENSE, included in this package, for details.
+--
+-- Copyright (C) 2002 Open Source Development Lab, Inc.
+-- History: 
+-- July-2003: Created by Satoshi Nagayasu & Hideyuki Kawashima
+-- Aug-12-2003:  Removed initializing values by Jenny Zhang
+--
+CREATE OR REPLACE FUNCTION addToSC (NUMERIC(10,0), NUMERIC(1,0), NUMERIC(10,0) ) RETURNS INT AS '
+	DECLARE
+		_sc_id ALIAS FOR $1;
+		_add_flag ALIAS FOR $2;
+		_i_id ALIAS FOR $3;
 
-	itemcount numeric(3, 0);
-	shop_cart_line_qty numeric(3,0);
-	item_cost numeric(17,2);
-	item_srp numeric(17,2);
-	item_title varchar(60);
-	item_backing varchar(15);
-	item_related1 numeric(10,0);
-	counter integer;
-BEGIN
-IF flag=1 THEN
-  SELECT sum(scl_qty) INTO itemcount FROM shopping_cart_line
-  WHERE scl_sc_id= shop_cart_id;
-  IF itemcount<100 THEN
-    SELECT scl_qty INTO shop_cart_line_qty FROM shopping_cart_line
-    WHERE scl_sc_id = shop_cart_id AND scl_i_id= item_id;
-    IF FOUND THEN
-       UPDATE shopping_cart_line SET scl_qty=shop_cart_line_qty+1
-       WHERE scl_sc_id=shop_cart_id AND scl_i_id=item_id;
-    ELSE
-       SELECT i_cost, i_srp, i_title, i_backing
-       INTO item_cost, item_srp, item_title, item_backing
-       FROM item WHERE i_id=item_id;
-       INSERT INTO shopping_cart_line VALUES(shop_cart_id, item_id, 1, item_cost,
-       item_srp, item_title, item_backing);
-    END IF;
-    return 1;
-  ELSE
-    return 0;
-  END IF;
-ELSE
---RAISE NOTICE ''flag=0'';
-   SELECT count(*) INTO counter FROM shopping_cart_line WHERE scl_sc_id=shop_cart_id;
-   IF counter=0 THEN
---RAISE NOTICE ''shopping_cart_line vide'';
-  	SELECT i_related1 INTO item_related1 FROM item WHERE i_id=item_id;
-	SELECT i_cost, i_srp, i_title, i_backing
-	INTO item_cost, item_srp, item_title, item_backing
- 	FROM item where i_id=item_related1;
- 	INSERT INTO shopping_cart_line values(shop_cart_id, item_related1, 1,
-  	item_cost, item_srp, item_title, item_backing);
-   END IF;
-END IF;
-return 1;
-END;
-'LANGUAGE 'plpgsql'
+		_itemcount NUMERIC(3,0);
+		_scl_qty NUMERIC(3,0);
+		_i_cost NUMERIC(17,2);
+		_i_srp NUMERIC(17,2);
+		_i_title CHAR(60);
+		_i_backing CHAR(15);
+		_i_related1 NUMERIC(10,0);
+		--VARs
+		sc_subtotal NUMERIC(17,2);
+	BEGIN
+--		RAISE NOTICE ''_add_flag=%'', _add_flag;
+		IF (_add_flag = 1) THEN
+
+			SELECT sum(scl_qty) 
+			INTO _itemcount 
+			FROM shopping_cart_line 
+			WHERE scl_sc_id = _sc_id;
+
+--			RAISE NOTICE ''_itemcount=%'', _itemcount;
+			IF (_itemcount > 100 ) THEN
+				RAISE EXCEPTION ''itemcount(%) > 100'', _itemcount;
+			ELSE
+				UPDATE shopping_cart_line 
+					SET scl_qty = scl_qty + 1
+				WHERE scl_sc_id = _sc_id 
+					AND scl_i_id = _i_id;
+
+				IF NOT FOUND THEN
+--					RAISE NOTICE ''not found'';
+					SELECT i_cost, i_srp, i_title, i_backing
+						INTO _i_cost, _i_srp, _i_title, _i_backing 
+						FROM item 
+					 WHERE i_id = _i_id;
+
+					INSERT INTO shopping_cart_line
+					VALUES(_sc_id, _i_id, 1, _i_cost, _i_srp, _i_title, _i_backing);
+
+				END IF;
+			END IF;
+		ELSE
+
+--			PERFORM * 
+--			FROM shopping_cart_line 
+--			WHERE scl_sc_id = _sc_id;
+
+--			IF NOT FOUND THEN
+
+				SELECT t1.i_cost, t1.i_srp, t1.i_title, t1.i_backing, t2.i_related1
+					INTO _i_cost, _i_srp, _i_title, _i_backing, _i_related1
+					FROM item t1, item t2 
+				 WHERE t1.i_id = t2.i_related1 
+					 AND t2.i_id = _i_id;
+
+				INSERT INTO shopping_cart_line 
+				VALUES(_sc_id, _i_related1, 1, _i_cost, _i_srp, _i_title, _i_backing);
+
+--			END IF;
+		END IF;
+		SELECT getSCSubTotal(_sc_id) INTO sc_subtotal;
+		UPDATE shopping_cart
+			SET sc_sub_total=sc_subtotal, sc_date=now()
+			WHERE sc_id=_sc_id;
+	RETURN 1;
+	END;
+' LANGUAGE 'plpgsql';
+commit;
+
+-- 
+-- Usage:
+-- 
+-- SELECT addToSC ( 
+--				 sc_id NUMERIC(10,0)
+--				 add_flag NUMERIC(1,0)
+--				 i_id NUMERIC(10,0) );
 

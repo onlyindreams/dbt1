@@ -11,6 +11,7 @@
 
 #include <db.h>
 
+#ifdef odbc
 #include <odbc_interaction_admin_confirm.h>
 #include <odbc_interaction_admin_request.h>
 #include <odbc_interaction_best_sellers.h>
@@ -24,21 +25,54 @@
 #include <odbc_interaction_shopping_cart.h>
 #include <odbc_interaction_search_request.h>
 #include <odbc_interaction_search_results.h>
+#endif
+
+#ifdef libpq
+#include <libpq_interaction_admin_confirm.h>
+#include <libpq_interaction_admin_request.h>
+#include <libpq_interaction_best_sellers.h>
+#include <libpq_interaction_buy_confirm.h>
+#include <libpq_interaction_buy_request.h>
+#include <libpq_interaction_home.h>
+#include <libpq_interaction_new_products.h>
+#include <libpq_interaction_order_display.h>
+#include <libpq_interaction_order_inquiry.h>
+#include <libpq_interaction_product_detail.h>
+#include <libpq_interaction_shopping_cart.h>
+#include <libpq_interaction_search_request.h>
+#include <libpq_interaction_search_results.h>
+#endif
 
 int db_connect(struct db_context_t *dbc)
 {
-	if (odbc_connect(dbc) != OK)
+	if (_db_connect(dbc) != OK)
 	{
-		return W_ERROR;
+		return ERROR;
 	}
 	return OK;
 }
 
+#ifdef odbc
 int db_init(char *sname, char *uname, char *auth)
+#endif
+#ifdef libpq
+int db_init(char *shost, char *dbname, char *uname, char *auth)
+#endif
 {
-	if (odbc_init(sname, uname, auth) != OK)
+#ifdef odbc	
+	_db_init(sname, uname, auth);
+#endif
+#ifdef libpq
+	_db_init(shost, dbname, uname, auth);
+#endif
+	return OK;
+}
+
+int db_disconnect(struct db_context_t *dbc)
+{
+	if (_db_disconnect(dbc) != OK)
 	{
-		return W_ERROR;
+		return ERROR;
 	}
 	return OK;
 }
@@ -93,26 +127,37 @@ int process_interaction(int interaction, struct db_context_t *dbc,
 			break;
 		default:
 			LOG_ERROR_MESSAGE("unknown interaction type %d", interaction);
-			return W_ERROR;
+			return ERROR;
 	}
 
+#ifdef odbc
 	if (rc == OK)
 	{
 		/* Commit. */
-		i = SQLEndTran(SQL_HANDLE_DBC, dbc->hdbc, SQL_COMMIT);
+		i = commit_transaction(dbc);
 		status = OK;
 	}
 	else
 	{
 		/* Rollback. */
-		i = SQLEndTran(SQL_HANDLE_DBC, dbc->hdbc, SQL_ROLLBACK);
+		i = rollback_transaction(dbc);
 		status = STATUS_ROLLBACK;
 	}
-	if (i != SQL_SUCCESS && i != SQL_SUCCESS_WITH_INFO)
+	if (i != OK )
 	{
-		LOG_ODBC_ERROR(SQL_HANDLE_STMT, dbc->hstmt);
-		status = W_ERROR;
+		status = ERROR;
 	}
+#endif
+#ifdef libpq
+	if (rc == OK)
+	{
+		status = OK;
+	}
+	else
+	{
+		status = ERROR;
+	}
+#endif
 
 	return status;
 }

@@ -20,7 +20,6 @@
 
 #define SAPDB 0
 #define PGSQL 1
-#define SEQUENCE_SQL "../scripts/sapdb/create_sequence.sql"
 
 int item_count, author_count;
 int set_seeds;
@@ -130,19 +129,37 @@ int main(int argc, char *argv[])
 	if (rdbms == SAPDB)
 	{
 		fprintf(sequence_sql, "sql_connect dbt,dbt\n");
+		fprintf(sequence_sql,
+			"%s CREATE SEQUENCE custid INCREMENT BY 1 START WITH %d\n",
+			exec_sql,
+			2880 * ebs + 1);
+	fprintf(sequence_sql,
+			"%s CREATE SEQUENCE addrid INCREMENT BY 1 START WITH %d\n",
+			exec_sql,
+			ebs * 2880 * 2 + 1);
+	fprintf(sequence_sql,
+			"%s CREATE SEQUENCE scid INCREMENT BY 1 START WITH %d\n",
+			exec_sql,
+			(int) ((double) ebs * 2880.0 * 0.9 + 1.0));
 	}
-	fprintf(sequence_sql,
-		"%s CREATE SEQUENCE custid INCREMENT BY 1 START WITH %d\n",
-		exec_sql,
-		2880 * ebs + 1);
-	fprintf(sequence_sql,
-		"%s CREATE SEQUENCE addrid INCREMENT BY 1 START WITH %d\n",
-		exec_sql,
-		ebs * 2880 * 2 + 1);
-	fprintf(sequence_sql,
-		"%s CREATE SEQUENCE scid INCREMENT BY 1 START WITH %d\n",
-		exec_sql,
-		(int) ((double) ebs * 2880.0 * 0.9 + 1.0));
+	else
+	{
+		fprintf(sequence_sql,
+			"%s CREATE SEQUENCE custid INCREMENT 1 START %d;\n",
+			exec_sql,
+			2880 * ebs + 1);
+		fprintf(sequence_sql, "commit;");
+		fprintf(sequence_sql,
+			"%s CREATE SEQUENCE addrid INCREMENT 1 START %d;\n",
+			exec_sql,
+			ebs * 2880 * 2 + 1);
+		fprintf(sequence_sql, "commit;");
+		fprintf(sequence_sql,
+			"%s CREATE SEQUENCE scid INCREMENT 1 START %d;\n",
+			exec_sql,
+			(int) ((double) ebs * 2880.0 * 0.9 + 1.0));
+		fprintf(sequence_sql, "commit;");
+	}
 	fclose(sequence_sql);
 
 	dpath = (char *) malloc(sizeof(char) * 64);
@@ -155,7 +172,7 @@ int main(int argc, char *argv[])
 	if (flag_item == 1) 
 	{
 		gen_items();
-		sprintf(cmd, "ln -fs %s/item.data /tmp/item.data", path);
+		sprintf(cmd, "ln -fs %s/item.data /tmp/item.data\n", path);
 		popen(cmd, "r");
 	}
 
@@ -528,7 +545,7 @@ void gen_items()
 	output = fopen(filename, "w");
 	if (output == NULL)
 	{
-		fprintf(stderr, "cannot open item.txt");
+		fprintf(stderr, "cannot open item.data");
 		return;
 	}
 
@@ -1038,7 +1055,6 @@ int process_options(int count, char **vector)
 	if (set_items == 0 || set_eus == 0 || set_rdbms==0 )
 	{
 		printf("item, eu numbers and rdbms type are required\n");
-		usage();
 		return 0;
 	}
 	return 1;

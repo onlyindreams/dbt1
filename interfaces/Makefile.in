@@ -7,7 +7,7 @@ OBJS = db.so
 
 all: $(OBJS)
 
-db.so: db.c $(INCLUDE_DIR)/db.h
+db.so: db.c $(INCLUDE_DIR)/db.h $(DBI_INCLUDE)
 
 clean:
 	rm -f $(OBJS)

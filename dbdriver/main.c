@@ -4,21 +4,38 @@
  * This file is released under the terms of the Artistic License.  Please see
  * the file LICENSE, included in this package, for details.
  *
- * Copyright (C) 2002 Mark Wong & Jenny Zhang &
- *                    Open Source Development Lab, Inc.
+ * Copyright (C) 2002 Open Source Development Lab, Inc.
  *
- * 30 January 2002
+ * History:
+ * Jan-30-2002  Created by Mark Wong & Jenny Zhang 
+ * Aug-20-2003  Rewrote parsing command line part
  */
 
 #include <semaphore.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <getopt.h>
 #include <ctype.h>
 #include <time.h>
 
 #include <common.h>
 #include <eu.h>
+
+int eus, rampuprate, duration;
+double think_time;
+char sname[32];
+int help;
+int mode_access, mode_cache;
+
+/* used to be for PHASE1, now just declare it but might not be used */
+char uname[32], auth[32], dbname[32];
+char cache_host[32];
+int cache_port;
+/* used to be for PHASE2, now just declare it but might not be used */
+int port;
+
+int usage(char *);
 
 /*
  * main() just takes arguments off the command line, starts up the rest of
@@ -26,120 +43,153 @@
  */
 int main(int argc, char *argv[])
 {
-	int eus, rampuprate, duration;
-	double think_time;
 	int running_eus;
-	char sname[32];
 	time_t stop_time;
-#ifdef PHASE1
-	char uname[32], auth[32];
-#ifdef SEARCH_RESULTS_CACHE
-	char cache_host[32];
-	int cache_port;
-#endif /* SEARCH_RESULTS_CACHE */
-#endif /* PHASE1 */
-#ifdef PHASE2
-	int port;
 	int c;
-#endif /* PHASE2 */
-/*
-	int i;
-	int sem_val;
-*/
 
-
-#ifdef PHASE1
-#ifdef SEARCH_RESULTS_CACHE
-	if (argc != 12)
-	{
-		printf("usage: %s <servername> <user> <pass> <items> <customers> <eus> <eus/min> <think time> <duration> <cache_host> <cache_port>\n",
-			argv[0]);
-		return -1;
-	}
-#else
-	if (argc != 10)
-	{
-		printf("usage: %s <servername> <user> <pass> <items> <customers> <eus> <eus/min> <think time> <duration>\n",
-			argv[0]);
-		return -1;
-	}
+	/* setup default value in case the user forgets, but in most
+	   cases the user should set it */
+#ifdef libpq
+	strcpy(sname, "localhost");
+	strcpy(dbname, "DBT1");
+	strcpy(uname, "pgsql");
+	strcpy(auth, "pgsql");
 #endif
-#endif /* PHASE1 */
-
-#ifdef PHASE2
-	if (argc < 17)
-	{
-		printf("usage: %s -d <servername> -p <port> -i <items> -c <customers> -u <eus> -r <eus/min> -t <think time> -l <duration>\n",
-			argv[0]);
-		return -1;
-	}
-#endif /* PHASE2 */
-
-
-#ifdef PHASE1
-	strcpy(uname, argv[2]);
-	strcpy(auth, argv[3]);
-	item_count = atoi(argv[4]);
-	customers = atoi(argv[5]);
-	eus = atoi(argv[6]);
-	rampuprate = atoi(argv[7]);
-	think_time = atof(argv[8]);
-	duration = atoi(argv[9]);
-#ifdef SEARCH_RESULTS_CACHE
-	strcpy(cache_host, argv[10]);
-	cache_port = atoi(argv[11]);
+#ifdef odbc
+	strcpy(sname, "localhost:DBT1");
+	strcpy(uname, "dbt");
+	strcpy(auth, "dbt");
 #endif
-#endif /* PHASE1 */
+	strcpy(cache_host, "localhost");
+	cache_port = 9999;
+	port = 9992;
+	item_count = 1000;
+	customers = 28800;
+	eus = 10;
+	rampuprate = 10;
+	think_time = 7.2;
+	duration = 300;
+	help = 0;
+	altered = 0;
+	mode_access = MODE_APPSERVER;
+	mode_cache = MODE_CACHE_OFF;
 
-	opterr = 0;
-	while ((c = getopt(argc, argv, "a:c:d:i:l:o:p:r:t:u:")) != -1)
+	while (1)
 	{
-		switch (c)
-		{
-			case 'a':
-				altered = 1;
-			case 'c':
-				customers = atoi(optarg);
-				break;
-			case 'd':
-				strcpy(sname, optarg);
-				break;
-			case 'i':
-				item_count = atoi(optarg);
-				break;
-			case 'l':
-				duration = atoi(optarg);
-				break;
-			case 'o':
-				strcpy(output_path, optarg);
-				break;
-			case 'p':
+		static struct option long_options[] = {
+			{ "access_cache", no_argument, &mode_cache, MODE_CACHE_ON },
+			{ "access_direct", no_argument, &mode_access, MODE_DIRECT },
+			{ "dbhost", required_argument, 0, 0 },
+			{ "dbname", required_argument, 0, 0 },
+			{ "dbnodename", required_argument, 0, 0 },
+			{ "username", required_argument, 0, 0 },
+			{ "password", required_argument, 0, 0 },
+			{ "server_name", required_argument, 0, 0 },
+			{ "port", required_argument, 0, 0 },
+			{ "item_count", required_argument, 0, 0 },
+			{ "customer_count", required_argument, 0, 0 },
+			{ "emulated_users", required_argument, 0, 0 },
+			{ "rampup_rate", required_argument, 0, 0 },
+			{ "think_time", required_argument, 0, 0 },
+			{ "duration", required_argument, 0, 0 },
+			{ "cache_host", required_argument, 0, 0 },
+			{ "cache_port", required_argument, 0, 0 },
+			{ "output_path", required_argument, 0, 0 },
+			{ "help", no_argument, &help, 1 },
+			{ "altered", no_argument, &altered, 1 },
+			{ 0, 0, 0, 0 }
+		};
+		int option_index = 0;
+                c = getopt_long_only(argc, argv, "", long_options, &option_index);
+                if (c == -1)
+                {
+                         break;
+                }
+                switch (c)
+                {
+                case 0:
+                        if (long_options[option_index].flag != 0)
+                        {
+                                break;
+                        }
+#ifdef libpq
+			if (strcmp(long_options[option_index].name, "dbhost") == 0)
+                        {
+                                strcpy(sname, optarg);
+                        }
+			if (strcmp(long_options[option_index].name, "dbname") == 0)
+                        {
+                                strcpy(dbname, optarg);
+                        }
+#endif
+#ifdef odbc
+			if (strcmp(long_options[option_index].name, "dbnodename") == 0)
+                        {
+                                strcpy(sname, optarg);
+                        }
+#endif
+			if (strcmp(long_options[option_index].name, "username") == 0)
+                        {
+                                strcpy(uname, optarg);
+                        }
+			if (strcmp(long_options[option_index].name, "password") == 0)
+                        {
+                                strcpy(auth, optarg);
+                        }
+			if (strcmp(long_options[option_index].name, "cache_host") == 0)
+                        {
+                                strcpy(cache_host, optarg);
+                        }
+			if (strcmp(long_options[option_index].name, "cache_port") == 0)
+                        {
+				cache_port = atoi(optarg);
+                        }
+			if (strcmp(long_options[option_index].name, "server_name") == 0)
+                        {
+                                strcpy(sname, optarg);
+                        }
+			if (strcmp(long_options[option_index].name, "port") == 0)
+                        {
 				port = atoi(optarg);
-				break;
-			case 'r':
-				rampuprate = atoi(optarg);
-				break;
-			case 't':
-				think_time = atof(optarg);
-				break;
-			case 'u':
+                        }
+			if (strcmp(long_options[option_index].name, "item_count") == 0)
+                        {
+				item_count = atoi(optarg);
+                        }
+			if (strcmp(long_options[option_index].name, "customer_count") == 0)
+                        {
+				customers = atoi(optarg);
+                        }
+			if (strcmp(long_options[option_index].name, "emulated_users") == 0)
+                        {
 				eus = atoi(optarg);
-				break;
-			case '?':
-				if (isprint(optopt))
-				{
-					fprintf(stderr, "Unknown option `-%c'.\n", optopt);
-				}
-				else
-				{
-					fprintf (stderr, "Unknown option character `\\x%x'.\n",
-						optopt);
-				}
-				return 1;
-			default:
-				printf("usage: %s <filename>\n", argv[0]);
-				return 1;
+                        }
+			if (strcmp(long_options[option_index].name, "output_path") == 0)
+                        {
+				strcpy(output_path, optarg);
+                        }
+			if (strcmp(long_options[option_index].name, "rampup_rate") == 0)
+                        {
+				rampuprate = atoi(optarg);
+                        }
+			if (strcmp(long_options[option_index].name, "think_time") == 0)
+                        {
+				think_time = atof(optarg);
+                        }
+			if (strcmp(long_options[option_index].name, "duration") == 0)
+                        {
+				duration = atoi(optarg);
+                        }
+			break;
+		default:
+			printf ("?? getopt returned character code 0%o ??\n", c);
+			exit(1);
 		}
+	}
+
+	if ( help == 1)
+	{
+		return usage(argv[0]);
 	}
 
 	/* Initialize global variables. */
@@ -152,20 +202,8 @@ int main(int argc, char *argv[])
 	stop_time = time(NULL) + duration + (int) ((eus / rampuprate) * 60);
 
 	/* Start the user threads. */
-#ifdef PHASE1
-#ifdef SEARCH_RESULTS_CACHE
-	init_eus(sname, uname, auth, eus, MIX_SHOPPING, rampuprate, duration,
-		think_time, item_count, cache_host, cache_port);
-#else
-	init_eus(sname, uname, auth, eus, MIX_SHOPPING, rampuprate, duration,
-		think_time, item_count);
-#endif
-#endif /* PHASE1 */
-
-#ifdef PHASE2
-	init_eus(sname, port, eus, MIX_SHOPPING, rampuprate, duration,
-		think_time, item_count);
-#endif /* PHASE2 */
+	if ( init_eus(eus, MIX_SHOPPING, rampuprate, duration, think_time, item_count ) != OK) 
+		return 1;
 
 	/*
 	 * Sit in an infinite loop until the run duration expires.  This is a good
@@ -196,6 +234,57 @@ int main(int argc, char *argv[])
 /*
 	mark_logs(RUN_END);
 */
+	printf ("Dbdriver ended\n");
+	fflush(stdout);
 
 	return 0;
+}
+
+int usage(char *name)
+{
+	printf("run without the middle tier and search_results_cache: \n");
+#ifdef libpq
+	printf("usage: %s --access_direct --dbhost <dbhost> --dbname <dbname>\n", name);
+#endif
+#ifdef odbc
+	printf("usage: %s --access_direct --dbnodehost <dbnodehost>\n", name);
+#endif
+	printf("--username <username> --password <password>\n");
+	printf("--item_count <item_count> --coustomer_count <customer_count>\n");
+	printf("--emulated_users <emulated_users> --rampup_rate <eu/min>\n");
+	printf("--think_time <think_time> --duration <duration>\n\n");
+
+
+	printf("run without the middle tier but with search_results_cache: \n");
+#ifdef libpq
+	printf("usage: %s --access_direct --dbhost <dbhost> --dbname <dbname>\n", name);
+#endif
+#ifdef odbc
+	printf("usage: %s --access_direct --dbnodehost <dbnodehost>\n", name);
+#endif
+	printf("--access_cache --cache_host <cache_host> --cache_port <cache_port>\n");
+	printf("--username <username> --password <password>\n");
+	printf("--item_count <item_count> --coustomer_count <customer_count>\n");
+	printf("--emulated_users <emulated_users> --rampup_rate <eu/min>\n");
+	printf("--think_time <think_time> --duration <duration>\n\n");
+
+	printf("run with the middle tier: \n");
+	printf("usage: %s --server_name <server_name> --port <port>\n", name);
+
+	printf("The default values if not defined\n");
+#ifdef libpq
+	printf("--dbhost %s --dbname %s\n", sname, dbname);
+#endif
+#ifdef odbc
+	printf("--dbnodehost %s\n", sname);
+#endif
+	printf("--username %s --password %s\n", uname, auth);
+	printf("--cache_host %s --cache_port %d\n", cache_host, cache_port);
+	printf("--server_name %s --port %d\n", sname, port);
+	printf("--item_count %d --coustomer_count %d\n", item_count, customers);
+	printf("--emulated_users %d --rampup_rate %d\n", eus, rampuprate);
+	printf("--think_time %f --duration %d\n", think_time, duration);
+	printf("--output_path dbdriver_dir\n");
+
+	return 1;
 }

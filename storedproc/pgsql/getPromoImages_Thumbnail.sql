@@ -19,3 +19,4 @@ SELECT i_thumbnail INTO res_thumbnail FROM item WHERE i_id = item_id ;
 RETURN res_thumbnail;
 END;
 ' LANGUAGE 'plpgsql';
+commit;

@@ -24,8 +24,10 @@
 #include <common.h>
 #include <_socket.h>
 #include <cache_interface.h>
+#ifdef odbc
 #include <sql.h>
 #include <sqlext.h>
+#endif
 #include <db.h>
 
 /* mutex to control access to the queue */
@@ -67,8 +69,13 @@ extern int search_results_cache_port;
  */
 int mode_cache = 1;
 
+#ifdef odbc
 int init_thread_pool(int PoolThreads, int TxnQSize, char *sname, char *uname,
 	char *auth)
+#endif
+#ifdef libpq
+int init_thread_pool(int PoolThreads, int TxnQSize, char *sname, char *dbname, char *uname, char *auth)
+#endif
 {
 	int i;
 	pthread_t ThreadID;
@@ -87,11 +94,20 @@ int init_thread_pool(int PoolThreads, int TxnQSize, char *sname, char *uname,
 	}
 
 #ifndef _SIMDB
+#ifdef odbc
 	/* This should be buried under a generic database initializtion call. */
-	if (odbc_init(sname, uname, auth) == W_ERROR)
+	if (db_init(sname, uname, auth) == ERROR)
 	{
-		return W_ERROR;
+		return ERROR;
 	}
+#endif
+#ifdef libpq
+	if (db_init(sname, dbname, uname, auth) == ERROR)
+	{
+		return ERROR;
+	}
+#endif
+
 #endif /* _SIMDB */
 
 	/* Create a pool of threads that connect to the database. */
@@ -127,10 +143,10 @@ void *DoTxn(void *fd)
 	/* This should be buried under a generic database initialization call. */
 	struct db_context_t dbc;
 	/* connect to database */
-	rc = odbc_connect(&dbc);
-	if (rc == W_ERROR)
+	rc = db_connect(&dbc);
+	if (rc == ERROR)
 	{
-		LOG_ERROR_MESSAGE("odbc_connect error\n");
+		LOG_ERROR_MESSAGE("db_connect error\n");
 		kill(0, SIGUSR1);
 		pthread_exit(NULL);
 	}
@@ -225,7 +241,7 @@ void *DoTxn(void *fd)
 			mode_cache == 1)
 		{
 			/* author and title search results are cached */
-			rc = W_ERROR;
+			rc = ERROR;
 			/* retry if send fails */
 			while (rc != OK)
 			{
@@ -263,7 +279,7 @@ void *DoTxn(void *fd)
 					kill(0, SIGUSR1);
 					pthread_exit(NULL);
 				}
-				rc = W_ERROR;
+				rc = ERROR;
 			}
 		}
 		else

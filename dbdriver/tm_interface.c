@@ -26,7 +26,7 @@ int receive_interaction_packet(int s, struct eu_context_t *euc)
 	if ((rec = _receive(s, (void *) &euc->interaction, sizeof(euc->interaction))) == -1)
 	{
 		LOG_ERROR_MESSAGE("cannot receive interaction type");
-		return W_ERROR;
+		return ERROR;
 	}
 	if (rec == 0) return SOCKET_CLOSE;
 	
@@ -34,14 +34,14 @@ int receive_interaction_packet(int s, struct eu_context_t *euc)
 	if ((rec = _receive(s, (void *) &result, sizeof(int))) == -1)
 	{
 		LOG_ERROR_MESSAGE("cannot receive result");
-		return W_ERROR;
+		return ERROR;
 	}
 	if (rec == 0) return SOCKET_CLOSE;
 	
-	if (result == W_ERROR) 
+	if (result == ERROR) 
 	{
 		LOG_ERROR_MESSAGE("database transaction failed");
-		return W_ERROR;
+		return ERROR;
 	}
 
 	/* Receive transaction data. */
@@ -103,7 +103,7 @@ int receive_interaction_packet(int s, struct eu_context_t *euc)
 	if ((rec = _receive(s, data, length)) == -1)
 	{
 		LOG_ERROR_MESSAGE("cannot receive interaction data");
-		return W_ERROR;
+		return ERROR;
 	}
 	if (rec == 0) return SOCKET_CLOSE;
 
@@ -175,14 +175,14 @@ int send_interaction_packet(int s, struct eu_context_t *euc)
 	if (_send(s, (void *) &euc->interaction, sizeof(euc->interaction)) == -1)
 	{
 		LOG_ERROR_MESSAGE("cannot send type %s", euc->interaction);
-		return W_ERROR;
+		return ERROR;
 	}
 
 	/* Send transaction data. */
 	if (_send(s, data, length) == -1)
 	{
 		LOG_ERROR_MESSAGE("cannot send data %s", euc->interaction);
-		return W_ERROR;
+		return ERROR;
 	}
 	return OK;
 }

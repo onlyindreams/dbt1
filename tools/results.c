@@ -16,12 +16,16 @@
 #include <string.h>
 #include <ctype.h>
 #include <common.h>
+#include <getopt.h>
 
+int usage(char *name);
+int help = 0;
 int main(int argc, char *argv[])
 {
 	int i;
 	FILE *log_mix;
 	FILE *plot_ips;
+	FILE *BT;
 	time_t current_time;
 	char interaction[3];
 	float response_time;
@@ -34,6 +38,8 @@ int main(int argc, char *argv[])
 	float interaction_response_time[INTERACTION_TOTAL];
 	int error_count, rc;
 	char mix_filename[256];
+	char outputdir[256];
+	char filename[256];
 
 	time_t previous_time;
 	int elapsed_time = 0;
@@ -43,39 +49,62 @@ int main(int argc, char *argv[])
 
 	int c;
 
-	if (argc != 3)
+	if ( argc < 1)
 	{
-		printf("usage: %s -f <filename>\n", argv[0]);
-		return 1;
+		return usage(argv[0]);
 	}
+
+	while (1)
+	{
+		static struct option long_options[] = {
+			{ "mixfile", required_argument, 0, 0 },
+			{ "outputdir", required_argument, 0, 0 },
+			{ "help", no_argument, &help, 1},
+			{0, 0, 0, 0}
+		};
+
+		int option_index = 0;
+		c = getopt_long_only(argc, argv, "", long_options, &option_index);
+		
+		if (c == -1)
+		{
+			 break;
+		}
+
+		switch (c)
+		{
+		case 0:
+			if (long_options[option_index].flag != 0)
+			{
+				break;
+			}
+			if (strcmp(long_options[option_index].name, "outputdir") == 0)
+			{
+				strcpy(outputdir, optarg);
+			}
+			if (strcmp(long_options[option_index].name, "mixfile") == 0)
+			{
+				strcpy(mix_filename, optarg);
+			}
+			if (strcmp(long_options[option_index].name, "help") == 0)
+			{
+				break;
+			}
+			break;
+		default:
+			printf ("?? getopt returned character code 0%o ??\n", c);
+			return 1;
+		}
+	}
+
+	if ( help == 1)
+	{
+		return usage(argv[0]);
+	}
+
 
 	error_count = 0;
 	previous_time=0;
-
-	opterr = 0;
-	while ((c = getopt(argc, argv, "f:")) != -1)
-	{
-		switch (c)
-		{
-			case 'f':
-				strcpy(mix_filename, optarg);
-				break;
-			case '?':
-				if (isprint(optopt))
-				{
-					fprintf(stderr, "Unknown option `-%c'.\n", optopt);
-				}
-				else
-				{
-					fprintf (stderr, "Unknown option character `\\x%x'.\n",
-						optopt);	
-				}
-				return 1;
-			default:
-				printf("usage: %s <filename>\n", argv[0]);
-				return 1;
-		}
-	}
 
 	log_mix = fopen(mix_filename, "r");
 	if (log_mix == NULL)
@@ -84,10 +113,19 @@ int main(int argc, char *argv[])
 		return 2;
 	}
 
-	plot_ips = fopen("ips.csv", "w");
+	sprintf(filename, "%s/%s", outputdir, "ips.csv");
+	plot_ips = fopen(filename, "w");
 	if (plot_ips == NULL)
 	{
-		printf("cannot open mix.csv for writing\n");
+		printf("cannot open outputdir/ips.csv for writing\n");
+		return 3;
+	}
+
+	sprintf(filename, "%s/%s", outputdir, "BT");
+	BT = fopen(filename, "w");
+	if (BT == NULL)
+	{
+		printf("cannot open outputdir/BT for writing\n");
 		return 3;
 	}
 
@@ -244,7 +282,8 @@ int main(int argc, char *argv[])
 				interaction_response_time[i] = 0;
 			}
 			fclose(plot_ips);
-			plot_ips = fopen("ips.csv", "w");
+			sprintf(filename, "%s/%s", outputdir, "ips.csv");
+			plot_ips = fopen(filename, "w");
 		}		
 		else break;
 	}
@@ -252,23 +291,30 @@ int main(int argc, char *argv[])
 	fclose(plot_ips);
 
 	/* Calculate the actual mix of interactions. */
-	printf("Interaction                 %%  Avg. Response Time (s)\n");
+	fprintf(BT, "%s\n", "Interaction                 %%  Avg. Response Time (s)");
 	for (i = 0; i < INTERACTION_TOTAL; i++)
 	{
-		printf("%-21s  %6.2f  %22.3f\n", interaction_name[i],
+		fprintf(BT, "%-21s  %6.2f  %22.3f\n", interaction_name[i],
 			(double) interaction_count[i] / (double) total_interaction_count * 100.0,
 			interaction_response_time[i] / (double) interaction_count[i]);
 	}
 	
 	/* Calculated the number of interactions per second. */
 	ips = (double) total_interaction_count / difftime(current_time, start_time);
-	printf("\n%0.1f bogotransactions per second\n", ips);
+	fprintf(BT, "\n%0.1f bogotransactions per second\n", ips);
 
-	printf("%0.1f minute duration\n",
+	fprintf(BT, "%0.1f minute duration\n",
 		difftime(current_time, start_time) / 60.0);
-	printf("total bogotransactions %ld\n", (long) total_interaction_count);
-	printf("total errors %d\n", error_count);
-	printf("\n");
+	fprintf(BT, "total bogotransactions %ld\n", (long) total_interaction_count);
+	fprintf(BT, "total errors %d\n", error_count);
+	fprintf(BT, "\n");
+	fclose(BT);
 
 	return 0;
+}
+
+int usage(char *name)
+{
+	printf("usage: %s --mixfile <filename> --outputdir <outputdir>\n", name);
+	return 1;
 }

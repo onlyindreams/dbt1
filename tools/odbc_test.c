@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
 	strcpy(auth, argv[3]);
 	odbc_init(sname, uname, auth);
 	rc = odbc_connect(&odbcc);
-	if (rc == W_ERROR)
+	if (rc == ERROR)
 	{
 		printf("odbc_connect() error\n");
 		return 2;
@@ -134,7 +134,7 @@ int main(int argc, char *argv[])
 #ifdef PHASE1
 		copy_in_admin_confirm(&euc, &odbcd);
 		rc = execute_admin_confirm(&odbcc, &odbcd);
-		if (rc == W_ERROR)
+		if (rc == ERROR)
 		{
 			printf("execute error\n");
 			return 3;
@@ -143,15 +143,15 @@ int main(int argc, char *argv[])
 #endif /* PHASE1 */
 #ifdef PHASE2
 		euc.interaction=ADMIN_CONFIRM;
-		if (send_interaction_packet(euc.s, &euc) == W_ERROR)
+		if (send_interaction_packet(euc.s, &euc) == ERROR)
 		{
 			LOG_ERROR_MESSAGE("send failed");
-			return W_ERROR;
+			return ERROR;
 		}
-		if (receive_interaction_packet(euc.s, &euc) == W_ERROR)
+		if (receive_interaction_packet(euc.s, &euc) == ERROR)
 		{
 			LOG_ERROR_MESSAGE("receive failed");
-			return W_ERROR;
+			return ERROR;
 		}
 #endif /* PHASE2 */
 
@@ -187,7 +187,7 @@ int main(int argc, char *argv[])
 #ifdef PHASE1
 		copy_in_admin_request(&euc, &odbcd);
 		rc = execute_admin_request(&odbcc, &odbcd);
-		if (rc == W_ERROR)
+		if (rc == ERROR)
 		{
 			printf("execute error\n");
 			return 3;
@@ -196,15 +196,15 @@ int main(int argc, char *argv[])
 #endif /* PHASE1 */
 #ifdef PHASE2
 		euc.interaction=ADMIN_REQUEST;
-		if (send_interaction_packet(euc.s, &euc) == W_ERROR)
+		if (send_interaction_packet(euc.s, &euc) == ERROR)
 		{
 			LOG_ERROR_MESSAGE("send failed");
-			return W_ERROR;
+			return ERROR;
 		}
-		if (receive_interaction_packet(euc.s, &euc) == W_ERROR)
+		if (receive_interaction_packet(euc.s, &euc) == ERROR)
 		{
 			LOG_ERROR_MESSAGE("receive failed");
-			return W_ERROR;
+			return ERROR;
 		}
 #endif /* PHASE2 */
 
@@ -236,7 +236,7 @@ int main(int argc, char *argv[])
 #ifdef PHASE1
 		copy_in_best_sellers(&euc, &odbcd);
 		rc = execute_best_sellers(&odbcc, &odbcd);
-		if (rc == W_ERROR)
+		if (rc == ERROR)
 		{
 			printf("execute error\n");
 			return 3;
@@ -245,15 +245,15 @@ int main(int argc, char *argv[])
 #endif /* PHASE1 */
 #ifdef PHASE2
 		euc.interaction=BEST_SELLERS;
-		if (send_interaction_packet(euc.s, &euc) == W_ERROR)
+		if (send_interaction_packet(euc.s, &euc) == ERROR)
 		{
 			LOG_ERROR_MESSAGE("send failed");
-			return W_ERROR;
+			return ERROR;
 		}
-		if (receive_interaction_packet(euc.s, &euc) == W_ERROR)
+		if (receive_interaction_packet(euc.s, &euc) == ERROR)
 		{
 			LOG_ERROR_MESSAGE("receive failed");
-			return W_ERROR;
+			return ERROR;
 		}
 #endif /* PHASE2 */
 
@@ -319,7 +319,7 @@ int main(int argc, char *argv[])
 #ifdef PHASE1
 		copy_in_buy_confirm(&euc, &odbcd);
 		rc=execute_buy_confirm(&odbcc, &odbcd);
-		if (rc == W_ERROR)
+		if (rc == ERROR)
 		{
 			printf("execute error\n");
 			return 3;
@@ -328,15 +328,15 @@ int main(int argc, char *argv[])
 #endif /* PHASE1 */
 #ifdef PHASE2
 		euc.interaction=BUY_CONFIRM;
-		if (send_interaction_packet(euc.s, &euc) == W_ERROR)
+		if (send_interaction_packet(euc.s, &euc) == ERROR)
 		{
 			LOG_ERROR_MESSAGE("send failed");
-			return W_ERROR;
+			return ERROR;
 		}
-		if (receive_interaction_packet(euc.s, &euc) == W_ERROR)
+		if (receive_interaction_packet(euc.s, &euc) == ERROR)
 		{
 			LOG_ERROR_MESSAGE("receive failed");
-			return W_ERROR;
+			return ERROR;
 		}
 #endif /* PHASE2 */
 		printf("c_discount %f\n", euc.buy_confirm_data.c_discount);
@@ -417,7 +417,7 @@ int main(int argc, char *argv[])
 #ifdef PHASE1
 		copy_in_buy_request(&euc, &odbcd);
 		rc=execute_buy_request(&odbcc, &odbcd);
-		if (rc == W_ERROR)
+		if (rc == ERROR)
 		{
 			printf("execute error\n");
 			return 3;
@@ -426,15 +426,15 @@ int main(int argc, char *argv[])
 #endif /* PHASE1 */
 #ifdef PHASE2
 		euc.interaction=BUY_REQUEST;
-		if (send_interaction_packet(euc.s, &euc) == W_ERROR)
+		if (send_interaction_packet(euc.s, &euc) == ERROR)
 		{
 			LOG_ERROR_MESSAGE("send failed");
-			return W_ERROR;
+			return ERROR;
 		}
-		if (receive_interaction_packet(euc.s, &euc) == W_ERROR)
+		if (receive_interaction_packet(euc.s, &euc) == ERROR)
 		{
 			LOG_ERROR_MESSAGE("receive failed");
-			return W_ERROR;
+			return ERROR;
 		}
 #endif /* PHASE2 */
 
@@ -490,7 +490,7 @@ int main(int argc, char *argv[])
 #ifdef PHASE1
 		copy_in_home(&euc, &odbcd);
 		rc = execute_home(&odbcc, &odbcd);
-		if (rc == W_ERROR)
+		if (rc == ERROR)
 		{
 			printf("execute error\n");
 			return 3;
@@ -499,15 +499,15 @@ int main(int argc, char *argv[])
 #endif /* PHASE1 */
 #ifdef PHASE2
 		euc.interaction=HOME;
-		if (send_interaction_packet(euc.s, &euc) == W_ERROR)
+		if (send_interaction_packet(euc.s, &euc) == ERROR)
 		{
 			LOG_ERROR_MESSAGE("send failed");
-			return W_ERROR;
+			return ERROR;
 		}
-		if (receive_interaction_packet(euc.s, &euc) == W_ERROR)
+		if (receive_interaction_packet(euc.s, &euc) == ERROR)
 		{
 			LOG_ERROR_MESSAGE("receive failed");
-			return W_ERROR;
+			return ERROR;
 		}
 #endif /* PHASE2 */
 
@@ -542,7 +542,7 @@ int main(int argc, char *argv[])
 #ifdef PHASE1
 		copy_in_new_products(&euc, &odbcd);
 		rc = execute_new_products(&odbcc, &odbcd);
-		if (rc == W_ERROR)
+		if (rc == ERROR)
 		{
 			printf("execute error\n");
 			return 3;
@@ -551,15 +551,15 @@ int main(int argc, char *argv[])
 #endif /* PHASE1 */
 #ifdef PHASE2
 		euc.interaction=NEW_PRODUCTS;
-		if (send_interaction_packet(euc.s, &euc) == W_ERROR)
+		if (send_interaction_packet(euc.s, &euc) == ERROR)
 		{
 			LOG_ERROR_MESSAGE("send failed");
-			return W_ERROR;
+			return ERROR;
 		}
-		if (receive_interaction_packet(euc.s, &euc) == W_ERROR)
+		if (receive_interaction_packet(euc.s, &euc) == ERROR)
 		{
 			LOG_ERROR_MESSAGE("receive failed");
-			return W_ERROR;
+			return ERROR;
 		}
 #endif /* PHASE2 */
 
@@ -600,7 +600,7 @@ int main(int argc, char *argv[])
 		copy_in_order_display(&euc, &odbcd);
 		printf("\nexecuting...\n\n");
 		rc = execute_order_display(&odbcc, &odbcd);
-		if (rc == W_ERROR)
+		if (rc == ERROR)
 		{
 			printf("execute error\n");
 			return 3;
@@ -609,15 +609,15 @@ int main(int argc, char *argv[])
 #endif /* PHASE1 */
 #ifdef PHASE2
 		euc.interaction=ORDER_DISPLAY;
-		if (send_interaction_packet(euc.s, &euc) == W_ERROR)
+		if (send_interaction_packet(euc.s, &euc) == ERROR)
 		{
 			LOG_ERROR_MESSAGE("send failed");
-			return W_ERROR;
+			return ERROR;
 		}
-		if (receive_interaction_packet(euc.s, &euc) == W_ERROR)
+		if (receive_interaction_packet(euc.s, &euc) == ERROR)
 		{
 			LOG_ERROR_MESSAGE("receive failed");
-			return W_ERROR;
+			return ERROR;
 		}
 #endif /* PHASE2 */
 
@@ -690,7 +690,7 @@ int main(int argc, char *argv[])
 #ifdef PHASE1
 		copy_in_order_inquiry(&euc, &odbcd);
 		rc = execute_order_inquiry(&odbcc, &odbcd);
-		if (rc == W_ERROR)
+		if (rc == ERROR)
 		{
 			printf("execute error\n");
 			return 3;
@@ -699,15 +699,15 @@ int main(int argc, char *argv[])
 #endif /* PHASE1 */
 #ifdef PHASE2
 		euc.interaction=ORDER_INQUIRY;
-		if (send_interaction_packet(euc.s, &euc) == W_ERROR)
+		if (send_interaction_packet(euc.s, &euc) == ERROR)
 		{
 			LOG_ERROR_MESSAGE("send failed");
-			return W_ERROR;
+			return ERROR;
 		}
-		if (receive_interaction_packet(euc.s, &euc) == W_ERROR)
+		if (receive_interaction_packet(euc.s, &euc) == ERROR)
 		{
 			LOG_ERROR_MESSAGE("receive failed");
-			return W_ERROR;
+			return ERROR;
 		}
 #endif /* PHASE2 */
 		
@@ -730,7 +730,7 @@ int main(int argc, char *argv[])
 #ifdef PHASE1
 		copy_in_product_detail(&euc, &odbcd);
 		rc = execute_product_detail(&odbcc, &odbcd);
-		if (rc == W_ERROR)
+		if (rc == ERROR)
 		{
 			printf("execute error\n");
 			return 3;
@@ -739,15 +739,15 @@ int main(int argc, char *argv[])
 #endif /* PHASE1 */
 #ifdef PHASE2
 		euc.interaction=PRODUCT_DETAIL;
-		if (send_interaction_packet(euc.s, &euc) == W_ERROR)
+		if (send_interaction_packet(euc.s, &euc) == ERROR)
 		{
 			LOG_ERROR_MESSAGE("send failed");
-			return W_ERROR;
+			return ERROR;
 		}
-		if (receive_interaction_packet(euc.s, &euc) == W_ERROR)
+		if (receive_interaction_packet(euc.s, &euc) == ERROR)
 		{
 			LOG_ERROR_MESSAGE("receive failed");
-			return W_ERROR;
+			return ERROR;
 		}
 #endif /* PHASE2 */
 
@@ -772,7 +772,7 @@ int main(int argc, char *argv[])
 		printf("\nexecuting...\n\n");
 #ifdef PHASE1
 		rc = execute_search_request(&odbcc, &odbcd);
-		if (rc == W_ERROR)
+		if (rc == ERROR)
 		{
 			printf("execute error\n");
 			return 3;
@@ -781,15 +781,15 @@ int main(int argc, char *argv[])
 #endif /* PHASE1 */
 #ifdef PHASE2
 		euc.interaction=SEARCH_REQUEST;
-		if (send_interaction_packet(euc.s, &euc) == W_ERROR)
+		if (send_interaction_packet(euc.s, &euc) == ERROR)
 		{
 			LOG_ERROR_MESSAGE("send failed");
-			return W_ERROR;
+			return ERROR;
 		}
-		if (receive_interaction_packet(euc.s, &euc) == W_ERROR)
+		if (receive_interaction_packet(euc.s, &euc) == ERROR)
 		{
 			LOG_ERROR_MESSAGE("receive failed");
-			return W_ERROR;
+			return ERROR;
 		}
 #endif /* PHASE2 */
 
@@ -835,7 +835,7 @@ int main(int argc, char *argv[])
 #ifdef PHASE1
 		copy_in_search_results(&euc, &odbcd);
 		execute_search_results(&odbcc, &odbcd);
-		if (rc == W_ERROR)
+		if (rc == ERROR)
 		{
 			printf("execute error\n");
 			return 3;
@@ -844,15 +844,15 @@ int main(int argc, char *argv[])
 #endif /* PHASE1 */
 #ifdef PHASE2
 		euc.interaction=SEARCH_RESULTS;
-		if (send_interaction_packet(euc.s, &euc) == W_ERROR)
+		if (send_interaction_packet(euc.s, &euc) == ERROR)
 		{
 			LOG_ERROR_MESSAGE("send failed");
-			return W_ERROR;
+			return ERROR;
 		}
-		if (receive_interaction_packet(euc.s, &euc) == W_ERROR)
+		if (receive_interaction_packet(euc.s, &euc) == ERROR)
 		{
 			LOG_ERROR_MESSAGE("receive failed");
-			return W_ERROR;
+			return ERROR;
 		}
 #endif /* PHASE2 */
 
@@ -925,7 +925,7 @@ int main(int argc, char *argv[])
 #ifdef PHASE1
 		copy_in_shopping_cart(&euc, &odbcd);
 		rc = execute_shopping_cart(&odbcc, &odbcd);
-		if (rc == W_ERROR)
+		if (rc == ERROR)
 		{
 			printf("execute error\n");
 			return 3;
@@ -934,15 +934,15 @@ int main(int argc, char *argv[])
 #endif /* PHASE1 */
 #ifdef PHASE2
 		euc.interaction=SHOPPING_CART;
-		if (send_interaction_packet(euc.s, &euc) == W_ERROR)
+		if (send_interaction_packet(euc.s, &euc) == ERROR)
 		{
 			LOG_ERROR_MESSAGE("send failed");
-			return W_ERROR;
+			return ERROR;
 		}
-		if (receive_interaction_packet(euc.s, &euc) == W_ERROR)
+		if (receive_interaction_packet(euc.s, &euc) == ERROR)
 		{
 			LOG_ERROR_MESSAGE("receive failed");
-			return W_ERROR;
+			return ERROR;
 		}
 #endif /* PHASE2 */
 

@@ -1,3 +1,4 @@
+DBI_NAME=@DBI_NAME@
 all: common_obj db_interface_obj cache_exe dbdriver_exe appServer_exe \
 	tools_exe wgen_obj datagen_exe
 
@@ -11,7 +12,7 @@ common_obj:
 	cd common; $(MAKE)
 
 db_interface_obj:
-	cd interfaces/odbc; $(MAKE)
+	cd interfaces/$(DBI_NAME); $(MAKE)
 
 cache_exe:
 	cd cache; $(MAKE)
@@ -28,9 +29,16 @@ tools_exe:
 clean:
 	cd wgen; $(MAKE) clean
 	cd common; $(MAKE) clean
-	cd interfaces/odbc; $(MAKE) clean
+	cd interfaces; $(MAKE) clean
+	cd interfaces/$(DBI_NAME); $(MAKE) clean
 	cd dbdriver; $(MAKE) clean
 	cd appServer; $(MAKE) clean
 	cd tools; $(MAKE) clean
 	cd datagen; $(MAKE) clean
 	cd cache; $(MAKE) clean
+
+install:
+	chmod +x scripts/@DATABASE_TO_USE@/*.sh
+	chmod +x data_collect/*.pl
+	chmod +x data_collect/pgsql/*.pl
+	chmod +x data_collect/pgsql/*.sh

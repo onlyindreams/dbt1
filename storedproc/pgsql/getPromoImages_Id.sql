@@ -19,3 +19,4 @@ SELECT i_id FROM item WHERE i_id=item_id ;
 RETURN res_id;
 END;
 ' LANGUAGE 'plpgsql';
+commit;

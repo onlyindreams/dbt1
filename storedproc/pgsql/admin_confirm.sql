@@ -3,12 +3,10 @@
 -- This file is released under the terms of the Artistic License.  Please see
 -- the file LICENSE, included in this package, for details.
 --
--- Copyright (C) 2002 Open Source Development Lab, Inc.
+-- Copyright (C) Open Source Development Lab, Inc.
 -- History:
--- Feb 2001: Created by Mark Wong & Jenny Zhang
--- Apr 2003: Rewritten for PostgreSQL by Virginie Megy & Thierry Missimilly
---		  Bull, Linux Competence Center
--- June 2003: Rewritten by NAGAYASU Satoshi to return records
+-- July 2003 Created by 2003 Satoshi Nagayasu
+--
 --
 CREATE OR REPLACE FUNCTION admin_confirm ( NUMERIC(10), numeric(10), NUMERIC(10), NUMERIC (17,2) ) RETURNS SETOF RECORD AS '
   DECLARE
@@ -35,6 +33,7 @@ CREATE OR REPLACE FUNCTION admin_confirm ( NUMERIC(10), numeric(10), NUMERIC(10)
     RETURN;
   END;
 ' LANGUAGE 'plpgsql';
+commit;
 
 -- 
 -- Usage:

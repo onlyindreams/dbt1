@@ -33,7 +33,7 @@
 #define INTERACTION_TOTAL 14
 
 #define SOCKET_CLOSE 0
-#define W_ERROR -1
+#define ERROR -1
 #define OK 1
 #define W_ZERO_ITEMS 2
 

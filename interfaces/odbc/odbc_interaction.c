@@ -22,7 +22,7 @@ SQLCHAR username[32];
 SQLCHAR authentication[32];
 
 /* Open an ODBC connection to the database. */
-int odbc_connect(struct db_context_t *odbcc)
+int _db_connect(struct db_context_t *odbcc)
 {
 	SQLRETURN rc;
 
@@ -71,7 +71,7 @@ int odbc_connect(struct db_context_t *odbcc)
  * Note that we create the environment handle in odbc_connect() but
  * we don't touch it here.
  */
-int odbc_disconnect(struct db_context_t *odbcc)
+int _db_disconnect(struct db_context_t *odbcc)
 {
 	SQLRETURN rc;
 
@@ -119,7 +119,7 @@ int odbc_error(char *filename, int line, SQLSMALLINT handle_type,
 }
 
 /* Initialize ODBC environment handle and the database connect string. */
-int odbc_init(char *sname, char *uname, char *auth)
+int _db_init(char *sname, char *uname, char *auth)
 {
 	SQLRETURN rc;
 
@@ -144,4 +144,29 @@ int odbc_init(char *sname, char *uname, char *auth)
 	strcpy(username, uname);
 	strcpy(authentication, auth);
 	return OK;
+}
+
+/* rollback and commit, copied for dbt2 */
+int rollback_transaction(struct db_context_t *dbc)
+{
+        int i;
+
+        i = SQLEndTran(SQL_HANDLE_DBC, dbc->hdbc, SQL_ROLLBACK);
+        if (i != SQL_SUCCESS && i != SQL_SUCCESS_WITH_INFO) {
+                LOG_ODBC_ERROR(SQL_HANDLE_STMT, dbc->hstmt);
+                return ERROR;
+        }
+        return OK;
+}
+
+int commit_transaction(struct db_context_t *dbc)
+{
+        int i;
+
+        i = SQLEndTran(SQL_HANDLE_DBC, dbc->hdbc, SQL_COMMIT);
+        if (i != SQL_SUCCESS && i != SQL_SUCCESS_WITH_INFO) {
+                LOG_ODBC_ERROR(SQL_HANDLE_STMT, dbc->hstmt);
+                return ERROR;
+        }
+        return OK;
 }

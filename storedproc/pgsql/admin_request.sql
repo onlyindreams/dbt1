@@ -3,10 +3,9 @@
 -- This file is released under the terms of the Artistic License.  Please see
 -- the file LICENSE, included in this package, for details.
 --
--- Copyright (C) 2002 Open Source Development Lab, Inc.
+-- Copyright (C) Open Source Development Lab, Inc.
 -- History:
--- Feb 2001: Created by Mark Wong & Jenny Zhang
--- June 2003: Rewritten by NAGAYASU Satoshi for PostgreSQL
+-- July 2003 Created by 2003 Satoshi Nagayasu
 --
 --
 CREATE OR REPLACE FUNCTION admin_request ( NUMERIC(10) ) RETURNS SETOF RECORD AS '
@@ -23,6 +22,7 @@ CREATE OR REPLACE FUNCTION admin_request ( NUMERIC(10) ) RETURNS SETOF RECORD AS
     RETURN;
   END;
 ' LANGUAGE 'plpgsql';
+commit;
 
 -- 
 -- Usage:

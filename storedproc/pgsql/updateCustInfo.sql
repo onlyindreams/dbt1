@@ -1,3 +1,12 @@
+--
+--
+-- This file is released under the terms of the Artistic License.  Please see
+-- the file LICENSE, included in this package, for details.
+--
+-- Copyright (C) 2002 Open Source Development Lab, Inc.
+-- History:
+-- July-2003: Created by Satoshi Nagayasu & Hideyuki Kawashima
+--
 /*
  *
  * This file is released under the terms of the Artistic License.  Please see
@@ -24,4 +33,5 @@ BEGIN
 	RETURN 1;
 END;
 ' LANGUAGE 'plpgsql';
+commit;
 

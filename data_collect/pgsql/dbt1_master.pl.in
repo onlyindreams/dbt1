@@ -1,0 +1,1041 @@
+#!/usr/bin/perl -w
+# dbt1_master.pl: scripts to run dbt1 test and collect data
+# this script should run on the database system
+#
+# This file is released under the terms of the Artistic License.  Please see
+# the file LICENSE, included in this package, for details.
+#
+# Copyright (C) 2003 Open Source Development Lab, Inc.
+#
+# Author: Jenny Zhang
+# May 2003
+require 5.002;
+use Socket;
+use Carp;
+#use strict;
+use English;
+use File::Spec::Functions;
+use File::Basename;
+use File::Copy;
+use FileHandle;
+use Getopt::Long;
+use Pod::Usage;
+use Env qw(SID1);
+use integer;
+
+=head1 NAME
+
+dbt1_master.pl
+
+=head1 SYNOPSIS
+
+script to run dbt1 test and collect data
+
+=head1 ARGUMENTS
+
+ -dbhost <database host name>
+ -bdbname <database name>
+ -username <database user name>
+ -password <database user password>
+ -cache <1/0 indicating if using cache>
+ -lcache_port <cache port>
+ -mconnection <number of connection the cache uses to warm up >
+ -items <database size: number of items>
+ -out_dir <output dir>
+ -nserver_port <appServer port>
+ -rconnection <number of connections between appServer and the database>
+ -q_size <transaction queue size>
+ -a_size <transaction array size>
+ -xcache_host <cache host name>
+ -server_host <appServer host name>
+ -eus <dbdriver emulated users>
+ -vrate <dbdriver warmup rate>
+ -think_time <think time>
+ -zduration <duration of the run>
+ -jdriver_server_host <server host name to which the dbdriver connects >
+ -kdriver_server_port <server port to which the dbdriver connects >
+ -db_param <database parameters>
+ -redirect_tmp <if redirect pgsql tmp dir>
+ -redirect_xlog <if redirect pgsql xlog dir>
+ -file <config filename to read from>
+ -write <config filename to write to>
+
+=cut
+
+my ($dbhost, $dbname, $user, $password, $use_cache, $cache_port, $cache_host,
+	$cache_connection, $items, $customers, @server_port, @server_connection,
+	@txn_queue_size, @txn_array_size, @server_host, @driver_host,
+	@driver_eus, @driver_server_host, @driver_server_port,
+	@warmup_rate, @think_time, @duration, $out_dir, $hlp, $db_param, 
+	$redirect_tmp, $redirect_xlog, $configfile, $writeme);
+
+GetOptions(
+	"dbhost=s" => \$dbhost,
+	"bdbname=s" => \$dbname,
+	"username=s" => \$user,
+	"password=s" => \$password,
+	"cache=i" => \$use_cache,
+	"lcache_port=i" => \$cache_port,
+	"xcache_host=s" => \$cache_host,
+	"mconnection=s" => \$cache_connection,
+	"items=s" => \$items,
+	"gcustomers=i" => \$customers,
+	"nserver_port=i" => \@server_port,
+	"rconnection=i" => \@server_connection,
+	"q_size=s" => \@txn_queue_size,
+	"a_szie=s" => \@txn_array_size,
+	"server_host=s" => \@server_host,
+	"ydriver_host=s" => \@driver_host,
+	"jdriver_server_host=s" => \@driver_server_host,
+	"kdriver_server_port=s" => \@driver_server_port,
+	"eus=i" => \@driver_eus,
+	"vrate=i" => \@warmup_rate,
+	"think_time:f" => \@think_time,
+	"zduration=i" => \@duration,
+	"out_dir=s" => \$out_dir,
+	"db_param=s" => \$db_param,
+	"redirect_tmp=i" => \$redirect_tmp,
+	"redirect_xlog=i" => \$redirect_xlog,
+	"help"      => \$hlp,
+	"file=s"    => \$configfile,
+	"write=s"   => \$writeme
+);
+
+my $fcf = new FileHandle;
+my ( $cline, %options );
+
+if ($hlp) { pod2usage(1); }
+
+if ( $configfile ) {
+	unless ( $fcf->open( "< $configfile" ) ) {
+		die "Missing config file $!";
+        }
+	while ( $cline = $fcf->getline ) {
+		next if ( $cline =~ /^#/ );
+		chomp $cline;
+		my ( $var, $value ) = split /:/, $cline;
+		$options{ $var } = $value;
+		$_ = $var;
+		if ( /^nserver_port/ )
+		{
+			$#server_port++;
+		}
+		elsif ( /^rconnection/ )
+		{
+			$#server_connection++;
+		}
+		elsif ( /^q_size/ )
+		{
+			$#txn_queue_size++;
+		}
+		elsif ( /^a_size/ )
+		{
+			$#txn_array_size++;
+		}
+		elsif ( /^server_host/ )
+		{
+			$#server_host++;
+		}
+		elsif ( /^ydriver_host/ )
+		{
+			$#driver_host++;
+		}
+		elsif ( /^jdriver_server_host/ )
+		{
+			$#driver_server_host++;
+		}
+		elsif ( /^kdriver_server_port/ )
+		{
+			$#driver_server_port++;
+		}
+		elsif ( /^eus/ )
+		{
+			$#driver_eus++;
+		}
+		elsif ( /^vrate/ )
+		{
+			$#warmup_rate++;
+		}
+		elsif ( /^think_time/ )
+		{
+			$#think_time++;
+		}
+		elsif ( /^zduration/ )
+		{
+			$#duration++;
+		}
+	}
+	$fcf->close;
+}
+
+if ( $dbhost ) { $options{ 'dbhost' } = $dbhost; }
+elsif ( $options{ 'dbhost' } ) {
+	$dbhost =  $options{ 'dbhost' };
+}
+else
+{
+	die "No dbhost $!";
+}
+
+if ( $dbname ) { $options{ 'bdbname' } = $dbname; }
+elsif ( $options{ 'bdbname' } ) {
+	$dbname =  $options{ 'bdbname' };
+}
+else
+{
+	die "No dbname $!";
+}
+
+if ( $user ) { $options{ 'username' } = $user; }
+elsif ( $options{ 'username' } ) {
+	$user =  $options{ 'username' };
+}
+else
+{
+	die "No username $!";
+}
+
+if ( $password ) { $options{ 'password' } = $password; }
+elsif ( $options{ 'password' } ) {
+	$password =  $options{ 'password' };
+}
+else
+{
+	die "No password $!";
+}
+
+if ( $use_cache ) { $options{ 'cache' } = $use_cache; }
+elsif ( $options{ 'cache' } ) {
+	$use_cache =  $options{ 'cache' };
+}
+else
+{
+	$use_cache = 0;
+	print "No cache\n";
+}
+
+if ( $cache_port ) { $options{ 'lcache_port' } = $cache_port; }
+elsif ( $options{ 'lcache_port' } ) {
+	$cache_port =  $options{ 'lcache_port' };
+}
+else
+{
+	die "No lcache_port $!";
+}
+
+if ( $cache_host ) { $options{ 'xcache_host' } = $cache_host; }
+elsif ( $options{ 'xcache_host' } ) {
+	$cache_host =  $options{ 'xcache_host' };
+}
+else
+{
+	die "No xcache_host $!";
+}
+
+if ( $cache_connection ) { $options{ 'mconnection' } = $cache_connection; }
+elsif ( $options{ 'mconnection' } ) {
+	$cache_connection =  $options{ 'mconnection' };
+}
+else
+{
+	die "No mconnection $!";
+}
+
+if ( $items ) { $options{ 'items' } = $items; }
+elsif ( $options{ 'items' } ) {
+	$items =  $options{ 'items' };
+}
+else
+{
+	die "No items $!";
+}
+
+if ( $customers ) { $options{ 'gcustomers' } = $customers; }
+elsif ( $options{ 'gcustomers' } ) {
+	$customers =  $options{ 'gcustomers' };
+}
+else
+{
+	die "No gcustomers $!";
+}
+
+if ( $out_dir ) { $options{ 'out_dir' } = $out_dir; }
+elsif ( $options{ 'out_dir' } ) {
+	$out_dir =  $options{ 'out_dir' };
+}
+else
+{
+	die "No out_dir $!";
+}
+
+if ( $db_param ) { $options{ 'db_param' } = $db_param; }
+elsif ( $options{ 'db_param' } ) {
+	$db_param =  $options{ 'db_param' };
+}
+else
+{
+	die "No db_param $!";
+}
+
+if ( $redirect_tmp ) { $options{ 'redirect_tmp' } = $redirect_tmp; }
+elsif ( $options{ 'redirect_tmp' } ) {
+	$redirect_tmp =  $options{ 'redirect_tmp' };
+}
+else
+{
+	$redirect_tmp = 0;
+}
+
+if ( $redirect_xlog ) { $options{ 'redirect_xlog' } = $redirect_xlog; }
+elsif ( $options{ 'redirect_xlog' } ) {
+	$redirect_xlog =  $options{ 'redirect_xlog' };
+}
+else
+{
+	$redirect_xlog = 0;
+}
+
+for ( my $i=0; $i<=$#server_port; $i++ )
+{
+	if ( $server_port[$i] )
+	{
+		$options{ "nserver_port$i" } = $server_port[$i];
+	}
+	elsif ( $options{ "nserver_port$i" } )
+	{
+		$server_port[$i] =  $options{ "nserver_port$i" };
+	}
+	else
+	{
+		die "No nserver_port $!";
+	}
+}
+
+for ( my $i=0; $i<=$#server_connection; $i++ )
+{
+	if ( $server_connection[$i] )
+	{
+		$options{ "rconnection$i" } = $server_connection[$i];
+	}
+	elsif ( $options{ "rconnection$i" } )
+	{
+		$server_connection[$i] =  $options{ "rconnection$i" };
+	}
+	else
+	{
+		die "No rconnection $!";
+	}
+}
+
+for ( my $i=0; $i<=$#txn_queue_size; $i++ )
+{
+	if ( $txn_queue_size[$i] )
+	{
+		$options{ "q_size$i" } = $txn_queue_size[$i];
+	}
+	elsif ( $options{ "q_size$i" } )
+	{
+		$txn_queue_size[$i] =  $options{ "q_size$i" };
+	}
+	else
+	{
+		die "No q_size $!";
+	}
+}
+
+for ( my $i=0; $i<=$#txn_array_size; $i++ )
+{
+	if ( $txn_array_size[$i] )
+	{
+		$options{ "a_size$i" } = $txn_array_size[$i];
+	}
+	elsif ( $options{ "a_size$i" } )
+	{
+		$txn_array_size[$i] =  $options{ "a_size$i" };
+	}
+	else
+	{
+		die "No a_size $!";
+	}
+}
+
+for ( my $i=0; $i<=$#server_host; $i++ )
+{
+	if ( $server_host[$i] )
+	{
+		$options{ "server_host$i" } = $server_host[$i];
+	}
+	elsif ( $options{ "server_host$i" } )
+	{
+		$server_host[$i] =  $options{ "server_host$i" };
+	}
+	else
+	{
+		die "No server_host $!";
+	}
+}
+
+for ( my $i=0; $i<=$#driver_host; $i++ )
+{
+	if ( $driver_host[$i] )
+	{
+		$options{ "ydriver_host$i" } = $driver_host[$i];
+	}
+	elsif ( $options{ "ydriver_host$i" } )
+	{
+		$driver_host[$i] =  $options{ "ydriver_host$i" };
+	}
+	else
+	{
+		die "No ydriver_host $!";
+	}
+}
+
+for ( my $i=0; $i<=$#driver_server_host; $i++ )
+{
+	if ( $driver_server_host[$i] )
+	{
+		$options{ "jdriver_server_host$i" } = $driver_server_host[$i];
+	}
+	elsif ( $options{ "jdriver_server_host$i" } )
+	{
+		$driver_server_host[$i] =  $options{ "jdriver_server_host$i" };
+	}
+	else
+	{
+		die "No kdriver_server_host $!";
+	}
+}
+
+for ( my $i=0; $i<=$#driver_server_port; $i++ )
+{
+	if ( $driver_server_port[$i] )
+	{
+		$options{ "kdriver_server_port$i" } = $driver_server_port[$i];
+	}
+	elsif ( $options{ "kdriver_server_port$i" } )
+	{
+		$driver_server_port[$i] =  $options{ "kdriver_server_port$i" };
+	}
+	else
+	{
+		die "No kdriver_server_port $!";
+	}
+}
+
+for ( my $i=0; $i<=$#driver_eus; $i++ )
+{
+	if ( $driver_eus[$i] )
+	{
+		$options{ "eus$i" } = $driver_eus[$i];
+	}
+	elsif ( $options{ "eus$i" } )
+	{
+		$driver_eus[$i] =  $options{ "eus$i" };
+	}
+	else
+	{
+		die "No eus $!";
+	}
+}
+
+for ( my $i=0; $i<=$#warmup_rate; $i++ )
+{
+	if ( $warmup_rate[$i] )
+	{
+		$options{ "vrate$i" } = $warmup_rate[$i];
+	}
+	elsif ( $options{ "vrate$i" } )
+	{
+		$warmup_rate[$i] =  $options{ "vrate$i" };
+	}
+	else
+	{
+		die "No vrate $!";
+	}
+}
+
+for ( my $i=0; $i<=$#think_time; $i++ )
+{
+	if ( $think_time[$i] )
+	{
+		$options{ "think_time$i" } = $think_time[$i];
+	}
+	elsif ( $options{ "think_time$i" } )
+	{
+		$think_time[$i] =  $options{ "think_time$i" };
+	}
+	else
+	{
+		die "No think_time $!";
+	}
+}
+
+for ( my $i=0; $i<=$#duration; $i++ )
+{
+	if ( $duration[$i] )
+	{
+		$options{ "zduration$i" } = $duration[$i];
+	}
+	elsif ( $options{ "zduration$i" } )
+	{
+		$duration[$i] =  $options{ "zduration$i" };
+	}
+	else
+	{
+		die "No zduration $!";
+	}
+}
+
+if ( $writeme ) {
+	my $ncf = new FileHandle;
+	unless ( $ncf->open( "> $writeme" ) ) { die "can't open file $!"; }
+	my $name;
+	foreach $name ( keys( %options ) ) {
+	    print $ncf $name, "=", $options{ $name }, "\n";
+	}
+	$ncf->close;
+}
+
+my ($line, $stats_duration, $interval, $count);
+
+# prepare the run
+system("@TOPDIR@/data_collect/pgsql/get_config.sh \"$db_param\" $redirect_tmp $redirect_xlog $out_dir");
+#system("rm -rf $out_dir");
+#kill_process('dbt1_stats');
+if ( ! -d "$out_dir" )
+{
+	mkdir "$out_dir" ||
+		die("can't make dir $out_dir $!");
+}
+if ( ! -d "$out_dir" )
+{
+	mkdir "$out_dir" ||
+		die("can't make dir $out_dir $!");
+}
+if ( ! -d "$out_dir/appserver" )
+{
+	mkdir "$out_dir/appserver" ||
+		die("can't make dir $out_dir/appserver $!");
+}
+if ( ! -d "$out_dir/cache" )
+{
+	mkdir "$out_dir/cache" ||
+		die("can't make dir $out_dir/cache $!");
+}
+if ( ! -d "$out_dir/dbdriver" )
+{
+	mkdir "$out_dir/dbdriver" ||
+		die("can't make dir $out_dir/dbdriver $!");
+}
+
+# stats_duration is 2 minutes longer than run, it will be killed at the end
+$stats_duration = $duration[0] + 120;
+$interval = 60;
+$count = $stats_duration/$interval + 1;
+
+# start cache if use cache
+if ( $use_cache )
+{
+	my $inmask = '';
+	my $timeout=10;
+	my $nfound;
+	my $cache_socket='CACHE';
+
+	if ( !connect_to_host($cache_host, 2345, $cache_socket) )
+	{
+		die "connect: $!\n";
+	}
+
+	#set time
+	my $master_time = `date`;
+	chomp($master_time);
+	send "$cache_socket", "master time $master_time", MSG_DONTWAIT;
+	vec($inmask, fileno($cache_socket), 1) = 1;
+	# wait for input to show up
+	$nfound = select(my $outmask = $inmask, undef, undef, undef);
+	if ( $nfound == 1)
+	{
+		recv "$cache_socket", $line, 1024, MSG_NOSIGNAL;
+		print "line is [$line]\n";
+	}
+
+	send "$cache_socket", "appCache --host $dbhost --dbname $dbname --username $user --password $password --port $cache_port --db_connection $cache_connection --item_count $items", MSG_DONTWAIT;
+
+	vec($inmask, fileno($cache_socket), 1) = 1;
+	# wait for input to show up
+	$nfound = select($inmask, undef, undef, undef);
+	if ( $nfound == 1)
+	{
+		recv "$cache_socket", $line, 1024, MSG_NOSIGNAL;
+		print "line is [$line]\n";
+	}
+
+	if ( $line =~ /fail/i ) 
+	{
+		send "$cache_socket", "last", MSG_DONTWAIT;
+		close ("$cache_socket") or die "close: $!";
+		die "cache did not start successfully\n"; 
+	}
+	send "$cache_socket", "last", MSG_DONTWAIT;
+	close ("$cache_socket") or die "close: $!";
+}
+
+# start appServer
+my $server_socket='SERVER';
+for (my $i=0; $i<=$#server_host; $i++ )
+{
+	my $inmask = '';
+	my $timeout=10;
+	my $nfound;
+	if ( !connect_to_host($server_host[$i], 2345, $server_socket) )
+	{
+		die "connect: $!\n";
+	}
+
+	my $master_time = `date`;
+	chomp($master_time);
+	send "$server_socket", "master time $master_time", MSG_DONTWAIT;
+	
+	vec($inmask, fileno($server_socket), 1) = 1;
+	# wait for input to show up
+	$nfound = select(my $outmask = $inmask, undef, undef, undef);
+	if ( $nfound == 1)
+	{
+		recv "$server_socket", $line, 1024, MSG_NOSIGNAL;
+		print "line is [$line]\n";
+	}
+
+	if ( $use_cache)
+	{
+		send "$server_socket", "appServer --host $dbhost --dbname $dbname --user $user -password $password --server_port $server_port[$i] --db_connection $server_connection[$i] --txn_q_size $txn_queue_size[$i] --txn_array_size $txn_array_size[$i] --item_count $items --access_cache --cache_host $cache_host --cache_port $cache_port", MSG_DONTWAIT;
+	}
+	else
+	{
+		send "$server_socket", "appServer --host $dbhost --dbname $dbname --user $user -password $password --server_port $server_port[$i] --db_connection $server_connection[$i] --txn_q_size $txn_queue_size[$i] --txn_array_size $txn_array_size[$i] --item_count $items", MSG_DONTWAIT;
+	}
+	vec($inmask, fileno($server_socket), 1) = 1;
+	# wait for appServer till it starts succesfully
+	$nfound = select($inmask, undef, undef, undef);
+	if ( $nfound == 1)
+	{
+		recv "$server_socket", $line, 1024, MSG_NOSIGNAL;
+		chomp($line);
+		print "line is [$line]\n";
+	}
+	else
+	{
+		send "$server_socket", "last", MSG_DONTWAIT;
+		die "appServer $server_host[$i] did not start after $timeout seconds\n";
+	}
+	if ( $line =~ /fail/i ) 
+	{
+		send "$server_socket", "last", MSG_DONTWAIT;
+		close ("$server_socket") or die "close: $!";
+		die "appServer did not start successfully\n"; 
+	}
+	send "$server_socket", "last", MSG_DONTWAIT;
+	close ("$server_socket") or die "close: $!";
+}
+
+# start the drivers
+my @driver_socket;
+for (my $i=0; $i<=$#driver_host; $i++ )
+{
+	my $inmask = '';
+	my $timeout=10;
+	my $nfound;
+
+	print "driver_host is $driver_host[$i]\n";
+	$driver_socket[$i]="driver$i";
+	if ( !connect_to_host($driver_host[$i], 2345, $driver_socket[$i]) )
+	{
+		die "connect: $!\n";
+	}
+
+	my $master_time = `date`;
+	chomp($master_time);
+	send "$driver_socket[$i]", "master time $master_time", MSG_DONTWAIT;
+
+	vec($inmask, fileno($driver_socket[$i]), 1) = 1;
+	# wait for input to show up
+	$nfound = select($inmask, undef, undef, undef);
+	if ( $nfound == 1)
+	{
+		recv "$driver_socket[$i]", $line, 1024, MSG_NOSIGNAL;
+		#chomp($line);
+		print "line is [$line]\n";
+	}
+
+	send "$driver_socket[$i]", "dbdriver --server_name $driver_server_host[$i] --port $driver_server_port[$i] --item_count $items --customer_count $customers --emulated_users $driver_eus[$i] --rampup_rate $warmup_rate[$i] --think_time $think_time[$i] --duration $duration[$i]",  MSG_DONTWAIT;
+	vec($inmask, fileno($driver_socket[$i]), 1) = 1;
+	# wait for appServer till it starts succesfully
+	$nfound = select($inmask, undef, undef, undef);
+	if ( $nfound == 1)
+	{
+		recv "$driver_socket[$i]", $line, 1024, MSG_NOSIGNAL;
+		chomp($line);
+		print "line is [$line]\n";
+	}
+	else
+	{
+		send "$driver_socket[$i]", "last", MSG_DONTWAIT;
+		die "dbdriver $driver_host[$i] did not start after $timeout seconds\n";
+	}
+	send "$driver_socket[$i]", "last", MSG_DONTWAIT;
+	close ("$driver_socket[$i]") or die "close: $!";
+}
+
+#send terminate to all the slaves
+if ( $use_cache )
+{
+	my $cache_socket='CACHE';
+	if ( connect_to_host($cache_host, 2345, $cache_socket) )
+	{
+		send "$cache_socket", "terminate", MSG_DONTWAIT;
+		close ("$cache_socket") or die "close: $!";
+	}
+}
+
+for (my $i=0; $i<=$#server_host; $i++ )
+{
+	if ( connect_to_host($server_host[$i], 2345, $server_socket, 0) )
+	{
+		send "$server_socket", "terminate", MSG_DONTWAIT;
+		close ("$server_socket") or die "close: $!";
+	}
+}
+
+for (my $i=0; $i<=$#driver_host; $i++ )
+{
+	print "driver_host is $driver_host[$i]\n";
+	$driver_socket[$i]="driver$i";
+	if ( connect_to_host($driver_host[$i], 2345, $driver_socket[$i], 0))
+	{
+		send "$driver_socket[$i]", "terminate", MSG_DONTWAIT;
+		close ("$driver_socket[$i]") or die "close: $!";
+	}
+}
+
+system("@TOPDIR@/data_collect/sys_stats.sh $interval $stats_duration $out_dir &") && 
+	die "failed to start sys_stats $!\n";
+system("@TOPDIR@/data_collect/pgsql/db_stats.sh DBT1 $out_dir $count $interval &") &&
+	die "failed to start db_stats $!\n";
+
+# now I am the server
+sub logmsg { print "$0 $$: @_ at ", scalar localtime, "\n" }
+
+my $port = shift || 2346;
+my $proto = getprotobyname('tcp');
+socket(SERVER, PF_INET, SOCK_STREAM, $proto) or die "socket: $!";
+setsockopt(SERVER, SOL_SOCKET, SO_REUSEADDR, pack("l", 1))
+						or die "setsockopt: $!";
+bind(SERVER, sockaddr_in($port, INADDR_ANY)) or die "bind: $!";
+listen(SERVER,SOMAXCONN) or die "listen: $!";
+
+logmsg "server started on port $port";
+
+my $waitedpid = 0;
+my $paddr;
+
+sub REAPER {
+	$waitedpid = wait;
+	$SIG{CHLD} = \&REAPER;  # if you don't have sigaction(2)
+	logmsg "reaped $waitedpid" . ($? ? " with exit $?" : "");
+}
+$SIG{CHLD} = \&REAPER;
+
+for ( ; $paddr = accept(CLIENT,SERVER); close CLIENT) {
+	my($port,$iaddr) = sockaddr_in($paddr);
+	my $name = gethostbyaddr($iaddr,AF_INET);
+	my $current_handle;
+	#set client unbuffered
+	$current_handle = select(CLIENT);
+	$|=1;
+	select($current_handle);
+
+	logmsg "connection from $name [",
+			inet_ntoa($iaddr), "] at port $port";
+	my $pid;
+	next if $pid = fork;	#parent
+	die "fork: $!" unless defined $pid;
+	
+	# otherwise child
+	close(SERVER); 		#no use to child
+
+	while (1)
+	{
+		my $inmask = '';
+		my $timeout=10;
+		my $nfound;
+
+		vec($inmask, fileno(CLIENT), 1) = 1;
+		# wait for input to show up
+		$nfound = select(my $outmask = $inmask, undef, undef, undef);
+		if ( $nfound == 1)
+		{
+			recv CLIENT, $line, 1024, MSG_NOSIGNAL;
+		}
+		if ( $line =~ /dbdriver: ended/ )
+		{
+			my $ftmp = new FileHandle;
+			unless ($ftmp->open( "> $out_dir/mix.log.$port" ) )
+				{ die "can't open file $out_dir/mix.log.$port: $!"; }
+			send CLIENT, "send mix log", 1024, MSG_NOSIGNAL;
+			#while( $line=<CLIENT> )
+			while( 1 )
+			{
+				recv CLIENT, $line, 1024, MSG_NOSIGNAL;
+				#print "---line is $line\n";
+				if ( $line =~ /last/ )
+				{
+					close($ftmp);
+					last;
+				}
+				else
+				{
+					print $ftmp "$line";
+					send CLIENT, "done", 1024, MSG_NOSIGNAL;
+				}
+			}
+			#print "outside while\n";
+			sleep(10);
+			# collect appserver error.log
+			unless ($ftmp->open( "> $out_dir/appserver/error.log.$port" ) )
+				{ die "can't open file $out_dir/appserver/error.log.$port: $!"; }
+			send CLIENT, "send appserver error log", 1024, MSG_DONTWAIT;
+			while( 1 )
+			{
+				recv CLIENT, $line, 1024, MSG_NOSIGNAL;
+				#print "---line is $line\n";
+				if ( $line =~ /last/ )
+				{
+					close($ftmp);
+					last;
+				}
+				else
+				{
+					print $ftmp "$line";
+					send CLIENT, "done", 1024, MSG_NOSIGNAL;
+				}
+			}
+			sleep(10);
+			# collect appserver time.log
+			unless ($ftmp->open( "> $out_dir/appserver/time.log.$port" ) )
+				{ die "can't open file $out_dir/appserver/time.log.$port: $!"; }
+			send CLIENT, "send appserver time log", 1024, MSG_NOSIGNAL;
+			while( 1 )
+			{
+				recv CLIENT, $line, 1024, MSG_NOSIGNAL;
+				#print "---line is $line\n";
+				if ( $line =~ /last/ )
+				{
+					close($ftmp);
+					last;
+				}
+				else
+				{
+					print $ftmp "$line";
+					send CLIENT, "done", 1024, MSG_NOSIGNAL;
+				}
+			}
+			sleep(10);
+			# collect cache error.log
+			unless ($ftmp->open( "> $out_dir/cache/error.log.$port" ) )
+				{ die "can't open file $out_dir/cache/error.log.$port: $!"; }
+			send CLIENT, "send cache error log", 1024, MSG_NOSIGNAL;
+			while( 1 )
+			{
+				recv CLIENT, $line, 1024, MSG_NOSIGNAL;
+				#print "---line is $line\n";
+				if ( $line =~ /last/ )
+				{
+					close($ftmp);
+					last;
+				}
+				else
+				{
+					print $ftmp "$line";
+					send CLIENT, "done", 1024, MSG_NOSIGNAL;
+				}
+			}
+			sleep(10);
+			# collect dbdriver error.log
+			unless ($ftmp->open( "> $out_dir/dbdriver/error.log.$port" ) )
+				{ die "can't open file $out_dir/dbdriver/error.log.$port: $!"; }
+			send CLIENT, "send dbdriver error log", 1024, MSG_NOSIGNAL;
+			while( 1 )
+			{
+				recv CLIENT, $line, 1024, MSG_NOSIGNAL;
+				#print "---line is $line\n";
+				if ( $line =~ /last/ )
+				{
+					close($ftmp);
+					last;
+				}
+				else
+				{
+					print $ftmp "$line";
+					send CLIENT, "done", 1024, MSG_NOSIGNAL;
+				}
+			}
+			sleep(10);
+			# collect dbdriver think_time.log
+			unless ($ftmp->open( "> $out_dir/dbdriver/think_time.log.$port" ) )
+				{ die "can't open file $out_dir/dbdriver/think_time.log.$port: $!"; }
+			send CLIENT, "send dbdriver think_time log", 1024, MSG_NOSIGNAL;
+			while( 1 )
+			{
+				recv CLIENT, $line, 1024, MSG_NOSIGNAL;
+				#print "---line is $line\n";
+				if ( $line =~ /last/ )
+				{
+					close($ftmp);
+					last;
+				}
+				else
+				{
+					print $ftmp "$line";
+					send CLIENT, "done", 1024, MSG_NOSIGNAL;
+				}
+			}
+			# collect dbdriver think_time.log
+			unless ($ftmp->open( "> $out_dir/dbdriver/usmd.log.$port" ) )
+				{ die "can't open file $out_dir/dbdriver/usmd.log.$port: $!"; }
+			send CLIENT, "send dbdriver usmd log", 1024, MSG_NOSIGNAL;
+			while( 1 )
+			{
+				recv CLIENT, $line, 1024, MSG_NOSIGNAL;
+				#print "---line is $line\n";
+				if ( $line =~ /last/ )
+				{
+					close($ftmp);
+					last;
+				}
+				else
+				{
+					print $ftmp "$line";
+					send CLIENT, "done", 1024, MSG_NOSIGNAL;
+				}
+			}
+			sleep(10);
+			# collect dbdriver output
+			unless ($ftmp->open( "> $out_dir/dbdriver.out.$port" ) )
+				{ die "can't open file $out_dir/dbdriver.out.$port: $!"; }
+			send CLIENT, "send dbdriver out", 1024, MSG_NOSIGNAL;
+			while( 1 )
+			{
+				recv CLIENT, $line, 1024, MSG_NOSIGNAL;
+				#print "---line is $line\n";
+				if ( $line =~ /last/ )
+				{
+					close($ftmp);
+					last;
+				}
+				else
+				{
+					print $ftmp "$line";
+					send CLIENT, "done", 1024, MSG_NOSIGNAL;
+				}
+			}
+			sleep(10);
+			# collect server output
+			unless ($ftmp->open( "> $out_dir/server.out.$port" ) )
+				{ die "can't open file $out_dir/server.out.$port: $!"; }
+			send CLIENT, "send server out", 1024, MSG_NOSIGNAL;
+			while( 1 )
+			{
+				recv CLIENT, $line, 1024, MSG_NOSIGNAL;
+				#print "---line is $line\n";
+				if ( $line =~ /last/ )
+				{
+					close($ftmp);
+					last;
+				}
+				else
+				{
+					print $ftmp "$line";
+					send CLIENT, "done", 1024, MSG_NOSIGNAL;
+				}
+			}
+			sleep(10);
+			# collect cache output
+			unless ($ftmp->open( "> $out_dir/cache.out.$port" ) )
+				{ die "can't open file $out_dir/cache.out.$port: $!"; }
+			send CLIENT, "send cache out", 1024, MSG_NOSIGNAL;
+			while( 1 )
+			{
+				recv CLIENT, $line, 1024, MSG_NOSIGNAL;
+				#print "---line is $line\n";
+				if ( $line =~ /last/ )
+				{
+					close($ftmp);
+					last;
+				}
+				else
+				{
+					print $ftmp "$line";
+					send CLIENT, "done", 1024, MSG_NOSIGNAL;
+				}
+			}
+			sleep(10);
+			send CLIENT, "last", 1024, MSG_NOSIGNAL;
+		}
+		elsif ( $line =~ /last confirmed/)
+		{
+			print "line is [$line]\n";
+			close(CLIENT);
+			last;
+		}
+	}
+	last;
+}
+
+#kill_process('sys_stats');
+kill_process('db_stats');
+kill_process('appCache');
+kill_process('appServer');
+kill_process('dbt1_slave');
+
+# analyze mix.log to get BT
+system("@TOPDIR@/data_collect/analyzeBT.pl -o $out_dir -l $out_dir");
+system("cp", "@TOPDIR@/run/db_logfile.txt", "$out_dir/");
+
+exit;
+
+sub connect_to_host
+{
+	my ($host, $port, $socket_name) = @_;
+	my ($iaddr, $proto, $paddr, $line);
+	# make cache_port untaint
+	if ($port =~ /^([0-9]+)$/) 
+	{ 
+		$port=$1; 
+	}
+	# make cache_host untaint
+	if ( $host =~ /^(.*)$/ )
+	{
+		$host=$1; 
+	}
+	
+	$iaddr   = inet_aton($host) or die "no host: $host";
+	$paddr   = sockaddr_in($port, $iaddr);
+
+	$proto   = getprotobyname('tcp');
+	socket("$socket_name", PF_INET, SOCK_STREAM, $proto) or die "socket: $!";
+	my $rc = connect("$socket_name", $paddr);
+	return $rc;
+}
+
+sub kill_process
+{
+	my ($process_name) = @_;
+
+	my ($line, @fields);
+	$line = `ps -ef | grep -v grep | grep -i $process_name`;
+	if ( $line )
+	{
+		@fields = split / +/, $line;
+		system("kill -9 $fields[1]");
+	}
+}

@@ -146,7 +146,7 @@ int init_common()
 	if (log_error == NULL)
 	{
 		fprintf(stderr, "cannot open %s\n", ERROR_LOG_NAME);
-		return W_ERROR;
+		return ERROR;
 	}
 
 #ifdef DEBUG
@@ -155,7 +155,7 @@ int init_common()
 	if (log_debug == NULL)
 	{
 		fprintf(stderr, "cannot open %s\n", DEBUG_LOG_NAME);
-		return W_ERROR;
+		return ERROR;
 	}
 #endif /* DEBUG */
 

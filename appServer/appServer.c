@@ -3,9 +3,10 @@
  * This file is released under the terms of the Artistic License.  Please see
  * the file LICENSE, included in this package, for details.
  *
- * Copyright (C) 2002 Mark Wong & Jenny Zhang &
- *                    Open Source Development Lab, Inc.
- *
+ * Copyright (C) 2002 Open Source Development Lab, Inc.
+ * History: 
+ * 2002 Created by Mark Wong & Jenny Zhang
+ * Aug-2003: rewrote the command line parsing part by Jenny Zhang
  */
 
 #include <pthread.h>
@@ -21,6 +22,7 @@
 #include <semaphore.h>
 #include <unistd.h>
 #include <signal.h>
+#include <getopt.h>
 #include <_socket.h>
 #include <common.h>
 #include <app_interface.h>
@@ -32,6 +34,8 @@ void *DoConnection(void *fd);
 void sighandler(int signum);
 
 static int connectioncount = 0;
+#define MODE_CACHE_OFF 0
+#define MODE_CACHE_ON 1
 
 /* globals */
 
@@ -61,22 +65,56 @@ int search_results_cache_port;
 
 pthread_mutex_t mutex_app_server = PTHREAD_MUTEX_INITIALIZER;
 
+int help;
+int port, PoolThreads, TxnQSize, ArraySize;
+#ifdef odbc
+	char sname[32];
+	char uname[32];
+	char auth[32];
+#endif
+#ifdef libpq
+	char sname[32];
+	char dbname[32];
+	char uname[32];
+	char auth[32];
+#endif
 int altered = 0;
+int usage(char *name);
 
 int main(int argc, char *argv[]) 
 {
 	int mastersock, workersock;
 	struct sockaddr_in socketaddr;
 	int addrlen;
-	char sname[32], uname[32], auth[32];
 	pthread_t ConnThread;
 	int rec;
-	int port, PoolThreads, TxnQSize, ArraySize;
 	struct sigaction sa;
 	int c;
 #ifdef GET_TIME
 	char filename[512];
 #endif /* GET_TIME */
+
+/* set default values */
+#ifdef odbc
+	strcpy(sname, "localhost:DBT1");
+	strcpy(uname, "dbt");
+	strcpy(auth, "dbt");
+#endif
+#ifdef libpq
+	strcpy(sname, "localhost");
+	strcpy(dbname, "DBT1");
+	strcpy(uname, "pgsql");
+	strcpy(auth, "pgsql");
+#endif
+	help = 0;
+	ArraySize = 100;
+	PoolThreads = 20;
+	port = 9992;
+	mode_cache = MODE_CACHE_OFF;
+	TxnQSize = 100;
+	strcpy(search_results_cache_host, "localhost");
+	search_results_cache_port = 9999;
+	item_count = 1000;
 
 	setlinebuf(stdout);
 	memset(&sa, 0, sizeof(sa));
@@ -92,79 +130,114 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	if (argc < 9)
+	if (argc < 1)
 	{
-		printf("usage: appServer -d <dbnodename> -u <username> -p <password> -l <port>\n");
-		printf("                 -c <db_connection> -q <transaction queue size>\n");
-		printf("                 -a <transaction array size> -i <items>\n");
-		printf("                 -x <search_results_cache_host> -y <search_results_cache_port>\n");
-		printf("                 -m <0|1>\n");
-		printf("\n");
-		printf("-m 1 accesses the cache and requires -x and -y, default\n");
-		printf("-m 0 does not access the cache\n");
-		return -1;
+		return usage(argv[0]);
 	}
 
-	opterr = 0;
-	while ((c = getopt(argc, argv, "a:c:d:i:l:m:o:p:q:u:x:y:z")) != -1)
+	while (1)
 	{
+		static struct option long_options[] = {
+			{ "host", required_argument, 0, 0 },
+			{ "dbname", required_argument, 0, 0 },
+			{ "dbnodename", required_argument, 0, 0 },
+			{ "username", required_argument, 0, 0 },
+			{ "password", required_argument, 0, 0 },
+			{ "server_port", required_argument, 0, 0 },
+			{ "db_connection", required_argument, 0, 0 },
+			{ "txn_q_size", required_argument, 0, 0 },
+			{ "txn_array_size", required_argument, 0, 0 },
+			{ "item_count", required_argument, 0, 0 },
+			{ "access_cache", no_argument, &mode_cache, MODE_CACHE_ON },
+			{ "cache_host", required_argument, 0, 0 },
+			{ "cache_port", required_argument, 0, 0 },
+			{ "output_path", required_argument, 0, 0 },
+			{ "help", no_argument, &help, 1},
+			{ 0, 0, 0, 0 }
+		};
+
+		int option_index = 0;
+		c = getopt_long_only(argc, argv, "", long_options, &option_index);
+		if (c == -1)
+		{
+			break;
+		}
+
 		switch (c)
 		{
-			case 'a':
-				ArraySize = atoi(optarg);
-				break;
-			case 'c':
-				PoolThreads = atoi(optarg);
-				break;
-			case 'd':
-				strcpy(sname, optarg);
-				break;
-			case 'i':
-				item_count = atoi(optarg);
-				break;
-			case 'l':
-				port = atoi(optarg);
-				break;
-			case 'm':
-				mode_cache = atoi(optarg);
-				break;
-			case 'o':
-				strcpy(output_path, optarg);
-				break;
-			case 'p':
-				strcpy(auth, optarg);
-				break;
-			case 'q':
-				TxnQSize = atoi(optarg);
-				break;
-			case 'u':
-				strcpy(uname, optarg);
-				break;
-			case 'x':
-				strcpy(search_results_cache_host, optarg);
-				break;
-			case 'y':
-				search_results_cache_port = atoi(optarg);
-				break;
-			case 'z':
-				altered = 1;
-				break;
-			case '?':
-				if (isprint(optopt))
+			case 0:
+				if (long_options[option_index].flag != 0)
 				{
-					fprintf(stderr, "Unknown option `-%c'.\n", optopt);
+					break;
 				}
-				else
+				if (strcmp(long_options[option_index].name, "host") == 0)
 				{
-					fprintf (stderr, "Unknown option character `\\x%x'.\n",
-						optopt);  
+					strcpy(sname, optarg);
 				}
-				return 1;
+				else if (strcmp(long_options[option_index].name, "help") == 0)
+				{
+					break;
+				}
+				else if (strcmp(long_options[option_index].name, "dbnodename") == 0)
+				{
+					strcpy(sname, optarg);
+				}
+				else if (strcmp(long_options[option_index].name, "dbname") == 0)
+				{
+					strcpy(dbname, optarg);
+				}
+				else if (strcmp(long_options[option_index].name, "username") == 0)
+				{
+					strcpy(uname, optarg);
+				}
+				else if (strcmp(long_options[option_index].name, "password") == 0)
+				{
+					strcpy(auth, optarg);
+				}
+				else if (strcmp(long_options[option_index].name, "server_port") == 0)
+				{
+					port = atoi(optarg);
+				}
+				else if (strcmp(long_options[option_index].name, "db_connection") == 0)
+				{
+					PoolThreads = atoi(optarg);
+				}
+				else if (strcmp(long_options[option_index].name, "txn_q_size") == 0)
+				{
+					TxnQSize = atoi(optarg);
+				}
+				else if (strcmp(long_options[option_index].name, "txn_array_size") == 0)
+				{
+					ArraySize = atoi(optarg);
+				}
+				else if (strcmp(long_options[option_index].name, "item_count") == 0)
+				{
+					item_count = atoi(optarg);
+				}
+				else if (strcmp(long_options[option_index].name, "cache_host") == 0)
+				{
+					strcpy(search_results_cache_host, optarg);
+				}
+				else if (strcmp(long_options[option_index].name, "cache_port") == 0)
+				{
+					search_results_cache_port = atoi(optarg);
+				}
+				else if (strcmp(long_options[option_index].name, "output_path") == 0)
+				{
+					strcpy(output_path, optarg);
+				}
+				break;
 			default:
-				return -1;
+				printf ("?? getopt returned character code 0%o ??\n", c);
+				exit(1);
 		}
 	}
 
+	if ( help )
+	{
+		return usage(argv[0]);
+	}
+	
 	init_common();
 
 	mastersock = _server_init_socket(port);
@@ -177,7 +250,12 @@ int main(int argc, char *argv[])
 	}
 
 	/* create the threadpool. */
+#ifdef odbc
 	if (!init_thread_pool(PoolThreads, TxnQSize, sname, uname, auth))
+#endif
+#ifdef libpq
+	if (!init_thread_pool(PoolThreads, TxnQSize, sname, dbname, uname, auth))
+#endif
 	{
 		LOG_ERROR_MESSAGE("InitThreadPool() failed with %d connection",
 			PoolThreads);
@@ -293,7 +371,7 @@ void *DoConnection(void *fd)
 	while (1)
 	{
 		if ((rec = receive_transaction_packet(workersock, &TxnQItem)) ==
-			W_ERROR) 
+			ERROR) 
 		{
 			LOG_ERROR_MESSAGE("receive_transaction_packet failed");
 			close(workersock);
@@ -417,4 +495,37 @@ void *DoConnection(void *fd)
 	}
 	close(workersock);
 	return NULL;
+}
+
+int usage(char *name)
+{
+#ifdef odbc
+	printf("usage: %s --dbnodename <dbnodename> ", name);
+#endif
+#ifdef libpq
+	printf("usage: %s --host <hostname> --dbname <dbname> ", name);
+#endif
+	printf("--username <username> --password <password> --server_port <port>\n");
+	printf("--db_connection <db_connection> --txn_q_size <transaction queue size>\n");
+	printf("--txn_array_size <transaction array size> --item_count <items>\n");
+	printf("--output_path <output_path>\n");
+	printf("if using search_result_cache, add:\n");
+	printf("--access_cache  --cache_host <search_results_cache_host> --cache_port <search_results_cache_port>\n");
+	printf("\n\n");
+
+	printf("The default values if not specified:\n");
+#ifdef odbc
+	printf("dbnodename: %s, username: %s, password: %s\n", 
+		sname, uname, auth);
+#endif
+#ifdef libpq
+	printf("host: %s, dbname: %s, username: %s, password: %s\n", 
+		sname, dbname, uname, auth);
+#endif
+	printf("port: %d, db_connection: %d, txn_q_size: %d, txn_array_size: %d\n",
+		port, PoolThreads, TxnQSize, ArraySize);
+	printf("item_count: %d, output_path: %s\n", item_count, output_path);
+	printf("access_cache: MODE_CACHE_OFF, cache_host: %s, cache_port: %d\n",
+		search_results_cache_host, search_results_cache_port);
+	return 1;
 }

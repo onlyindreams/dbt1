@@ -4,11 +4,10 @@
 -- the file LICENSE, included in this package, for details.
 --
 -- Copyright (C) 2002 Open Source Development Lab, Inc.
--- History:
--- Feb 2001: Created by Mark Wong & Jenny Zhang
--- Apr 2003: Rewritten for PostgreSQL by Virginie Megy & Thierry Missimilly
---		  Bull, Linux Competence Center
--- June 2003: NAGAYASU Satoshi added usage info
+-- History: 
+-- July-2003: Created by Satoshi Nagayasu
+--
+--
 --
 CREATE OR REPLACE FUNCTION createSC  ( numeric(10,0) ) RETURNS numeric(10,0) AS '
   DECLARE
@@ -35,6 +34,7 @@ CREATE OR REPLACE FUNCTION createSC  ( numeric(10,0) ) RETURNS numeric(10,0) AS 
     RETURN _sc_id;
   END;
 ' LANGUAGE 'plpgsql';
+commit;
 
 
 -- 
