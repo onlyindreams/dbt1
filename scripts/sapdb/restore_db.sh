@@ -34,13 +34,3 @@ fi
 
 echo "changing data_cache back to 262144"
 ./set_param.sh 1
-_o=`cat <<EOF | /opt/sapdb/depend/bin/dbmcli -d $SID1 -u dbm,dbm 2>&1
-db_stop
-db_warm
-quit
-EOF`
-_test=`echo $_o | grep ERR`
-if ! [ "$_test" = "" ]; then
-        echo "set parameters failed"
-        exit 1
-fi
