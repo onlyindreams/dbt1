@@ -398,9 +398,10 @@ int main(int argc, char *argv[])
 				/* c_id=1 returning customer */
 				strcpy(euc.buy_request_data.c_uname, argv[parameter_number+2]);
 				strcpy(euc.buy_request_data.c_passwd, argv[parameter_number+3]);
-				euc.buy_request_data.sc_id=atoi(argv[5]);
+				euc.buy_request_data.sc_id=atoi(argv[parameter_number+4]);
 				printf("c_uname: %s\n", euc.buy_request_data.c_uname);
 				printf("c_passwd: %s\n", euc.buy_request_data.c_passwd);
+				printf("sc_id: %d\n", euc.buy_request_data.sc_id);
 				euc.buy_request_data.returning_flag=1;
 				break;
 			default:
