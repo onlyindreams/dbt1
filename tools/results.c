@@ -223,13 +223,13 @@ int main(int argc, char *argv[])
 	fclose(log_mix);
 	fclose(plot_ips);
 
-	/* Calculate the actualy mix of interactions. */
+	/* Calculate the actual mix of interactions. */
 	printf("interaction\t%\tavg response time (s)\n");
 	for (i = 0; i < INTERACTION_TOTAL; i++)
 	{
 		printf("%s\t\t%2.2f\t%0.3f\n", interaction_short_name[i],
 			(double) interaction_count[i] / (double) total_interaction_count * 100.0,
-			interaction_response_time[i] / (double) total_interaction_count);
+			interaction_response_time[i] / (double) interaction_count[i]);
 	}
 	
 	/* Calculated the number of interactions per second. */
