@@ -58,6 +58,11 @@ int main(int argc, char *argv[])
 		printf("can not register signal handler to SIGUSR2\n");
 		return -1;
 	}
+	if (sigaction(SIGSEGV, &sa, NULL) == -1)
+	{
+		printf("can not register signal handler to SIGSEGV\n");
+		return -1;
+	}
 
 	if (argc < 7)
 	{
@@ -170,6 +175,8 @@ void sighandler(int signum)
 		printf("connect to database failed\n");
 	else if (signum==SIGUSR2)
 		printf("warm up threads failed\n");
+	else if (signum==SIGSEGV)
+		printf("memory violation\n");
 	printf("please check error.log\n");
 	_exit(-1);
 }
