@@ -21,7 +21,7 @@ int copy_in_best_sellers(struct eu_context_t *euc, union odbc_data_t *odbcd)
 	strcpy(odbcd->best_sellers_odbc_data.eb.i_subject,
 		euc->best_sellers_data.i_subject);
 
-	return W_OK;
+	return OK;
 }
 
 int copy_out_best_sellers(struct eu_context_t *euc, union odbc_data_t *odbcd)
@@ -48,7 +48,7 @@ int copy_out_best_sellers(struct eu_context_t *euc, union odbc_data_t *odbcd)
 		strcpy(euc->best_sellers_data.results_data[i].a_lname,
 			odbcd->best_sellers_odbc_data.eb.results_data[i].a_lname);
 	}
-	return W_OK;
+	return OK;
 }
 #endif /* PHASE1 */
 
@@ -193,5 +193,5 @@ int execute_best_sellers(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 	{
 		return W_ZERO_ITEMS;
 	}
-	return W_OK;
+	return OK;
 }

@@ -28,7 +28,7 @@ int copy_in_admin_request(struct eu_context_t *euc, union odbc_data_t *odbcd)
 	}
 	odbcd->admin_request_odbc_data.eb.i_id =
 		(UDWORD) euc->admin_request_data.i_id;
-	return W_OK;
+	return OK;
 }
 
 int copy_out_admin_request(struct eu_context_t *euc, union odbc_data_t *odbcd)
@@ -44,7 +44,7 @@ int copy_out_admin_request(struct eu_context_t *euc, union odbc_data_t *odbcd)
 	euc->admin_request_data.i_image = odbcd->admin_request_odbc_data.eb.i_image;
 	euc->admin_request_data.i_thumbnail =
 		odbcd->admin_request_odbc_data.eb.i_thumbnail;
-	return W_OK;
+	return OK;
 }
 #endif /* PHASE1*/
 
@@ -160,5 +160,5 @@ int execute_admin_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd
 		return W_ERROR;
 	}
 
-	return W_OK;
+	return OK;
 }

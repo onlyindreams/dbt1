@@ -188,7 +188,7 @@ int receive_transaction_packet(int s, struct QItem *TxnQItem)
 		return W_ERROR;
 	}
 
-	return W_OK;
+	return OK;
 }
 
 int send_transaction_packet(int s, struct QItem TxnQItem)
@@ -252,7 +252,7 @@ int send_transaction_packet(int s, struct QItem TxnQItem)
 		return W_ERROR;
 	}
 	
-	if (result==W_OK)
+	if (result==OK)
 	{
 		switch (interaction)
 		{
@@ -363,6 +363,6 @@ int send_transaction_packet(int s, struct QItem TxnQItem)
 			FreeSlot(&app_shopping_cart_array, TxnQItem.SlotID);
 			break;
 	}
-	return W_OK;
+	return OK;
 }
 

@@ -32,7 +32,7 @@ int copy_in_admin_confirm(struct eu_context_t *euc, union odbc_data_t *odbcd)
 	odbcd->admin_confirm_odbc_data.eb.i_thumbnail =
 		(UDWORD) euc->admin_confirm_data.i_thumbnail;
 	odbcd->admin_confirm_odbc_data.eb.i_cost = euc->admin_confirm_data.i_cost;
-	return W_OK;
+	return OK;
 }
 
 int copy_out_admin_confirm(struct eu_context_t *euc, union odbc_data_t *odbcd)
@@ -64,7 +64,7 @@ int copy_out_admin_confirm(struct eu_context_t *euc, union odbc_data_t *odbcd)
 	strcpy(euc->admin_confirm_data.i_isbn,
 		odbcd->admin_confirm_odbc_data.eb.i_isbn);
 
-	return W_OK;
+	return OK;
 }
 #endif /* PHASE1*/
 
@@ -252,5 +252,5 @@ int execute_admin_confirm(struct odbc_context_t *odbcc, union odbc_data_t *odbcd
 	}
 #endif
 
-	return W_OK;
+	return OK;
 }

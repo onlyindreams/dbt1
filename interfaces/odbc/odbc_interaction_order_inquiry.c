@@ -19,13 +19,13 @@
 int copy_in_order_inquiry(struct eu_context_t *euc, union odbc_data_t *odbcd)
 {
 	odbcd->order_inquiry_odbc_data.eb.c_id = euc->order_inquiry_data.c_id;
-	return W_OK;
+	return OK;
 }
 
 int copy_out_order_inquiry(struct eu_context_t *euc, union odbc_data_t *odbcd)
 {
 	strcpy(euc->order_inquiry_data.c_uname, odbcd->order_inquiry_odbc_data.eb.c_uname);
-	return W_OK;
+	return OK;
 }
 #endif /* PHASE1*/
 
@@ -90,5 +90,5 @@ int execute_order_inquiry(struct odbc_context_t *odbcc, union odbc_data_t *odbcd
 	}
 #endif
 
-	return W_OK;
+	return OK;
 }

@@ -111,7 +111,7 @@ int receive_interaction_packet(int s, struct eu_context_t *euc)
 	DEBUGMSG("sc_id %lld", euc->shopping_cart_data.sc_id);
 #endif
 
-	return W_OK;
+	return OK;
 }
 
 int send_interaction_packet(int s, struct eu_context_t *euc)
@@ -188,6 +188,6 @@ int send_interaction_packet(int s, struct eu_context_t *euc)
 		LOG_ERROR_MESSAGE("cannot send data %s", euc->interaction);
 		return W_ERROR;
 	}
-	return W_OK;
+	return OK;
 }
 

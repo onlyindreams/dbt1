@@ -143,7 +143,7 @@ int init_common()
 	}
 #endif /* DEBUG */
 
-	return W_OK;
+	return OK;
 }
 
 
@@ -265,7 +265,7 @@ int log_error_message(char *filename, int line, const char *fmt, ...)
 	fflush(log_error);
 	pthread_mutex_unlock(&mutex_error_log);
 
-	return W_OK;
+	return OK;
 }
 
 #ifdef DEBUG
@@ -288,7 +288,7 @@ int log_debug_message(char *filename, int line, const char *fmt, ...)
 	fflush(log_debug);
 	pthread_mutex_unlock(&mutex_debug_log);
 
-	return W_OK;
+	return OK;
 }
 #endif /* DEBUG */
 

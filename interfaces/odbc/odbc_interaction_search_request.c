@@ -27,7 +27,7 @@ int copy_out_search_request(struct eu_context_t *euc, union odbc_data_t *odbcd)
 		euc->search_request_data.pp_data.i_thumbnail[i] =
 			(long long) odbcd->search_request_odbc_data.eb.pp_data.i_thumbnail[i];
 	}
-	return W_OK;
+	return OK;
 }
 #endif /* PHASE1*/
 
@@ -107,5 +107,5 @@ int execute_search_request(struct odbc_context_t *odbcc, union odbc_data_t *odbc
 	}
 #endif
 
-	return W_OK;
+	return OK;
 }

@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
 	warm_up_thread=(pthread_t *)malloc(db_thread*sizeof(pthread_t));
 	range=(struct table_range *)malloc(db_thread*sizeof(struct table_range));
 
-	if (init_cache(num_items, sname, uname, auth) != W_OK)
+	if (init_cache(num_items, sname, uname, auth) != OK)
 	{
 		printf("init_odbc environment failed\n");
 		return -1;
@@ -192,11 +192,11 @@ int init_cache(int item, char *sname, char *uname, char *auth)
 	author_results_table=malloc(item/10*sizeof(struct search_results));	
 	title_results_table=malloc(item/5*sizeof(struct search_results));	
 
-	if ((rc=odbc_init(sname, uname, auth))!=W_OK)
+	if ((rc=odbc_init(sname, uname, auth))!=OK)
 	{
 		return W_ERROR;
 	}
-	return W_OK;
+	return OK;
 }
 
 /* thread filling out results tables */

@@ -29,7 +29,7 @@ int receive_search_results(int s, struct search_results_t *search_results_reques
 		return SOCKET_CLOSE;
 	}
 
-	return W_OK;
+	return OK;
 }
 
 int send_search_results(int s,  struct search_results_t *search_results_response)
@@ -43,6 +43,6 @@ int send_search_results(int s,  struct search_results_t *search_results_response
 		return W_ERROR;
 	}
 
-	return W_OK;
+	return OK;
 }
 

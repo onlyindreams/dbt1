@@ -21,7 +21,7 @@ int copy_in_new_products(struct eu_context_t *euc, union odbc_data_t *odbcd)
 	strcpy(odbcd->new_products_odbc_data.eb.i_subject,
 		euc->new_products_data.i_subject);
 
-	return W_OK;
+	return OK;
 }
 
 int copy_out_new_products(struct eu_context_t *euc, union odbc_data_t *odbcd)
@@ -48,7 +48,7 @@ int copy_out_new_products(struct eu_context_t *euc, union odbc_data_t *odbcd)
 		strcpy(euc->new_products_data.results_data[i].a_lname,
 			odbcd->new_products_odbc_data.eb.results_data[i].a_lname);
 	}
-	return W_OK;
+	return OK;
 }
 #endif /* PHASE1 */
 
@@ -193,5 +193,5 @@ int execute_new_products(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 	{
 		return W_ZERO_ITEMS;
 	}
-	return W_OK;
+	return OK;
 }

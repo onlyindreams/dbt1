@@ -298,11 +298,11 @@ void *DoTxn(void *fd)
 			{
 				rc = W_ERROR;
 				/* retry if send fails */
-				while (rc != W_OK)
+				while (rc != OK)
 				{
 					rc = send_search_results(workersock, &app_search_results_array.odbc_data_array[TxnQItem.SlotID].search_results_odbc_data.eb);
 					/* if send fails, reopen a new socket */
-					if (rc!=W_OK)
+					if (rc!=OK)
 					{
 						LOG_ERROR_MESSAGE("send search_results to cache host failed");
 						close(workersock);
@@ -316,9 +316,9 @@ void *DoTxn(void *fd)
 					}
 				}
 
-				rc = W_OK;
+				rc = OK;
 				rc = receive_search_results(workersock, &app_search_results_array.odbc_data_array[TxnQItem.SlotID].search_results_odbc_data.eb);
-				if (rc!=W_OK)
+				if (rc!=OK)
 				{
 					LOG_ERROR_MESSAGE("receive search_results from cache host failed");
 					close(workersock);

@@ -136,7 +136,7 @@ int cache_port;
  */
 int do_interaction(struct eu_context_t *euc)
 {
-	int rc = W_OK;
+	int rc = OK;
 
 #ifdef PHASE1
 	/*
@@ -153,12 +153,12 @@ int do_interaction(struct eu_context_t *euc)
 			prepare_admin_confirm(euc);
 #ifdef PHASE1
 			rc = copy_in_admin_confirm(euc, &euc->odbcd);
-			if (rc != W_OK)
+			if (rc != OK)
 			{
 				return W_ERROR;
 			}
 			rc = execute_admin_confirm(&euc->odbcc, &euc->odbcd);
-			if (rc != W_OK)
+			if (rc != OK)
 			{
 				return W_ERROR;
 			}
@@ -169,12 +169,12 @@ int do_interaction(struct eu_context_t *euc)
 			prepare_admin_request(euc);
 #ifdef PHASE1
 			rc = copy_in_admin_request(euc, &euc->odbcd);
-			if (rc != W_OK)
+			if (rc != OK)
 			{
 				return W_ERROR;
 			}
 			rc = execute_admin_request(&euc->odbcc, &euc->odbcd);
-			if (rc == W_OK)
+			if (rc == OK)
 			{
 				copy_out_admin_request(euc, &euc->odbcd);
 			}
@@ -203,7 +203,7 @@ int do_interaction(struct eu_context_t *euc)
 #ifdef PHASE1
 			copy_in_buy_confirm(euc, &euc->odbcd);
 			rc = execute_buy_confirm(&euc->odbcc, &euc->odbcd);
-			if (rc == W_OK)
+			if (rc == OK)
 			{
 				copy_out_buy_confirm(euc, &euc->odbcd);
 			}
@@ -215,7 +215,7 @@ int do_interaction(struct eu_context_t *euc)
 #ifdef PHASE1
 			copy_in_buy_request(euc, &euc->odbcd);
 			rc = execute_buy_request(&euc->odbcc, &euc->odbcd);
-			if (rc == W_OK)
+			if (rc == OK)
 			{
 				copy_out_buy_request(euc, &euc->odbcd);
 			}
@@ -227,17 +227,17 @@ int do_interaction(struct eu_context_t *euc)
 			 * This isn't a database interaction so we can just return at this
 			 * point.
 			 */
-			return W_OK;
+			return OK;
 		case HOME:
 			rc = prepare_home(euc);
-			if (rc != W_OK)
+			if (rc != OK)
 			{
 				return W_ERROR;
 			}
 #ifdef PHASE1
 			copy_in_home(euc, &euc->odbcd);
 			rc = execute_home(&euc->odbcc, &euc->odbcd);
-			if (rc == W_OK)
+			if (rc == OK)
 			{
 				copy_out_home(euc, &euc->odbcd);
 			}
@@ -263,14 +263,14 @@ int do_interaction(struct eu_context_t *euc)
 			break;
 		case ORDER_DISPLAY:
 			rc = prepare_order_display(euc);
-			if (rc != W_OK)
+			if (rc != OK)
 			{
 				return W_ERROR;
 			}
 #ifdef PHASE1
 			copy_in_order_display(euc, &euc->odbcd);
 			rc = execute_order_display(&euc->odbcc, &euc->odbcd);
-			if (rc == W_OK)
+			if (rc == OK)
 			{
 				copy_out_order_display(euc, &euc->odbcd);
 			}
@@ -279,13 +279,13 @@ int do_interaction(struct eu_context_t *euc)
 		case ORDER_INQUIRY:
 			if (euc->c_id == UNKNOWN_CUSTOMER)
 			{
-				return W_OK;
+				return OK;
 			}
 			prepare_order_inquiry(euc);
 #ifdef PHASE1
 			copy_in_order_inquiry(euc, &euc->odbcd);
 			rc = execute_order_inquiry(&euc->odbcc, &euc->odbcd);
-			if (rc == W_OK)
+			if (rc == OK)
 			{
 				copy_out_order_inquiry(euc, &euc->odbcd);
 			}
@@ -298,14 +298,14 @@ int do_interaction(struct eu_context_t *euc)
 			DEBUGMSG("product detail id %lld", euc->product_detail_data.i_id);
 #endif
 */
-			if (rc != W_OK)
+			if (rc != OK)
 			{
 				return W_ERROR;
 			}
 #ifdef PHASE1
 			copy_in_product_detail(euc, &euc->odbcd);
 			rc = execute_product_detail(&euc->odbcc, &euc->odbcd);
-			if (rc == W_OK)
+			if (rc == OK)
 			{
 				copy_out_product_detail(euc, &euc->odbcd);
 			}
@@ -314,7 +314,7 @@ int do_interaction(struct eu_context_t *euc)
 		case SEARCH_REQUEST:
 #ifdef PHASE1
 			rc = execute_search_request(&euc->odbcc, &euc->odbcd);
-			if (rc == W_OK)
+			if (rc == OK)
 			{
 				copy_out_search_request(euc, &euc->odbcd);
 			}
@@ -322,7 +322,7 @@ int do_interaction(struct eu_context_t *euc)
 			break;
 		case SEARCH_RESULTS:
 			rc = prepare_search_results(euc);
-			if (rc != W_OK)
+			if (rc != OK)
 			{
 				return W_ERROR;
 			}
@@ -332,7 +332,7 @@ int do_interaction(struct eu_context_t *euc)
 			{
 				rc = send_search_results(euc->cache_s, &euc->search_results_data);
 				/* if send fails, reopen a new socket */
-				if (rc!=W_OK)
+				if (rc!=OK)
 				{
 					LOG_ERROR_MESSAGE("send search_results to cache host failed");
 					close(euc->cache_s);
@@ -345,7 +345,7 @@ int do_interaction(struct eu_context_t *euc)
 					return W_ERROR;
 				}
 				rc = receive_search_results(euc->cache_s, &euc->search_results_data);
-				if (rc!=W_OK)
+				if (rc!=OK)
 				{
 					LOG_ERROR_MESSAGE("receive search_results from cache host failed");
 					close(euc->cache_s);
@@ -369,7 +369,7 @@ int do_interaction(struct eu_context_t *euc)
 			{
 				copy_in_search_results(euc, &euc->odbcd);
 				rc = execute_search_results(&euc->odbcc, &euc->odbcd);
-				if (rc == W_OK)
+				if (rc == OK)
 				{
 					copy_out_search_results(euc, &euc->odbcd);
 				}
@@ -377,7 +377,7 @@ int do_interaction(struct eu_context_t *euc)
 #else
 			copy_in_search_results(euc, &euc->odbcd);
 			rc = execute_search_results(&euc->odbcc, &euc->odbcd);
-			if (rc == W_OK)
+			if (rc == OK)
 			{
 				copy_out_search_results(euc, &euc->odbcd);
 			}
@@ -389,7 +389,7 @@ int do_interaction(struct eu_context_t *euc)
 #ifdef PHASE1
 			copy_in_shopping_cart(euc, &euc->odbcd);
 			rc = execute_shopping_cart(&euc->odbcc, &euc->odbcd);
-			if (rc == W_OK)
+			if (rc == OK)
 			{
 				copy_out_shopping_cart(euc, &euc->odbcd);
 			}
@@ -687,7 +687,7 @@ int dump_interaction_output(struct eu_context_t *euc)
 			LOG_ERROR_MESSAGE("unknown interaction %d", euc->interaction);
 			break;
 	}
-	return W_OK;
+	return OK;
 }
 #endif /* DEBUG */
 
@@ -890,7 +890,7 @@ int dump_interaction_data(struct eu_context_t *euc)
 			LOG_ERROR_MESSAGE("unknown interaction %d", euc->interaction);
 			break;
 	}
-	return W_OK;
+	return OK;
 }
 
 /* 
@@ -1361,7 +1361,7 @@ int init_eus(char *sname, int port, int eus,
 		nanosleep(&ts, NULL);
 	}
 
-	return W_OK;
+	return OK;
 }
 
 int mark_logs(char *mark)
@@ -1381,7 +1381,7 @@ int mark_logs(char *mark)
 	fflush(log_usmd);
 	pthread_mutex_unlock(&mutex_usmd_log);
 
-	return W_OK;
+	return OK;
 }
 
 /*
@@ -1395,7 +1395,7 @@ int prepare_admin_confirm(struct eu_context_t *euc)
 	euc->admin_confirm_data.i_image = (int) get_random(item_count);
 	euc->admin_confirm_data.i_thumbnail = (int) get_random(item_count);
 
-	return W_OK;
+	return OK;
 }
 
 /* 
@@ -1405,7 +1405,7 @@ int prepare_admin_request(struct eu_context_t *euc)
 {
 	euc->admin_request_data.i_id = euc->product_detail_data.i_id;
 
-	return W_OK;
+	return OK;
 }
 
 /* 
@@ -1418,7 +1418,7 @@ int prepare_best_sellers(struct eu_context_t *euc)
 	strcpy(euc->best_sellers_data.i_subject,
 		i_subject[(int) get_random(I_SUBJECT_MAX)]);
 
-	return W_OK;
+	return OK;
 }
 
 /* 
@@ -1473,7 +1473,7 @@ int prepare_buy_confirm(struct eu_context_t *euc)
 			co_name[(int) get_random(CO_ID_MAX)]);
 	}
 
-	return W_OK;
+	return OK;
 }
 
 /* 
@@ -1552,7 +1552,7 @@ int prepare_buy_request(struct eu_context_t *euc)
 			co_name[(int) get_random(CO_ID_MAX)]);
 	}
 
-	return W_OK;
+	return OK;
 }
 
 /*
@@ -1578,7 +1578,7 @@ int prepare_home(struct eu_context_t *euc)
 		}
 	}
 
-	return W_OK;
+	return OK;
 }
 
 /*
@@ -1591,7 +1591,7 @@ int prepare_new_products(struct eu_context_t *euc)
 	strcpy(euc->new_products_data.i_subject,
 		i_subject[(int) get_random(I_SUBJECT_MAX)]);
 
-	return W_OK;
+	return OK;
 }
 
 /*
@@ -1629,7 +1629,7 @@ int prepare_order_display(struct eu_context_t *euc)
 			(char) tolower(euc->order_display_data.c_uname[i]);
 	}
 
-	return W_OK;
+	return OK;
 }
 
 /*
@@ -1639,7 +1639,7 @@ int prepare_order_inquiry(struct eu_context_t *euc)
 {
 	euc->order_inquiry_data.c_id = euc->c_id;
 
-	return W_OK;
+	return OK;
 }
 
 /*
@@ -1675,7 +1675,7 @@ int prepare_product_detail(struct eu_context_t *euc)
 		return W_ERROR;
         }
 
-	return W_OK;
+	return OK;
 }
 
 /*
@@ -1706,7 +1706,7 @@ int prepare_search_results(struct eu_context_t *euc)
 			return W_ERROR;
 	}
 
-	return W_OK;
+	return OK;
 }
 
 /*
@@ -1786,7 +1786,7 @@ int prepare_shopping_cart(struct eu_context_t *euc)
 		euc->shopping_cart_data.i_id = euc->product_detail_data.i_id;
 	}
 
-	return W_OK;
+	return OK;
 }
 
 /*
@@ -1820,7 +1820,7 @@ void *start_eu(void *data)
 
 #ifdef PHASE1
 	/* Connect to the database. */
-	while (odbc_connect(&euc.odbcc) != W_OK)
+	while (odbc_connect(&euc.odbcc) != OK)
 	{
 		/*
 		 * Attempt to connect to the database every 10 seconds, if there

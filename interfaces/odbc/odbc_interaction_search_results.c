@@ -22,7 +22,7 @@ int copy_in_search_results(struct eu_context_t *euc, union odbc_data_t *odbcd)
 		euc->search_results_data.search_type;
 	strcpy(odbcd->search_results_odbc_data.eb.search_string,
 		euc->search_results_data.search_string);
-	return W_OK;
+	return OK;
 }
 
 int copy_out_search_results(struct eu_context_t *euc, union odbc_data_t *odbcd)
@@ -49,7 +49,7 @@ int copy_out_search_results(struct eu_context_t *euc, union odbc_data_t *odbcd)
 		strcpy(euc->search_results_data.results_data[i].a_lname,
 			odbcd->search_results_odbc_data.eb.results_data[i].a_lname);
 	}
-	return W_OK;
+	return OK;
 }
 #endif /* PHASE1 */
 
@@ -205,5 +205,5 @@ int execute_search_results(struct odbc_context_t *odbcc,
 	}
 #endif
 
-	return W_OK;
+	return OK;
 }

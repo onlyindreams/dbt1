@@ -337,7 +337,7 @@ void *DoConnection(void *fd)
 		fflush(timefp);
 		pthread_mutex_unlock(&time_log_mutex);
 #endif
-		if(send_transaction_packet(workersock, TxnQItem) != W_OK) 
+		if(send_transaction_packet(workersock, TxnQItem) != OK) 
 		{
 			LOG_ERROR_MESSAGE("send_transaction_packet failed");
 			close(workersock);

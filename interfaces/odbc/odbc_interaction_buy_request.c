@@ -65,7 +65,7 @@ int copy_in_buy_request(struct eu_context_t *euc, union odbc_data_t *odbcd)
 		strcpy(odbcd->buy_request_odbc_data.eb.c_data,
 			euc->buy_request_data.c_data);
 	}
-	return W_OK;
+	return OK;
 }
 
 int copy_out_buy_request(struct eu_context_t *euc, union odbc_data_t *odbcd)
@@ -127,7 +127,7 @@ int copy_out_buy_request(struct eu_context_t *euc, union odbc_data_t *odbcd)
 		strcpy(euc->buy_request_data.scl_data[i].i_backing, 
 			odbcd->buy_request_odbc_data.eb.scl_data[i].i_backing);
 	}
-	return W_OK;
+	return OK;
 }
 #endif /* PHASE1 */
 
@@ -479,5 +479,5 @@ int execute_buy_request(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 	}
 #endif
 
-	return W_OK;
+	return OK;
 }

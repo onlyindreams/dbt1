@@ -19,7 +19,7 @@
 int copy_in_home(struct eu_context_t *euc, union odbc_data_t *odbcd)
 {
 	odbcd->home_odbc_data.eb.c_id = (UDWORD) euc->home_data.c_id;
-	return W_OK;
+	return OK;
 }
 
 int copy_out_home(struct eu_context_t *euc, union odbc_data_t *odbcd)
@@ -38,7 +38,7 @@ int copy_out_home(struct eu_context_t *euc, union odbc_data_t *odbcd)
 		euc->home_data.pp_data.i_thumbnail[i] =
 			odbcd->home_odbc_data.eb.pp_data.i_thumbnail[i];
 	}
-	return W_OK;
+	return OK;
 }
 #endif /* PHASE1*/
 
@@ -144,5 +144,5 @@ int execute_home(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 	}
 #endif
 
-	return W_OK;
+	return OK;
 }

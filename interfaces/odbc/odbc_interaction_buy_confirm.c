@@ -39,7 +39,7 @@ int copy_in_buy_confirm(struct eu_context_t *euc, union odbc_data_t *odbcd)
 		euc->buy_confirm_data.shipping.addr_zip);
 	strcpy(odbcd->buy_confirm_odbc_data.eb.shipping.co_name,
 		euc->buy_confirm_data.shipping.co_name);
-	return W_OK;
+	return OK;
 }
 
 int copy_out_buy_confirm(struct eu_context_t *euc, union odbc_data_t *odbcd)
@@ -69,7 +69,7 @@ int copy_out_buy_confirm(struct eu_context_t *euc, union odbc_data_t *odbcd)
 		strcpy( euc->buy_confirm_data.scl_data[i].i_backing, 
 			odbcd->buy_confirm_odbc_data.eb.scl_data[i].i_backing);
 	}
-	return W_OK;
+	return OK;
 
 }
 #endif /* PHASE1*/
@@ -378,5 +378,5 @@ int execute_buy_confirm(struct odbc_context_t *odbcc, union odbc_data_t *odbcd)
 	}
 #endif
 
-	return W_OK;
+	return OK;
 }

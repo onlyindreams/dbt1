@@ -24,7 +24,7 @@ int copy_in_shopping_cart(struct eu_context_t *euc, union odbc_data_t *odbcd)
 		euc->shopping_cart_data.add_flag, 
 		euc->shopping_cart_data.sc_size,  
 		euc->shopping_cart_data.sc_id);
-#endif /* DEBUG
+#endif /* DEBUG */
 
 	/* Copy data in. */
 	odbcd->shopping_cart_odbc_data.eb.c_id=euc->shopping_cart_data.c_id;
@@ -51,7 +51,7 @@ int copy_in_shopping_cart(struct eu_context_t *euc, union odbc_data_t *odbcd)
 			euc->shopping_cart_data.sc_refresh[i].scl_qty;
 		}
 	}
-	return W_OK;
+	return OK;
 }
 
 int copy_out_shopping_cart(struct eu_context_t *euc, union odbc_data_t *odbcd)
@@ -83,7 +83,7 @@ int copy_out_shopping_cart(struct eu_context_t *euc, union odbc_data_t *odbcd)
 		strcpy( euc->shopping_cart_data.scl_data[i].i_backing, 
 			odbcd->shopping_cart_odbc_data.eb.scl_data[i].i_backing);
 	}
-	return W_OK;
+	return OK;
 }
 #endif /* PHASE1 */
 
@@ -301,5 +301,5 @@ int execute_shopping_cart(struct odbc_context_t *odbcc,  union odbc_data_t *odbc
 	}
 #endif
 
-	return W_OK;
+	return OK;
 }

@@ -68,7 +68,7 @@ int odbc_connect(struct odbc_context_t *odbcc)
 	}
 	pthread_mutex_unlock(&db_source_mutex);
 
-	return W_OK;
+	return OK;
 }
 
 /*
@@ -100,7 +100,7 @@ int odbc_disconnect(struct odbc_context_t *odbcc)
 		return W_ERROR;
 	}
 	pthread_mutex_unlock(&db_source_mutex);
-	return W_OK;
+	return OK;
 }
 
 /* Print out all errors messages generated to the error log file. */
@@ -120,7 +120,7 @@ int odbc_error(char *filename, int line, SQLSMALLINT handle_type,
 		log_error_message(filename, line, msg);
 		++i;
 	}
-	return W_OK;
+	return OK;
 }
 
 /* Initialize ODBC environment handle and the database connect string. */
@@ -148,5 +148,5 @@ int odbc_init(char *sname, char *uname, char *auth)
 	strcpy(servername, sname);
 	strcpy(username, uname);
 	strcpy(authentication, auth);
-	return W_OK;
+	return OK;
 }

@@ -23,7 +23,7 @@ int copy_in_order_display(struct eu_context_t *euc, union odbc_data_t *odbcd)
 	strcpy(odbcd->order_display_odbc_data.eb.c_passwd,
 		euc->order_display_data.c_passwd);
 
-	return W_OK;
+	return OK;
 }
 
 int copy_out_order_display(struct eu_context_t *euc, union odbc_data_t *odbcd)
@@ -97,7 +97,7 @@ int copy_out_order_display(struct eu_context_t *euc, union odbc_data_t *odbcd)
 		odbcd->order_display_odbc_data.eb.cx_type);
 	strcpy(euc->order_display_data.cx_auth_id,
 		odbcd->order_display_odbc_data.eb.cx_auth_id);
-	return W_OK;
+	return OK;
 }
 #endif /* PHASE1 */
 
@@ -465,5 +465,5 @@ int execute_order_display(struct odbc_context_t *odbcc, union odbc_data_t *odbcd
 	}
 #endif
 
-	return W_OK;
+	return OK;
 }

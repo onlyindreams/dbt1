@@ -29,7 +29,7 @@ void init_app_txn_array(struct app_txn_array *txn_array, int ArraySize)
 	{
 		txn_array->pin[i]=0;
 		bzero(&txn_array->odbc_data_array[i], sizeof(union odbc_data_t));
-		txn_array->txn_result[i]=W_OK;
+		txn_array->txn_result[i]=OK;
 #ifdef GET_TIME
 		txn_array->db_response_time[i]=0.0;
 #endif

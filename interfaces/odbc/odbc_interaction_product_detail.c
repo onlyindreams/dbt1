@@ -27,7 +27,7 @@ int copy_in_product_detail(struct eu_context_t *euc, union odbc_data_t *odbcd)
 		return W_ERROR;
 	}
 	odbcd->product_detail_odbc_data.eb.i_id = euc->product_detail_data.i_id;
-	return W_OK;
+	return OK;
 }
 
 int copy_out_product_detail(struct eu_context_t *euc, union odbc_data_t *odbcd)
@@ -60,7 +60,7 @@ int copy_out_product_detail(struct eu_context_t *euc, union odbc_data_t *odbcd)
 	euc->product_detail_data.i_cost = odbcd->product_detail_odbc_data.eb.i_cost;
 	euc->product_detail_data.i_image = odbcd->product_detail_odbc_data.eb.i_image;
 
-	return W_OK;
+	return OK;
 }
 #endif /* PHASE1*/
 
@@ -228,5 +228,5 @@ int execute_product_detail(struct odbc_context_t *odbcc, union odbc_data_t *odbc
 		return W_ERROR;
 	}
 
-	return W_OK;
+	return OK;
 }
