@@ -13,7 +13,6 @@
 
 int receive_search_results(int s, struct search_results_t *search_results_request)
 {
-	void *data;
 	int length;
 	int rec;
 
