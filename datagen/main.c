@@ -9,14 +9,11 @@
  * 10 january 2001
  */
 
-#define _LARGEFILE64_SOURCE
-
 #include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
-#include <semaphore.h>
 #include <tpcw.h>
 #include <common.h>
 
@@ -46,7 +43,6 @@ int items, ebs;
 /* directory where the datafile will be put */
 char path[256];
 int flag_cust, flag_item, flag_author, flag_address, flag_order;
-sem_t sem;
 int multi = 0; /* multi = 1, allow parallel data generation */
 
 /* Prototypes */
@@ -66,7 +62,6 @@ int main(int argc, char *argv[])
 	FILE *p;
 	char pwd[256];
 	char cmd[256];
-	int sem_val;
 	pthread_t t1, t2, t3, t4, t5;
 
 	path[0] = '\0';
@@ -102,7 +97,7 @@ int main(int argc, char *argv[])
 	printf("data files are in %10s\n", path);
 
 	printf("generating sequence creation file: %s\n", SEQUENCE_SQL);
-	sequence_sql = fopen64(SEQUENCE_SQL, "w");
+	sequence_sql = fopen(SEQUENCE_SQL, "w");
 	if (sequence_sql == NULL)
 	{
 		printf("cannot open %s\n", SEQUENCE_SQL);
@@ -127,79 +122,64 @@ int main(int argc, char *argv[])
 	load_dists();
 	printf("generating data files...\n");
 
-	if (sem_init(&sem, 0, 0) != 0)
-	{
-		perror("sem_init");
-		return 4;
-	}
-
 	if (flag_item == 1) 
 	{
-		sem_post(&sem);
 		if (pthread_create(&t1, NULL, gen_items, NULL) != 0)
 		{
 			perror("pthread_create");
 		}
 		sprintf(cmd, "ln -fs %s/item.data /tmp/item.data", path);
 		popen(cmd, "r");
+		if (multi == 0)
+		{
+			pthread_join(t1, NULL);
+		}
 	}
-	do
-	{
-		sleep(10);
-		sem_getvalue(&sem, &sem_val);
-	} while (sem_val > 0);
 
 	if (flag_cust == 1)
 	{
-		sem_post(&sem);
 		if (pthread_create(&t2, NULL, gen_customers, NULL) != 0)
 		{
 			perror("pthread_create");
 		}
 		sprintf(cmd, "ln -fs %s/customer.data /tmp/customer.data", path);
 		popen(cmd, "r");
+		if (multi == 0)
+		{
+			pthread_join(t2, NULL);
+		}
 	}
-	do
-	{
-		sleep(10);
-		sem_getvalue(&sem, &sem_val);
-	} while (sem_val > 0);
 
 	if (flag_author == 1) 
 	{
-		sem_post(&sem);
 		if (pthread_create(&t3, NULL, gen_authors, NULL) != 0)
 		{
 			perror("pthread_create");
 		}
 		sprintf(cmd, "ln -fs %s/author.data /tmp/author.data", path);
 		popen(cmd, "r");
+		if (multi == 0)
+		{
+			pthread_join(t3, NULL);
+		}
 	}
-	do
-	{
-		sleep(10);
-		sem_getvalue(&sem, &sem_val);
-	} while (sem_val > 0);
 
 	if (flag_address == 1)
 	{
-		sem_post(&sem);
 		if (pthread_create(&t4, NULL, gen_addresses, NULL) != 0)
 		{
 			perror("pthread_create");
 		}
 		sprintf(cmd, "ln -fs %s/address.data /tmp/address.data", path);
 		popen(cmd, "r");
+		if (multi == 0)
+		{
+			pthread_join(t4, NULL);
+		}
 	}
-	do
-	{
-		sleep(10);
-		sem_getvalue(&sem, &sem_val);
-	} while (sem_val > 0);
 
 	if (flag_order == 1)
 	{
-		sem_post(&sem);
 		if (pthread_create(&t5, NULL, gen_orders, NULL) != 0)
 		{
 			perror("pthread_create");
@@ -211,17 +191,23 @@ int main(int argc, char *argv[])
 		popen(cmd, "r");
 		sprintf(cmd, "ln -fs %s/cc_xacts.data /tmp/cc_xacts.data", path);
 		popen(cmd, "r");
+		if (multi == 0)
+		{
+			pthread_join(t5, NULL);
+		}
+	}
+
+	if (multi == 1)
+	{
+		pthread_join(t1, NULL);
+		pthread_join(t2, NULL);
+		pthread_join(t3, NULL);
+		pthread_join(t4, NULL);
+		pthread_join(t5, NULL);
 	}
 
 	sprintf(cmd, "ln -fs %s/country.data /tmp/country.data", pwd);
 	popen(cmd, "r");
-
-	do
-	{
-		sleep(10);
-		sem_getvalue(&sem, &sem_val);
-	} while (sem_val > 0);
-	sem_destroy(&sem);
 
 	free(dpath);
 	return 0;
@@ -237,7 +223,7 @@ void *gen_addresses(void *data)
 	char filename[256];
 
 	sprintf(filename, "%s/address.data", path);
-	output = fopen64(filename, "w");
+	output = fopen(filename, "w");
 	if (output == NULL)
 	{
 		fprintf(stderr, "cannot open address.data\n");
@@ -288,7 +274,6 @@ void *gen_addresses(void *data)
 
 	fflush(output);
 	fclose(output);
-	sem_wait(&sem);
 	printf("Finished address table data.\n");
 	return NULL;
 }
@@ -304,7 +289,7 @@ void *gen_authors(void *data)
 	char filename[256];
 
 	sprintf(filename, "%s/author.data", path);
-	output = fopen64(filename, "w");
+	output = fopen(filename, "w");
 	if (output == NULL)
 	{
 		fprintf(stderr, "cannot open author.data\n");
@@ -362,7 +347,6 @@ void *gen_authors(void *data)
 
 	fflush(output);
 	fclose(output);
-	sem_wait(&sem);
 	printf("Finished author table data.\n");
 	return NULL;
 }
@@ -381,7 +365,7 @@ void *gen_customers(void *data)
 	char filename[256];
 
 	sprintf(filename, "%s/customer.data", path);
-	output = fopen64(filename, "w");
+	output = fopen(filename, "w");
 	if (output == NULL)
 	{
 		fprintf(stderr, "cannot open customer.data\n");
@@ -515,7 +499,6 @@ void *gen_customers(void *data)
 
 	fflush(output);
 	fclose(output);
-	sem_wait(&sem);
 	printf("Finished customer table data.\n");
 	return NULL;
 }
@@ -533,7 +516,7 @@ void *gen_items(void *data)
 	char filename[256];
 
 	sprintf(filename, "%s/item.data", path);
-	output = fopen64(filename, "w");
+	output = fopen(filename, "w");
 	if (output == NULL)
 	{
 		fprintf(stderr, "cannot open item.txt");
@@ -692,7 +675,6 @@ void *gen_items(void *data)
 
 	fflush(output);
 	fclose(output);
-	sem_wait(&sem);
 	printf("Finished item table data.\n");
 	return NULL;
 }
@@ -715,7 +697,7 @@ void *gen_orders(void *data)
 	char filename3[256];
 
 	sprintf(filename1, "%s/orders.data", path);
-	orders_file = fopen64(filename1, "w");
+	orders_file = fopen(filename1, "w");
 	if (orders_file == NULL)
 	{
 		fprintf(stderr, "cannot open orders.data\n");
@@ -723,7 +705,7 @@ void *gen_orders(void *data)
 	}
 
 	sprintf(filename2, "%s/order_line.data", path);
-	order_line_file = fopen64(filename2, "w");
+	order_line_file = fopen(filename2, "w");
 	if (order_line_file == NULL)
 	{
 		fprintf(stderr, "cannot open order_line.data\n");
@@ -731,7 +713,7 @@ void *gen_orders(void *data)
 	}
 
 	sprintf(filename3, "%s/cc_xacts.data", path);
-	cc_xacts_file = fopen64(filename3, "w");
+	cc_xacts_file = fopen(filename3, "w");
 	if (cc_xacts_file == NULL)
 	{
 		fprintf(stderr, "cannot open cc_xacts.data\n");
@@ -899,7 +881,6 @@ void *gen_orders(void *data)
 	fclose(orders_file);
 	fclose(order_line_file);
 	fclose(cc_xacts_file);
-	sem_wait(&sem);
 	printf("Finished order, order_line, and cc_xacts table data.\n");
 	return NULL;
 }
@@ -961,6 +942,7 @@ int process_options(int count, char **vector)
 				return 0;
 			case 'm':
 				multi = 1;
+				break;
 			default:
 				return 0;
 		}
