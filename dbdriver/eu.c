@@ -18,6 +18,7 @@
 #include <math.h>
 #include <eu.h>
 #include <common.h>
+#include <cache.h>
 
 #ifdef PHASE1
 #include <odbc_interaction.h>
@@ -35,8 +36,8 @@
 #include <odbc_interaction_search_results.h>
 #endif /* PHASE1 */
 
-#ifdef PHASE2
 #include <_socket.h>
+#ifdef PHASE2
 #include <tm_interface.h>
 #endif /* PHASE2 */
 
@@ -121,6 +122,11 @@ pthread_mutex_t mutex_stats[INTERACTION_TOTAL];
 /* IP or hostname of the middle tier system. */
 char tm_address[32];
 #endif /* PHASE2 */
+
+#ifdef PHASE1
+char cache_host[32];
+int cache_port;
+#endif
 
 /*
  * Generate input data and request an interaction to be executed.
@@ -315,12 +321,61 @@ int do_interaction(struct eu_context_t *euc)
 				return W_ERROR;
 			}
 #ifdef PHASE1
+#ifdef SEARCH_RESULTS_CACHE
+			if (euc->search_results_data.search_type != SEARCH_SUBJECT)
+			{
+				rc = send_search_results(euc->cache_s, &euc->search_results_data);
+				/* if send fails, reopen a new socket */
+				if (rc!=W_OK)
+				{
+					LOG_ERROR_MESSAGE("send search_results to cache host failed");
+					close(euc->cache_s);
+					euc->cache_s=_connect(cache_host, cache_port);
+					if (euc->cache_s==-1)
+					{
+						LOG_ERROR_MESSAGE("connect to cache failed\n");
+						return W_ERROR;
+					}
+					return W_ERROR;
+				}
+				rc = receive_search_results(euc->cache_s, &euc->search_results_data);
+				if (rc!=W_OK)
+				{
+					LOG_ERROR_MESSAGE("receive search_results from cache host failed");
+					close(euc->cache_s);
+					euc->cache_s=_connect(cache_host, cache_port);
+					if (euc->cache_s==-1)
+					{
+						LOG_ERROR_MESSAGE("connect to cache failed\n");
+						return W_ERROR;
+					}
+					return W_ERROR;
+				}
+/*
+				if (rc==0)
+				{
+					LOG_ERROR_MESSAGE("cache host closed socket");
+					return SOCKET_CLOSE;
+				}
+*/
+			}
+			else
+			{
+				copy_in_search_results(euc, &euc->odbcd);
+				rc = execute_search_results(&euc->odbcc, &euc->odbcd);
+				if (rc == W_OK)
+				{
+					copy_out_search_results(euc, &euc->odbcd);
+				}
+			}
+#else
 			copy_in_search_results(euc, &euc->odbcd);
 			rc = execute_search_results(&euc->odbcc, &euc->odbcd);
 			if (rc == W_OK)
 			{
 				copy_out_search_results(euc, &euc->odbcd);
 			}
+#endif /*SEARCH_RESULTS_CACHE*/
 #endif /* PHASE1 */
 			break;
 		case SHOPPING_CART:
@@ -1102,10 +1157,17 @@ void init_shopping_mix()
  * Initialize a semaphore and create a thread per user to run.
  */
 #ifdef PHASE1
+#ifdef SEARCH_RESULTS_CACHE
+int init_eus(char *sname, char *uname, char *auth, int eus,
+	int interaction_mix, int rampuprate, int duration, double tt_mean,
+	int item_scale, char *host, int port)
+#else
 int init_eus(char *sname, char *uname, char *auth, int eus,
 	int interaction_mix, int rampuprate, int duration, double tt_mean,
 	int item_scale)
-#endif
+
+#endif /*SEARCH_RESULTS_CACHE */
+#endif /*PHASE1*/
 #ifdef PHASE2
 int init_eus(char *sname, int port, int eus,
 	int interaction_mix, int rampuprate, int duration, double tt_mean,
@@ -1114,6 +1176,13 @@ int init_eus(char *sname, int port, int eus,
 {
 	int i, rc;
 	struct timespec ts;
+
+#ifdef PHASE1
+#ifdef SEARCH_RESULTS_CACHE
+	strcpy(cache_host, host);
+	cache_port = port;
+#endif
+#endif
 
 	/*
 	 * Initialize the semaphore that keeps count of the number of threads
@@ -1649,10 +1718,10 @@ void *start_eu(void *data)
 	struct eu_context_t euc;
 	int rc;
 	struct timespec think_time, rem;
+	int retry;
 	extern int errno;
 #ifdef PHASE2
 	int *port;
-
 	port = (int *) data;
 #endif /* PHASE2 */
 
@@ -1677,17 +1746,27 @@ void *start_eu(void *data)
 		sleep(10);
 		LOG_ERROR_MESSAGE("cannot connect to database");
 	}
+#ifdef SEARCH_RESULTS_CACHE
+	if ((euc.cache_s = _connect(cache_host, cache_port)) == -1)
+	{
+		printf("connect to cache failed\n");
+		LOG_ERROR_MESSAGE("connect to cache failed");
+		return;
+	}
+#endif
 #endif /* PHASE1 */
 
 #ifdef PHASE2
 	if ((euc.s = _connect(tm_address, *port)) == -1)
 	{
+		printf("connect to appServer failed\n");
 		LOG_ERROR_MESSAGE("connect failed");
 		return;
 	}
 #endif /* PHASE2 */
 
 	/* Main loop for the user logic. */
+	retry=0;
 	do
 	{
 		/* Determine this users minimum duration and note the start time. */
@@ -1696,6 +1775,7 @@ void *start_eu(void *data)
 
 		/* The Home interaction is always first. */
 		euc.interaction = HOME;
+		/* do Home interaction, retry RETRY time if error happens */
 		do
 		{
 			/* Get the time before the interaction is executed. */
@@ -1704,7 +1784,6 @@ void *start_eu(void *data)
 				perror("gettimeofday");
 			}
 			rc = do_interaction(&euc);
-			LOG_ERROR_MESSAGE("do_interaction returns %d", rc);
 			
 			/* Get the time after the interaction has executed. */
 			if (gettimeofday(&rt1, NULL) == -1)
@@ -1724,11 +1803,22 @@ void *start_eu(void *data)
 				odbc_disconnect(&euc.odbcc);
 				odbc_connect(&euc.odbcc);
 #endif /* PHASE1 */
+				/* an error can be caused by db transaction 
+				 * failure, or socket error 
+				 */
 				/* If an error occurs, sleep for 10 seconds and try again. */
 				sleep(10);
 			}
-		} while (rc == W_ERROR);
+			retry++;
+		} while (rc == W_ERROR && retry<RETRY);
 #ifdef PHASE2
+		/* if retry fails, start from the beginning */
+		if (rc == W_ERROR && retry==RETRY) 
+		{
+			LOG_ERROR_MESSAGE("retry Home interaction failed");
+			continue;
+		}
+
 		/* if appServer close this socket, reconnect */
 		if (rc == SOCKET_CLOSE)
 		{
@@ -1746,6 +1836,7 @@ void *start_eu(void *data)
 		response_time = time_diff(rt0, rt1);
 
 		/* Log the response time and the interaction that was just executed. */
+		/* log only successful interactions */
 		pthread_mutex_lock(&mutex_mix_log);
 		fprintf(log_mix, "%d,%s,%f,%d\n",
 			time(NULL), interaction_short_name[euc.interaction],
@@ -1787,6 +1878,7 @@ void *start_eu(void *data)
 		{ 
 			euc.previous_interaction = euc.interaction;
 			euc.interaction = get_next_interaction(euc.interaction);
+			retry=0;
 			do
 			{
 				/* Get the time before the interaction is executed. */
@@ -1795,7 +1887,6 @@ void *start_eu(void *data)
 					perror("gettimeofday");
 				}
 				rc = do_interaction(&euc);
-				LOG_ERROR_MESSAGE("do_interaction returns %d", rc);
 				/* Get the time after the interaction has executed. */
 				if (gettimeofday(&rt1, NULL) == -1)
 				{
@@ -1819,8 +1910,13 @@ void *start_eu(void *data)
 					 */
 					sleep(10);
 				}
-			} while (rc == W_ERROR);
+				retry++;
+			} while (rc == W_ERROR && retry < RETRY);
 #ifdef PHASE2
+			/* if retry fails, try other interaction or the same 
+                         * interaction with different data */
+			if (rc == W_ERROR && retry == RETRY) continue;
+
 	                /* if appServer close this socket, reconnect */
         	        if (rc == SOCKET_CLOSE)
 			{

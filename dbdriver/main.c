@@ -25,14 +25,30 @@ int main(int argc, char *argv[])
 	int running_eus;
 	char sname[32], uname[32], auth[32];
 	time_t stop_time;
+#ifdef PHASE1
+#ifdef SEARCH_RESULTS_CACHE
+	char cache_host[32];
+	int cache_port;
+#endif
+#endif
+
 
 #ifdef PHASE1
+#ifdef SEARCH_RESULTS_CACHE
+	if (argc != 12)
+	{
+		printf("usage: %s <servername> <user> <pass> <items> <customers> <eus> <eus/min> <think time> <duration> <cache_host> <cache_port>\n",
+			argv[0]);
+		return -1;
+	}
+#else
 	if (argc != 10)
 	{
 		printf("usage: %s <servername> <user> <pass> <items> <customers> <eus> <eus/min> <think time> <duration>\n",
 			argv[0]);
 		return -1;
 	}
+#endif
 #endif /* PHASE1 */
 
 #ifdef PHASE2
@@ -55,6 +71,10 @@ int main(int argc, char *argv[])
 	rampuprate = atoi(argv[7]);
 	think_time = atof(argv[8]);
 	duration = atoi(argv[9]);
+#ifdef SEARCH_RESULTS_CACHE
+	strcpy(cache_host, argv[10]);
+	cache_port = atoi(argv[11]);
+#endif
 #endif /* PHASE1 */
 
 #ifdef PHASE2
@@ -72,8 +92,13 @@ int main(int argc, char *argv[])
 
 	/* Start the user threads. */
 #ifdef PHASE1
+#ifdef SEARCH_RESULTS_CACHE
+	init_eus(sname, uname, auth, eus, MIX_SHOPPING, rampuprate, duration,
+		think_time, item_count, cache_host, cache_port);
+#else
 	init_eus(sname, uname, auth, eus, MIX_SHOPPING, rampuprate, duration,
 		think_time, item_count);
+#endif
 #endif /* PHASE1 */
 
 #ifdef PHASE2
