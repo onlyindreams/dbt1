@@ -33,47 +33,57 @@ AC_CHECK_FUNCS(gettimeofday mktime socket strdup)
 dnl> Configuration options for different databases, PostgreSQL is default.
 DATABASE_TO_USE="pgsql"
 DBI_NAME="libpq"
+
 AC_ARG_WITH(postgresql,
   [AC_HELP_STRING([--with-postgresql=DIR],
     [Default on. Set to the path of the PostgreSQL's installation, or leave
      unset if the path is already in the compiler search path.])],
-  [DATABASE_TO_USE=$withval],
-  [DATABASE_TO_USE="pgsql"]
-)
+  [DATABASE_TO_USE="pgsql" DBI_NAME="libpq" DATABASE_PREFIX=$withval])
+
 AC_ARG_WITH(sapdb,
 	[  --with-sapdb],
 	[ DATABASE_TO_USE="sapdb" DBI_NAME="odbc" ])
 
+AC_ARG_WITH(odbc,
+	[  --with-odbc],
+	[ DBI_NAME="odbc" ])
+
 dnl> Set up rules depending on what database is selected.
-if test "$DATABASE_TO_USE" = "pgsql"; then
-	CFLAGS="-I${DATABASE_TO_USE}/include $CFLAGS"
-	CPPFLAGS="-I${DATABASE_TO_USE}/include $CPPFLAGS"
-	LDFLAGS="-L${DATABASE_TO_USE}/lib -Wl,-R${DATABASE_TO_USE}/lib $LDFLAGS"
-	AC_CHECK_HEADERS(libpq-fe.h, [], AC_MSG_ERROR([libpq headers required]))
-	AC_SEARCH_LIBS(PQexec, pq, [], AC_MSG_ERROR([libpq libs required]))
-	AC_DEFINE(LIBPQ, 1, [using PostgreSQL])
-elif test "$DATABASE_TO_USE" = "sapdb"; then
+if test "$DBI_NAME" = "odbc"; then
 	dnl>
 	dnl> ODBC Library (required)
 	dnl>
-	AC_CHECK_HEADERS(sql.h sqlext.h sqltypes.h WINDOW.H,
-		[],
-		[AC_CHECK_HEADERS(/opt/sapdb/interfaces/odbc/incl/sql.h /opt/sapdb/interfaces/odbc/incl/sqlext.h /opt/sapdb/interfaces/odbc/incl/sqltypes.h /opt/sapdb/interfaces/odbc/incl/WINDOW.H,
-			[],
-			[AC_MSG_ERROR([unixODBC or iODBC required]) ]) ])
+	CFLAGS="-I${DATABASE_PREFIX}/include -DODBC $CFLAGS"
+	LDFLAGS="-L${DATABASE_PREFIX}/lib -Wl,-R${DATABASE_PREFIX}/lib -lodbc $LDFLAGS"
+	AC_CHECK_HEADERS(sql.h sqlext.h sqltypes.h, [],
+	                 AC_MSG_ERROR([ODBC headers required]))
+dnl>	AC_CHECK_HEADERS(WINDOW.H, [],
+dnl>	                 AC_MSG_ERROR([WINDOW.H required]))
 	AC_SEARCH_LIBS(SQLDriverConnect,
 		sqlod sqlrte,
 		,
 		AC_MSG_ERROR([SAPDB ODBC library required]))
-	AC_DEFINE(ODBC, 1, [using ODBC to SAPDB])
+	AC_DEFINE(ODBC, 1, [using ODBC to $DATABASE_TO_USE])
+elif test "$DATABASE_TO_USE" = "pgsql"; then
+	test "$DATABASE_PREFIX" = "yes" && DATABASE_PREFIX=/usr/local
+
+	AC_PATH_PROGS(PG_CONFIG, pg_config, no)
+
+	CFLAGS="-I`${PG_CONFIG} --includedir` -DLIBPQ $CFLAGS"
+	CPPFLAGS="-I`${PG_CONFIG} --includedir` $CPPFLAGS"
+	LDFLAGS="-L`${PG_CONFIG} --libdir` -Wl,-R`${PG_CONFIG} --libdir` $LDFLAGS"
+	AC_CHECK_HEADERS(libpq-fe.h, [], AC_MSG_ERROR([libpq headers required]))
+	AC_SEARCH_LIBS(PQexec, pq, [], AC_MSG_ERROR([libpq libs required]))
+	AC_DEFINE(LIBPQ, 1, [using PostgreSQL])
 else
-        AC_MSG_ERROR('You stink at autoconf!')
+        AC_MSG_ERROR('You stink at autoconf! - $DATABASE_TO_USE $DATABASE_PREFIX')
 fi
 
 TOPDIR=`pwd`
 AC_SUBST(TOPDIR)
 AC_SUBST(DBI_NAME)
 AC_SUBST(DATABASE_TO_USE)
+AC_SUBST(DATABASE_PREFIX)
 
 AC_OUTPUT(
 make.common 
