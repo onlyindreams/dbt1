@@ -111,7 +111,7 @@ int init_thread_pool(int PoolThreads, int TxnQSize, char *sname, char *dbname, c
 #endif /* _SIMDB */
 
 	/* Create a pool of threads that connect to the database. */
-	printf("Openning connections to the database.\n");
+	printf("Openning %d connections to the database.\n", PoolThreads);
 	for (i = 0; i < PoolThreads; i++)
 	{
 		if (pthread_create (&ThreadID, NULL, DoTxn, NULL) != 0)
@@ -125,7 +125,7 @@ int init_thread_pool(int PoolThreads, int TxnQSize, char *sname, char *dbname, c
 		 */
 		sleep(1);
 	}
-	printf("Database connections have been established.\n");
+	printf("%d connections to the database have been established.\n", PoolThreads);
 	return TRUE;
 }
 

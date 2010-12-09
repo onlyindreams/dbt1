@@ -78,10 +78,6 @@ struct eu_context_t
 
 /* Prototypes */
 
-int init_eus(int eus, int interaction_mix, int rampuprate, int duration, 
-	double tt_mean, int item_scale);
-int mark_logs(char *mark);
-
 extern int customers;
 extern sem_t running_eu_count;
 extern sem_t running_interactions[INTERACTION_TOTAL];
@@ -92,8 +88,12 @@ extern char cache_host[32];
 extern int cache_port;
 extern char sname[32];
 extern char dbname[32];
-extern char uname[32];
+extern char username[32];
 extern char auth[32];
 extern int port;
+
+int init_eus(int eus, int interaction_mix, int rampuprate, int duration,
+	double tt_mean, int item_scale);
+int mark_logs(char *mark);
 
 #endif /* _EU_H_ */

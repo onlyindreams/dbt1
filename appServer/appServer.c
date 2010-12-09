@@ -72,15 +72,15 @@ pthread_mutex_t mutex_app_server = PTHREAD_MUTEX_INITIALIZER;
 int help;
 int port, PoolThreads, TxnQSize, ArraySize;
 #ifdef ODBC
-	char sname[32];
-	char uname[32];
-	char auth[32];
+static char sname[32];
+static char uname[32];
+static char auth[32];
 #endif
 #ifdef LIBPQ
-	char sname[32];
-	char dbname[32];
-	char uname[32];
-	char auth[32];
+static char sname[32];
+static char dbname[32];
+static char uname[32];
+static char auth[32];
 #endif
 int altered = 0;
 int usage(char *name);
@@ -156,6 +156,7 @@ int main(int argc, char *argv[])
 			{ "cache_host", required_argument, 0, 0 },
 			{ "cache_port", required_argument, 0, 0 },
 			{ "output_path", required_argument, 0, 0 },
+			{ "debug", no_argument, 0, 0 },
 			{ "help", no_argument, &help, 1},
 			{ 0, 0, 0, 0 }
 		};
@@ -230,6 +231,10 @@ int main(int argc, char *argv[])
 				{
 					strcpy(output_path, optarg);
 				}
+				else if (strcmp(long_options[option_index].name, "debug") == 0)
+				{
+					LogDebug = 1;
+				}
 				break;
 			default:
 				printf ("?? getopt returned character code 0%o ??\n", c);
@@ -299,7 +304,12 @@ int main(int argc, char *argv[])
 	}
 #endif /* GET_TIME */
 
+	/*
+	 * Do not change this output. The run script may watch this.
+	 * See `run_dbt1.sh' for more details.
+	 */
 	printf("The app server is active...\n");
+
 	while (1) {
 		addrlen = sizeof(socketaddr);
 		pthread_mutex_lock(&mutex_app_server);
@@ -329,7 +339,13 @@ int main(int argc, char *argv[])
 			printf("Connection attempt made, but we cannot start a new pthread.  Stop listening...");
 			break;
 		}
+
+		/*
+		 * Do not change this output. The run script may watch this.
+		 * See `run_dbt1.sh' for more details.
+		 */
 		printf("%d client connections have been established.\n", connectioncount);
+		fflush(stdout);
 	}
 	close(mastersock);
 	printf("%d client connections have been established.\n", connectioncount);
@@ -515,7 +531,8 @@ int usage(char *name)
 	printf("--output_path <output_path>\n");
 	printf("if using search_result_cache, add:\n");
 	printf("--access_cache  --cache_host <search_results_cache_host> --cache_port <search_results_cache_port>\n");
-	printf("\n\n");
+	printf("--debug\n");
+	printf("\n");
 
 	printf("The default values if not specified:\n");
 #ifdef ODBC

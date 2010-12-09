@@ -67,48 +67,58 @@ int prepare_shopping_cart(struct eu_context_t *euc);
 
 void *start_eu(void *data);
 
-#ifdef DEBUG
 int dump_interaction_output(struct eu_context_t *euc);
-#endif /* DEBUG */
 
-sem_t running_eu_count;
-
+/*
+ * Global variables
+ */
 int customers;
-int a;
+sem_t running_eu_count;
+sem_t running_interactions[INTERACTION_TOTAL];
+int altered = 0;
+int mode_access;
+int mode_cache;
+char cache_host[32];
+int cache_port;
+char sname[32];
+char dbname[32];
+char username[32];
+char auth[32];
+int port;
 
-time_t stop_time;
-double think_time_mean;
-
-int mix_matrix[INTERACTION_TOTAL][INTERACTION_TOTAL];
+/*
+ * Local variable
+ */
+static int a;
+static time_t stop_time;
+static double think_time_mean;
+static int mix_matrix[INTERACTION_TOTAL][INTERACTION_TOTAL];
 
 /* Log Files */
 
-FILE *log_mix;
-FILE *log_think_time;
-FILE *log_usmd;
+static FILE *log_mix;
+static FILE *log_think_time;
+static FILE *log_usmd;
 
 /* Log Files Mutuexes */
 
-pthread_mutex_t mutex_mix_log = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t mutex_think_time_log = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t mutex_usmd_log = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t mutex_mix_log = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t mutex_think_time_log = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t mutex_usmd_log = PTHREAD_MUTEX_INITIALIZER;
 
 #ifdef RUNTIME_STATS
 /* Run-time Statistics */
 
-int interaction_count[INTERACTION_TOTAL];
-double cumulative_response_time[INTERACTION_TOTAL];
+static int interaction_count[INTERACTION_TOTAL];
+static double cumulative_response_time[INTERACTION_TOTAL];
 
-pthread_mutex_t mutex_stats[INTERACTION_TOTAL]; 
+static pthread_mutex_t mutex_stats[INTERACTION_TOTAL];
 #endif /* RUNTIME_STATS */
 
 /* IP or hostname of the middle tier system. */
-char tm_address[32];
+static char tm_address[32];
 
-sem_t running_interactions[INTERACTION_TOTAL];
-
-int altered = 0;
-int stop_connecting = 0;
+static int stop_connecting = 0;
 
 /*
  * Generate input data and request an interaction to be executed.
@@ -309,13 +319,16 @@ int do_interaction(struct eu_context_t *euc)
 	return rc;
 }
 
-#ifdef DEBUG
 /*
  * Dump the interaction output for debugging purposes only.
  */
 int dump_interaction_output(struct eu_context_t *euc)
 {
 	int i;
+
+	if ( !LogDebug )
+	  return OK;
+
 	DEBUGMSG("dumping %s interaction output, c_id %lld, sc_id %lld",
 		interaction_short_name[euc->interaction],
 		euc->c_id,
@@ -555,7 +568,6 @@ int dump_interaction_output(struct eu_context_t *euc)
 	}
 	return OK;
 }
-#endif /* DEBUG */
 
 /* 
  * Dump the input data in the euc variable to the error log.  The format of
@@ -795,8 +807,8 @@ int get_think_time()
 	/* Log the calculate think time. */
 	pthread_mutex_lock(&mutex_think_time_log);
 	time(&t);
-	fprintf(log_think_time, "%d,%d,%d\n", (int) t, tt,
-		(int) pthread_self());
+	fprintf(log_think_time, "%d,%d,%lu\n", (int) t, tt,
+		pthread_self());
 	fflush(log_think_time);
 	pthread_mutex_unlock(&mutex_think_time_log);
 
@@ -825,7 +837,7 @@ double get_usmd()
 	/* Log the calculated USMD. */
 	pthread_mutex_lock(&mutex_usmd_log);
 	time(&t);
-	fprintf(log_usmd, "%d,%f,%d\n", (int) t, usmd, (int) pthread_self());
+	fprintf(log_usmd, "%d,%f,%lu\n", (int) t, usmd, pthread_self());
 	fflush(log_usmd);
 	pthread_mutex_unlock(&mutex_usmd_log);
 
@@ -1142,10 +1154,10 @@ int init_eus(int eus, int interaction_mix, int rampuprate, int duration,
 
 	if ( mode_access == MODE_DIRECT ) {
 #ifdef ODBC
-		db_init(sname, uname, auth);
+		db_init(sname, username, auth);
 #endif /* ODBC */
 #ifdef LIBPQ
-		db_init(sname, dbname, uname, auth);
+		db_init(sname, dbname, username, auth);
 #endif /* LIBPQ */
 	} else {
 		strcpy(tm_address, sname);
@@ -1163,7 +1175,7 @@ int init_eus(int eus, int interaction_mix, int rampuprate, int duration,
 	printf("duration: %d\n", duration);
 	printf("ramp: %d\n", ((eus / rampuprate) * 60));
 
-	printf("Starting %d users per minutes.\n", rampuprate);
+	printf("Starting total %d users (%d users/min)\n", eus, rampuprate);
 	for (i = 0; i < eus; i++) {
 		pthread_t tid;
 
@@ -1200,7 +1212,7 @@ int init_eus(int eus, int interaction_mix, int rampuprate, int duration,
 			break;
 		}
 	}
-	printf("All users started\n");
+	printf("All %d users started\n", eus);
 	fflush(stdout);
 
 	return OK;
@@ -1338,9 +1350,8 @@ int prepare_buy_request(struct eu_context_t *euc)
 		time_t t1, t2, t3;
 		struct tm tm1, *tm2, *tm3;
 
-#ifdef DEBUG
 		DEBUGMSG("creating new customer...");
-#endif /* DEBUG */
+
 		euc->buy_request_data.returning_flag = FALSE;
 
 		get_a_string(euc->buy_request_data.c_fname, 8, C_FNAME_LEN);
@@ -1663,6 +1674,7 @@ void *start_eu(void *data)
 				return NULL;
 			}
 		}
+		DEBUGMSG("An EU connected to the database.");
 	} else {
 		if ((euc.s = _connect(tm_address, *port)) == -1) {
 			stop_connecting = 1;
@@ -1671,6 +1683,7 @@ void *start_eu(void *data)
 			sem_wait(&running_eu_count);
 			return NULL;
 		}
+		DEBUGMSG("An EU connected to the appServer.");
 	}
 
 	/* Main loop for the user logic. */
@@ -1709,9 +1722,9 @@ void *start_eu(void *data)
 
 				/* Log the error */
 				pthread_mutex_lock(&mutex_mix_log);
-				fprintf(log_mix, "%d,ER,%f,%d\n",
+				fprintf(log_mix, "%d,ER,%f,%lu\n",
 					(int) time(NULL), (double)retry,
-					(int) pthread_self());
+					pthread_self());
 				fflush(log_mix);
 				pthread_mutex_unlock(&mutex_mix_log);
 
@@ -1764,10 +1777,10 @@ void *start_eu(void *data)
 		 */
 		/* log only successful interactions */
 		pthread_mutex_lock(&mutex_mix_log);
-		fprintf(log_mix, "%d,%s,%f,%d\n",
+		fprintf(log_mix, "%d,%s,%f,%lu\n",
 			(int) time(NULL),
 			interaction_short_name[euc.interaction],
-			response_time, (int) pthread_self());
+			response_time, pthread_self());
 		fflush(log_mix);
 		pthread_mutex_unlock(&mutex_mix_log);
 
@@ -1831,10 +1844,10 @@ void *start_eu(void *data)
 						interaction_short_name[euc.interaction]);
 					/* Log the error */
 					pthread_mutex_lock(&mutex_mix_log);
-					fprintf(log_mix, "%d,ER,%f,%d\n",
+					fprintf(log_mix, "%d,ER,%f,%lu\n",
 						(int) time(NULL),
 						response_time,
-						(int) pthread_self());
+						pthread_self());
 					fflush(log_mix);
 					pthread_mutex_unlock(&mutex_mix_log);
 
@@ -1889,10 +1902,10 @@ void *start_eu(void *data)
 			 * just executed.
 			 */
 			pthread_mutex_lock(&mutex_mix_log);
-			fprintf(log_mix, "%d,%s,%f,%d\n",
+			fprintf(log_mix, "%d,%s,%f,%lu\n",
 				(int) time(NULL),
 				interaction_short_name[euc.interaction],
-				response_time, (int) pthread_self());
+				response_time, pthread_self());
 			fflush(log_mix);
 			pthread_mutex_unlock(&mutex_mix_log);
 
@@ -1923,10 +1936,8 @@ void *start_eu(void *data)
 			}
 		}
 		/* user session ends*/
-#ifdef DEBUG
 		DEBUGMSG("user c_id %lld, sc_id %lld, usmd %f, user_session ended",
 			euc.c_id, euc.sc_id, usmd);
-#endif /* DEBUG */
 
 	}
 	while (time(NULL) < stop_time);

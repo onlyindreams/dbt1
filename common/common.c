@@ -27,6 +27,9 @@ const char *a_string_char = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxy
 const char *n_string_char = "0123456789";
 int item_count;
 
+int LogDebug = 0;
+
+static char *find_filename(const char *);
 
 /* Clause 4.7.1 */
 const char *cx_type[CX_TYPE_MAX] =
@@ -120,10 +123,8 @@ const char *interaction_name[INTERACTION_TOTAL] =
 
 
 char output_path[256] = "";
-FILE *log_error;
-#ifdef DEBUG
-FILE *log_debug;
-#endif /* DEBUG */
+FILE *log_error = NULL;
+FILE *log_debug = NULL;
 pthread_mutex_t mutex_error_log = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_debug_log = PTHREAD_MUTEX_INITIALIZER;
 
@@ -149,15 +150,16 @@ int init_common()
 		return ERROR;
 	}
 
-#ifdef DEBUG
-	sprintf(path, "%s/%s", output_path, DEBUG_LOG_NAME);
-	log_debug = fopen(path, "w");
-	if (log_debug == NULL)
+	if ( LogDebug )
 	{
-		fprintf(stderr, "cannot open %s\n", DEBUG_LOG_NAME);
-		return ERROR;
+		sprintf(path, "%s%s", output_path, DEBUG_LOG_NAME);
+		log_debug = fopen(path, "w");
+		if (log_debug == NULL)
+		{
+			fprintf(stderr, "cannot open %s\n", DEBUG_LOG_NAME);
+			return ERROR;
+		}
 	}
-#endif /* DEBUG */
 
 	return OK;
 }
@@ -269,6 +271,51 @@ int get_random_int(int max)
 	return rand() %  max;
 }
 
+/*
+ * Find a position of filename (sub-)string in path name string.
+ */
+static char *
+find_filename(const char *filename)
+{
+  char *f;
+
+  if ( strrchr(filename, '/') != NULL )
+    f = strrchr(filename, '/') + 1;
+  else
+    f = (char *)filename;
+
+  return f;
+}
+
+/*
+ * A common log output function.
+ */
+int
+log_print(const char *filename, int line, const char *prefix, const char *fmt, ...)
+{
+  va_list fmtargs;
+  time_t t;
+  struct tm *tt;
+  FILE *of = stdout;
+
+  /* Print the error message(s) */
+  t = time(NULL);
+  tt = localtime(&t);
+
+  fprintf(of, "[%02d/%02d/%04d %02d:%02d:%02d] %s: %s(%d): ",
+	  tt->tm_mon + 1, tt->tm_mday, tt->tm_year + 1900,
+	  tt->tm_hour, tt->tm_min, tt->tm_sec,
+	  prefix, find_filename(filename), line);
+
+  va_start(fmtargs, fmt);
+  vfprintf(of, fmt, fmtargs);
+  va_end(fmtargs);
+  fprintf(of, "\n");
+  fflush(of);
+  
+  return OK;
+ }
+
 int log_error_message(char *filename, int line, const char *fmt, ...)
 {
 	va_list fmtargs;
@@ -291,30 +338,6 @@ int log_error_message(char *filename, int line, const char *fmt, ...)
 
 	return OK;
 }
-
-#ifdef DEBUG
-int log_debug_message(char *filename, int line, const char *fmt, ...)
-{
-	va_list fmtargs;
-	time_t t;
-	FILE *of = (log_debug) ? log_debug: stderr;
-
-	/* Print the error message(s) */
-	t = time(NULL);
-	va_start(fmtargs, fmt);
-
-	pthread_mutex_lock(&mutex_debug_log);
-	fprintf(of, "%s%s:%d\n", ctime(&t), filename, line);
-	va_start(fmtargs, fmt);
-	vfprintf(of, fmt, fmtargs);
-	va_end(fmtargs);
-	fprintf(of, "\n");
-	fflush(log_debug);
-	pthread_mutex_unlock(&mutex_debug_log);
-
-	return OK;
-}
-#endif /* DEBUG */
 
 double time_diff(struct timeval start_time, struct timeval end_time)
 {

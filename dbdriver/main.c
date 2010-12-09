@@ -20,18 +20,11 @@
 #include <common.h>
 #include <eu.h>
 
-int eus, rampuprate, duration;
-double think_time;
-char sname[32];
-int help;
-int mode_access, mode_cache;
-
-/* used to be for PHASE1, now just declare it but might not be used */
-char uname[32], auth[32], dbname[32];
-char cache_host[32];
-int cache_port;
-/* used to be for PHASE2, now just declare it but might not be used */
-int port;
+static int eus;
+static int rampuprate;
+static int duration;
+static double think_time;
+static int help;
 
 int usage(char *);
 
@@ -50,12 +43,12 @@ int main(int argc, char *argv[])
 #ifdef LIBPQ
 	strcpy(sname, "localhost");
 	strcpy(dbname, "DBT1");
-	strcpy(uname, "pgsql");
+	strcpy(username, "pgsql");
 	strcpy(auth, "pgsql");
 #endif
 #ifdef ODBC
 	strcpy(sname, "localhost:DBT1");
-	strcpy(uname, "dbt");
+	strcpy(username, "dbt");
 	strcpy(auth, "dbt");
 #endif
 	strcpy(cache_host, "localhost");
@@ -93,6 +86,7 @@ int main(int argc, char *argv[])
 			{ "cache_host", required_argument, 0, 0 },
 			{ "cache_port", required_argument, 0, 0 },
 			{ "output_path", required_argument, 0, 0 },
+			{ "debug", no_argument, 0, 0 },
 			{ "help", no_argument, &help, 1 },
 			{ "altered", no_argument, &altered, 1 },
 			{ 0, 0, 0, 0 }
@@ -128,7 +122,7 @@ int main(int argc, char *argv[])
 #endif
 			if (strcmp(long_options[option_index].name, "username") == 0)
                         {
-                                strcpy(uname, optarg);
+                                strcpy(username, optarg);
                         }
 			if (strcmp(long_options[option_index].name, "password") == 0)
                         {
@@ -177,6 +171,10 @@ int main(int argc, char *argv[])
 			if (strcmp(long_options[option_index].name, "duration") == 0)
                         {
 				duration = atoi(optarg);
+                        }
+			if (strcmp(long_options[option_index].name, "debug") == 0)
+                        {
+				LogDebug = 1;
                         }
 			break;
 		default:
@@ -232,6 +230,10 @@ int main(int argc, char *argv[])
 /*
 	mark_logs(RUN_END);
 */
+	/*
+	 * Do not change this output. The run script may watch this.
+	 * See `run_dbt1.sh' for more details.
+	 */
 	printf ("Dbdriver ended\n");
 	fflush(stdout);
 
@@ -250,7 +252,9 @@ int usage(char *name)
 	printf("--username <username> --password <password>\n");
 	printf("--item_count <item_count> --coustomer_count <customer_count>\n");
 	printf("--emulated_users <emulated_users> --rampup_rate <eu/min>\n");
-	printf("--think_time <think_time> --duration <duration>\n\n");
+	printf("--think_time <think_time> --duration <duration>\n");
+	printf("--debug\n");
+	printf("\n");
 
 
 	printf("run without the middle tier but with search_results_cache: \n");
@@ -276,7 +280,7 @@ int usage(char *name)
 #ifdef ODBC
 	printf("--dbnodehost %s\n", sname);
 #endif
-	printf("--username %s --password %s\n", uname, auth);
+	printf("--username %s --password %s\n", username, auth);
 	printf("--cache_host %s --cache_port %d\n", cache_host, cache_port);
 	printf("--server_name %s --port %d\n", sname, port);
 	printf("--item_count %d --coustomer_count %d\n", item_count, customers);

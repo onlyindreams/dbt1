@@ -104,9 +104,12 @@ done <./dbt1.config   # I/O redirection.
 IFS=$OIFS              # Restore originial $IFS.
 
 
+# --------------------------------------------------------------
+# Start appCache in background
+# --------------------------------------------------------------
 #see if appCache is running
 cache_running=0
-ssh  sapdb@$cache_host "ps -ef |grep appCache" > /tmp/cache_pid.log
+ssh  $cache_host "ps -ef |grep appCache" > /tmp/cache_pid.log
 while read v1 v2 v3 v4 v5 v6 v7 v8 v9
 do
 	if [ "$v1" = "" ]
@@ -130,7 +133,12 @@ else # start appCache
 	echo 
 	echo Starting appCache
 	
-	ssh -n -f sapdb@$cache_host "cd $cache_dir; ./appCache $db_host:$db_instance $db_user $db_password $cache_port $cache_dbconnection $cache_items" > /tmp/cache.log
+	ssh -n -f $cache_host \
+	  "cd $cache_dir; \
+	   ./appCache $db_host:$db_instance $db_user $db_password \
+	              $cache_port $cache_dbconnection $cache_items" \
+	> /tmp/cache.log
+
 	sleep 2
 	while [ 1 ]
 	do
@@ -162,12 +170,25 @@ fi
 echo appCache is active
 echo 
 
+# --------------------------------------------------------------
+# Start appServer in background
+# --------------------------------------------------------------
 index=0
 element_count=${#appServer_host[@]}
 while [ "$index" -lt "$element_count" ]
 do
 	echo Starting appServer "$index"
-	ssh -n -f sapdb@${appServer_host[$index]} "cd ${appServer_dir[$index]}; ./appServer $db_host:$db_instance $db_user $db_password ${appServer_port[$index]} ${appServer_dbconnection[$index]} ${appServer_txn_q_size[$index]} ${appServer_txn_a_size[$index]} ${dbdriver_items[$index]} $cache_host $cache_port" > /tmp/appServer$index.log
+	ssh -n -f ${appServer_host[$index]} \
+	  "cd ${appServer_dir[$index]}; \
+	   ./appServer $db_host:$db_instance $db_user $db_password \
+	               ${appServer_port[$index]} \
+	               ${appServer_dbconnection[$index]} \
+	               ${appServer_txn_q_size[$index]} \
+	               ${appServer_txn_a_size[$index]} \
+	               ${dbdriver_items[$index]} $cache_host $cache_port \
+	               --debug" \
+	> /tmp/appServer$index.log
+
 	sleep 2
 	while [ 1 ]
 	do
@@ -179,7 +200,7 @@ do
 			continue
 		fi
 	
-		if [ "$appServer_output" = "The server is active..." ]
+		if [ "$appServer_output" = "The app server is active..." ]
 		then 
 			echo "appServer $index started"
 			break
@@ -199,58 +220,65 @@ do
 	let "index = $index + 1"
 done 
 
+# --------------------------------------------------------------
+# Start dbdriver in background
+# --------------------------------------------------------------
 echo 
 index=0
 element_count=${#appServer_host[@]}
 while [ "$index" -lt "$element_count" ]
 do
 	echo Starting dbdriver "$index"
-	ssh -n -f sapdb@${dbdriver_host[$index]} "cd ${dbdriver_dir[$index]}; ./dbdriver_p2 ${appServer_host[$index]} ${appServer_port[$index]} ${dbdriver_items[$index]} ${dbdriver_customers[$index]} ${dbdriver_eus[$index]} ${dbdriver_eus_per_min[$index]} ${dbdriver_think_time[$index]} ${dbdriver_run_duration[$index]}" > /tmp/driver$index.log
+	ssh -n -f ${dbdriver_host[$index]} \
+	  "cd ${dbdriver_dir[$index]}; \
+	   ./dbdriver --server_name ${appServer_host[$index]} \
+	              --port ${appServer_port[$index]} \
+	              --item_count ${dbdriver_items[$index]} \
+	              --customer_count ${dbdriver_customers[$index]} \
+	              --emulated_users ${dbdriver_eus[$index]} \
+	              --rampup_rate ${dbdriver_eus_per_min[$index]} \
+	              --think_time ${dbdriver_think_time[$index]} \
+	              --duration ${dbdriver_run_duration[$index]} \
+	              --debug" \
+	> /tmp/driver$index.log
+
 let "index = $index + 1"
 done 
 
-#estimate how long it takes for all users logging in
-#using parameters from one dbdriver
-let "rampup_time = ${dbdriver_eus[0]}/${dbdriver_eus_per_min[0]}"
-#convert it to seconds
-let "rampup_time = rampup_time*60"
-echo "sleep for ramp up time $rampup_time"
-#sleep $rampup_time
-
+# --------------------------------------------------------------
+# Wait for all EUS to get connected to appServer.
+# --------------------------------------------------------------
 #read from the appServer.log and see if all users logged in
 eus=${dbdriver_eus[0]}
-echo "wait for $eus users login"
 while [ 1 ]
 do
-	read v1 v2
-	echo "first var is $v1"
-	#skip the first line
-	if [ "$v1" = "The" ]
-		then continue
-	else
-		if [ "$v1" = "" ] 
-		then 
-			sleep 10
-			continue
-		else
-			if [ "$v1" = "$eus" ] 
-			then 
-				break
-			fi
-		fi
+	read v1
+	if [ "$v1" = "$eus client connections have been established." ]
+		then break
+	elif [ "$v1" = "" ]
+	then
+		# next line not arrived yet.
+		sleep 2
+		continue
 	fi
 done < /tmp/appServer0.log
 
+echo "all EUS got connected."
+
+# --------------------------------------------------------------
+# Starts collecting data.
+# --------------------------------------------------------------
 echo all users started, start collecting data
 #calculate the time window we need to collect system statistics
 run_duration=${dbdriver_run_duration[0]}
+interval=10
 echo "run duration is $run_duration"
 #leave 20 minutes for rampdown
 if [ $run_duration -gt 1200 ]
 then 
-	let "collect_count = (run_duration-20*60)/10"
+	let "collect_count = (run_duration-20*60)/interval"
 else
-	let "collect_count = (run_duration)/10"
+	let "collect_count = (run_duration)/interval"
 fi
 
 if [ -d ${RESULTS_PATH} ]
@@ -259,27 +287,50 @@ then
 else
 	mkdir "$RESULTS_PATH"
 fi
-echo "./collect_data 10 $collect_count $CPUS $RESULTS_PATH"
-./collect_data.sh 10 $collect_count $CPUS $RESULTS_PATH
+echo "./collect_data $interval $collect_count $CPUS $RESULTS_PATH"
+# FIXME: collect_data.sh is still broken.
+# ./collect_data.sh $interval $collect_count $CPUS $RESULTS_PATH
 
-#wait for run to stop
-let sleep_sec=$run_duration-$collect_count*10
-echo "waiting for the run to finish, sleep for $sleep_sec..."
-sleep $sleep_sec
+# --------------------------------------------------------------
+# Wait for dbdriver completion.
+# --------------------------------------------------------------
+while [ 1 ]
+do
+	read v1
 
+	if [ "$v1" = "Dbdriver ended" ]
+		then break
+	elif [ "$v1" = "" ]
+	then
+		# next line not arrived yet.
+		sleep 2
+		continue
+	fi
+done < /tmp/driver0.log
+
+echo "dbdriver finished."
+
+# --------------------------------------------------------------
+# Collect and summarize stats data.
+#
+# At first, collects mix.log(s) generated by dbdriver from
+# each server, and merge them into one log file.
+#
+# And then, run the `results' command to summarize it into
+# `BT' and `ips.csv' files.
+# --------------------------------------------------------------
 #copy mix files
-cd $RESULTS_PATH
 index=0
 element_count=${#dbdriver_host[@]}
 while [ "$index" -lt "$element_count" ]
 do
 	echo "copying mix.log from ${dbdriver_host[$index]}"
-	scp sapdb@${dbdriver_host[$index]}:"${dbdriver_dir[$index]}/mix.log" ./mix.log.${dbdriver_host[$index]}
+	scp ${dbdriver_host[$index]}:"${dbdriver_dir[$index]}/mix.log" $RESULTS_PATH/mix.log.${dbdriver_host[$index]}
 	let "index = $index + 1"
 done
 
 #get the latest start time
-start_time=`eval grep -h START mix.log.* | sort -n -r|head -n1| awk -F, '{print $1}'`
+start_time=`eval grep -h START $RESULTS_PATH/mix.log.* | sort -n -r|head -n1| awk -F, '{print $1}'`
 echo "got latest start time $start_time"
 
 #chop the mix.logs so that only the transactions after start_time is logged
@@ -288,13 +339,15 @@ element_count=${#dbdriver_host[@]}
 while [ "$index" -lt "$element_count" ]
 do
 echo "chopping file mix.log.${dbdriver_host[$index]}"
-cat mix.log.${dbdriver_host[$index]} | awk -F, '{if ($1 > "'$start_time'") print $0}' > result_mix.log.${dbdriver_host[$index]}
+cat $RESULTS_PATH/mix.log.${dbdriver_host[$index]} | awk -F, '{if ($1 > "'$start_time'") print $0}' > $RESULTS_PATH/result_mix.log.${dbdriver_host[$index]}
 let "index = $index + 1"
 done
 
 #merge mix.log
 echo "merging the logs..."
-cat result_mix.log.*|sort -n>mix.log
+cat $RESULTS_PATH/result_mix.log.* | sort -n > $RESULTS_PATH/mix.log
 #run results
 echo "analyzing the logs..."
-../../../tools/results ./mix.log > BT
+../../tools/results --mixfile $RESULTS_PATH/mix.log --outputdir $RESULTS_PATH
+
+ls -l $RESULTS_PATH

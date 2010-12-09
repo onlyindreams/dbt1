@@ -126,15 +126,15 @@
 
 #define LOG_ERROR_MESSAGE(arg...) log_error_message(__FILE__, __LINE__, ## arg)
 
-#ifdef DEBUG
-#define DEBUGMSG(arg...) log_debug_message(__FILE__, __LINE__, ## arg)
-#endif
+#define DEBUGMSG(arg...) log_print(__FILE__, __LINE__, "DEBUG", ## arg)
 
 /* Macros for marking the log files. */
 #define RUN_START "START"
 #define RUN_END "END"
 
 /* Prototypes */
+
+extern int LogDebug; /* Debug log flag. 1:enabled, 0:disabled */
 
 int init_common();
 void digsyl2(char *string, long long d, long long n);
@@ -145,9 +145,9 @@ int get_nu_rand(int a, int x, int y);
 /*
 long long get_random(long long max);
 */
+extern int log_print(const char *, int, const char *, const char *, ...);
 int get_random_int(int max);
 int log_error_message(char *filename, int line, const char *fmt, ...);
-int log_debug_message(char *filename, int line, const char *fmt, ...);
 double time_diff(struct timeval start_time, struct timeval end_time);
 
 /* Global Variables */

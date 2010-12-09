@@ -11,8 +11,11 @@
  */
 
 #include <unistd.h>
+#include <errno.h>
 #include <string.h>
 #include <_socket.h>
+
+#include "common.h"
 
 int _connect(char *address, unsigned short port)
 {
@@ -27,6 +30,7 @@ int _connect(char *address, unsigned short port)
 	sa.sin_port = htons(port);
 	if (sa.sin_port == 0)
 	{
+		LOG_ERROR_MESSAGE("Invalid port number. - %d", port);
 		return -1;
 	}
 
@@ -38,6 +42,7 @@ int _connect(char *address, unsigned short port)
 		if ((he = gethostbyname(address)) == NULL)
 		{
 			close(sockfd);
+			LOG_ERROR_MESSAGE("gethostbyname() failed. - %s", strerror(errno));
 			return -1;
 		}
 	}
@@ -47,6 +52,7 @@ int _connect(char *address, unsigned short port)
 		if ((he = gethostbyaddr((char *) (&addr), sizeof(addr), AF_INET)) == NULL)
 		{
 			close(sockfd);
+			LOG_ERROR_MESSAGE("gethostbyaddr() failed. - %s", strerror(errno));
 			return -1;
 		}
 		memcpy(&sa.sin_addr, &addr, sizeof(addr));
@@ -56,11 +62,15 @@ int _connect(char *address, unsigned short port)
 	sockfd = socket(PF_INET, SOCK_STREAM, resolveproto("tcp"));
 	if (sockfd == -1)
 	{
+		LOG_ERROR_MESSAGE("socket() failed. - %s", strerror(errno));
 		return sockfd;
 	}
 
 	if ( connect(sockfd, (struct sockaddr *) &sa, sizeof(struct sockaddr_in)) <0)
-	return -1;
+	{
+		LOG_ERROR_MESSAGE("connect() failed. - %s", strerror(errno));
+		return -1;
+	}
 
 	return sockfd;
 }
@@ -75,6 +85,7 @@ int _receive(int s, void *data, int length)
 		received = recv(s, data, remaining, 0);
 		if (received == -1)
 		{
+			LOG_ERROR_MESSAGE("recv() failed. - %s", strerror(errno));
 			return -1;
 		}
 		if (received == 0)
@@ -98,6 +109,7 @@ int _send(int s, void *data, int length)
 		sent = send(s, (void *) data, remaining, 0);
 		if (sent == -1)
 		{
+			LOG_ERROR_MESSAGE("send() failed. - %s", strerror(errno));
 			return -1;
 		}
 		data += sent;
@@ -119,16 +131,19 @@ int _server_init_socket(int port)
 	mastersock = socket(PF_INET, SOCK_STREAM, resolveproto("TCP"));
 	if (mastersock < 0) 
 	{
+		LOG_ERROR_MESSAGE("socket() failed. - %s", strerror(errno));
 		return ERR_SOCKET_CREATE;
 	}
 
 	if (bind(mastersock, (struct sockaddr *)&sa, sizeof(struct sockaddr_in)) <0)
 	{
+		LOG_ERROR_MESSAGE("bind() failed. - %s", strerror(errno));
 		return ERR_SOCKET_BIND;
 	}
 
 	if (listen(mastersock, 1) < 0)
 	{
+		LOG_ERROR_MESSAGE("listen() failed. - %s", strerror(errno));
 		return ERR_SOCKET_LISTEN;
 	}
 	return mastersock;
@@ -138,6 +153,7 @@ int resolveproto(const char *proto) {
 	struct protoent *protocol;
 	protocol = getprotobyname(proto);
 	if (!protocol) {
+		LOG_ERROR_MESSAGE("getprotobyname() failed. - %s", strerror(errno));
 		return ERR_SOCKET_RESOLVPROTO;
 	}
 

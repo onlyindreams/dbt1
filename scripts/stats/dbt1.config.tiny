@@ -1,0 +1,42 @@
+[database]
+#hostname instance username password
+localhost:DBT1:dbuser:
+
+[cache]
+#hostname port dbconnections items appCache_executable_directory
+localhost:9999:5:10000:/home/osdldbt/dbt1/cache
+
+[appServer]
+#hostname 
+localhost
+#port
+9992
+#dbconnection
+20
+#transaction_queue_szie
+1500
+#transaction_array_szie
+1500
+#items
+10000
+#appServer executable directory
+/home/osdldbt/dbt1/appServer
+
+
+[dbdriver]
+#hostname 
+localhost
+#items
+10000
+#customers
+2880000
+#eu
+100
+#eu/min
+100
+#mean think_time
+7.2
+#run_duration in seconds
+300
+#dbdriver executable directory
+/home/osdldbt/dbt1/dbdriver
