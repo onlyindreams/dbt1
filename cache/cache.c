@@ -141,10 +141,12 @@ int main(int argc, char *argv[])
 			{
 				strcpy(sname2, optarg);
 			}
+#ifdef LIBPQ
            		else if (strcmp(long_options[option_index].name, "dbname") == 0)
 			{
 				strcpy(dbname2, optarg);
 			}
+#endif /* LIBPQ */
             		else if (strcmp(long_options[option_index].name, "username") == 0)
 			{
 				strcpy(uname2, optarg);

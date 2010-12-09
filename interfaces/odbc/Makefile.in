@@ -1,48 +1,19 @@
 # Makefile
-# 20 february 2002
+# 6 Dec 2010
 
 include @TOPDIR@/make.common
 
-CFLAGS_ODBC=$(CFLAGS) -DPHASE1
-
-all: $(ODBC_OBJS)
-
-odbc_interaction.o: odbc_interaction.c
-
-odbc_interaction_admin_confirm.o: odbc_interaction_admin_confirm.c
-
-odbc_interaction_admin_request.o: odbc_interaction_admin_request.c
-
-odbc_interaction_best_sellers.o: odbc_interaction_best_sellers.c
-
-odbc_interaction_buy_confirm.o: odbc_interaction_buy_confirm.c
-
-odbc_interaction_buy_request.o: odbc_interaction_buy_request.c
-
-odbc_interaction_home.o: odbc_interaction_home.c
-
-odbc_interaction_new_products.o: odbc_interaction_new_products.c
-
-odbc_interaction_order_display.o: odbc_interaction_order_display.c
-
-odbc_interaction_order_inquiry.o: odbc_interaction_order_inquiry.c
-
-odbc_interaction_product_detail.o: odbc_interaction_product_detail.c
-
-odbc_interaction_search_request.o: odbc_interaction_search_request.c
-
-odbc_interaction_search_results.o: odbc_interaction_search_results.c
-
-odbc_interaction_shopping_cart.o: odbc_interaction_shopping_cart.c
+all: $(DBI_OBJS)
 
 clean:
-	rm -f $(ODBC_OBJS)
+	rm -f $(DBI_OBJS)
 
 explain:
-	@echo "$(ODBC_OBJS)"
+	@echo "$(DBI_OBJS)"
 
-DBOBJS: \
+ODBC_OBJS: \
 	Makefile \
 	$(TOPDIR)/make.common \
-	$(ODBC_INCLUDE) \
-	$(ODBC_PRGS)
+	$(INCLUDE_DIR)/common.h $(INCLUDE_DIR)/interaction_data.h \
+	$(DBI_INCLUDE) \
+	$(DBI_PRGS)

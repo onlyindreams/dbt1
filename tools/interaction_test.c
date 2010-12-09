@@ -243,7 +243,12 @@ int main(int argc, char *argv[])
 		if (db_init(sname2, dbname2, uname2, auth2) != OK)
 #endif
 		{
+#ifdef ODBC
+			printf("sname2 %s, uname2 %s, auth2 %s\n", sname2, uname2, auth2);
+#endif
+#ifdef LIBPQ
 			printf("sname2 %s, dbname2 %s, uname2 %s, auth2 %s\n", sname2, dbname2, uname2, auth2);
+#endif
 			printf("db environment initialization failed\n");
 			return -1;
 		}

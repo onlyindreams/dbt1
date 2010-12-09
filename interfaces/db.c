@@ -82,6 +82,7 @@ int process_interaction(int interaction, struct db_context_t *dbc,
 {
 	int rc;
 	int status;
+	int i;
 
 	switch (interaction)
 	{

@@ -12,8 +12,13 @@
 #ifndef _ODBC_INTERACTION_H_
 #define _ODBC_INTERACTION_H_
 
-/* comment the next line out if unixODBC is used */
-#include <WINDOWS.H>
+/* if not on Windows, just define only W_ERROR macro. */
+#ifdef WINDOWS
+ #include <WINDOWS.H>
+#else
+ #define W_ERROR 0
+#endif
+
 #include <sql.h>
 #include <sqlext.h>
 #include <sqltypes.h>
