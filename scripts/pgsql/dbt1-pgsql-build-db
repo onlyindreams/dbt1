@@ -1,0 +1,129 @@
+#!/bin/sh
+
+#
+# This file is released under the terms of the Artistic License.
+# Please see the file LICENSE, included in this package, for details.
+#
+# Copyright (C) 2005-2006 Open Source Development Labs, Inc.
+# Copyright (C) 2005-2010 Mark Wong
+#
+
+usage()
+{
+	echo "Usage:"
+	echo "    dbt1-pgsql-build-db [options]"
+	echo "    dbt1-pgsql-build-db -h"
+	echo "Options:"
+	echo "    -b"
+	echo "        Load tables and create indexes in parallel."
+	echo "    -g <data path>"
+	echo "        Generate data files with using the specified directory."
+	echo "    -l <port>"
+	echo "        PostgreSQL port"
+	echo "    -x <xlog path>"
+	echo "        Use alternative xlog directory."
+	echo "    -p <database_parameters>"
+	echo "        PostgreSQL database parameters."
+	echo "    -r"
+	echo "        Drop existing database before building a new database"
+	echo "    -t"
+	echo "        Use tablespaces."
+	echo "    -i <items>"
+	echo "        Number of items to build. Default 10000."
+	echo "    -u <emulated users>"
+	echo "        Number of emulated users to build. Default 1000."
+}
+
+# default values
+REBUILD_DB=0
+ITEMS=10000
+EUS=1000
+DATA_PATH=""
+XLOGPATH_OPT=""
+
+while getopts "bg:hl:p:rtw:x:" OPT; do
+	case ${OPT} in
+	b)
+		BACKGROUND_FLAG="-b"
+		;;
+	g)
+		DATA_PATH=${OPTARG}
+		;;
+	x)
+		XLOGPATH_OPT="-x ${OPTARG}"
+		;;
+	h)
+		usage
+		exit 0
+		;;
+	l)
+		PORT=${OPTARG}
+		PARAMETERS="$PARAMETERS -p ${PORT}"
+		;;
+	p)
+		PARAMETERS=$OPTARG
+		;;
+	r)
+		REBUILD_DB=1
+		;;
+	t)
+		TABLESPACES_FLAG="-t"
+		;;
+	i)
+		ITEMS=${OPTARG}
+		;;
+	u)
+		EUS=${OPTARG}
+		;;
+	esac
+done
+
+if [ ! "x${PORT}" = "x" ]; then
+	PORTARG="-l ${PORT}"
+fi
+
+if [ ${REBUILD_DB} -eq 1 ]; then
+	echo "Restarting the database to reset database parameters..."
+	dbt1-pgsql-stop-db
+	dbt1-pgsql-start-db -p "${PARAMETERS}" || exit 1
+	dbt1-pgsql-drop-db ${PORTARG}
+fi
+
+dbt1-pgsql-create-db ${XLOGPATH_OPT} ${PORTARG} || exit 1
+dbt1-pgsql-create-tables ${PORTARG} ${TABLESPACES_FLAG} || exit 1
+
+# FIXME: Make datagen take argument instead of setting environment variables
+# for psql.
+export PGPORT="${PORT}"
+export PGDATABASE="${DBNAME}"
+
+# generate data into flat files.
+if [ ! "x${DATA_PATH}" = "x" ]; then
+    export PATH=../../datagen:$PATH
+    mkdir -p $DATA_PATH
+    datagen -d PGSQL -i $ITEMS -u $EUS -p $DATA_PATH || exit 1
+fi
+
+# load data set and create sequences.
+# `/tmp' keeps symlinks to the data files.
+dbt1-pgsql-load-db -d /tmp ${PORTARG} || exit 1
+
+dbt1-pgsql-create-indexes ${PORTARG} ${TABLESPACES_FLAG} || exit 1
+
+# load pl/pgsql implementation of the stored procedures
+dbt1-pgsql-load-stored-procs ${PORTARG} || exit 1
+
+if [ ! "x${PORT}" = "x" ]; then
+        PORTARG="-p ${PORT}"
+fi
+
+psql ${PORTARG} -e -d ${DBNAME} -c "SELECT setseed(0);" || exit 1
+
+# VACUUM FULL ANALYZE: Build optimizer statistics for newly-created
+# tables. The VACUUM FULL is probably unnecessary; we want to scan the
+# heap and update the commit-hint bits on each new tuple, but a regular
+# VACUUM ought to suffice for that.
+
+vacuumdb ${PORTARG} -z -f -d ${DBNAME} || exit 1
+
+exit 0

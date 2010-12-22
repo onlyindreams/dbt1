@@ -1,6 +1,0 @@
-db_param=$1
-if [ ! -d @TOPDIR@/run ]; then
-	mkdir @TOPDIR@/run
-fi
-pg_ctl start -l @TOPDIR@/run/db_logfile.txt -o "$db_param" 
-sleep 10

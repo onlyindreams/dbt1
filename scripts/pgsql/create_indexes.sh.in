@@ -1,1 +1,0 @@
-psql -d $SID1 -f @TOPDIR@/scripts/pgsql/create_indexes.sql

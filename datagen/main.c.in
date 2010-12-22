@@ -80,18 +80,27 @@ int main(int argc, char *argv[])
 		usage();
 		return 1;
 	}
+
+	p = popen("pwd", "r");
+	fscanf(p, "%s", pwd);
+	printf("%s\n", pwd);
+	if (strcmp(path, ".") == 0 || path[0] == '\0' )
+	{
+		strcpy(path, pwd);
+	}
+
         if (rdbms == SAPDB)
 	{
 		strcpy(field_deco, "\"");
 		delimiter =  ',';
-		strcpy(sequence_file, "@TOPDIR@/scripts/sapdb/create_sequence.sql");
+		sprintf(sequence_file, "%s/create_sequence.sql", path);
 		strcpy(exec_sql, "sql_execute");
 	}
 	else if (rdbms == PGSQL)
 	{
 		strcpy(field_deco, "");
 		delimiter =  '>';
-		strcpy(sequence_file, "@TOPDIR@/scripts/pgsql/create_sequence.sql");
+		sprintf(sequence_file, "%s/create_sequence.sql", path);
 		strcpy(exec_sql, "");
 	}
 
@@ -105,14 +114,6 @@ int main(int argc, char *argv[])
 		printf("\t1000000\n");
 		printf("\t10000000\n");
 		return 2;
-	}
-
-	p = popen("pwd", "r");
-	fscanf(p, "%s", pwd);
-	printf("%s\n", pwd);
-	if (strcmp(path, ".") == 0 || path[0] == '\0' )
-	{
-		strcpy(path, pwd);
 	}
 
 	printf("item scale factor %10d\n", items);
@@ -161,6 +162,8 @@ int main(int argc, char *argv[])
 		fprintf(sequence_sql, "commit;");
 	}
 	fclose(sequence_sql);
+	sprintf(cmd, "ln -fs %s/create_sequence.sql /tmp/create_sequence.sql", path);
+	popen(cmd, "r");
 
 	dpath = (char *) malloc(sizeof(char) * 64);
 	strcpy(dpath, "@TOPDIR@/wgen/grammar.tpcw");

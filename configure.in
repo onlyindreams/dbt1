@@ -99,17 +99,8 @@ appServer/Makefile
 tools/Makefile 
 datagen/Makefile
 datagen/main.c
-scripts/pgsql/build_db.sh
-scripts/pgsql/create_db.sh
-scripts/pgsql/create_fk.sh
-scripts/pgsql/create_indexes.sh
-scripts/pgsql/create_tables.sh
-scripts/pgsql/load_db.sh
-scripts/pgsql/load_dbproc.sh
 scripts/pgsql/set_db_env.sh
 scripts/pgsql/set_run_env.sh
-scripts/pgsql/start_db.sh
-scripts/pgsql/update_statistics.sh
 data_collect/dbt1_slave.pl
 data_collect/analyzeBT.pl
 data_collect/pgsql/dbt1_master.pl

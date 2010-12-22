@@ -1,0 +1,56 @@
+#!/bin/sh
+
+#
+# This file is released under the terms of the Artistic License.
+# Please see the file LICENSE, included in this package, for details.
+#
+# Copyright (C) 2002-2008 Mark Wong & Open Source Development Labs, Inc.
+#
+
+if [ "x${DBNAME}" = "x" ]; then
+	echo "DBNAME not defined."
+	exit 1
+fi
+
+while getopts "l:" OPT; do
+	case ${OPT} in
+	l)
+		PORT=${OPTARG}
+		;;
+	esac
+done
+
+if [ ! "x${PORT}" = "x" ]; then
+	PORTARG="-p ${PORT}"
+fi
+
+PSQL="psql ${PORTARG} -e -d ${DBNAME}"
+SHAREDIR=`pg_config --sharedir`
+
+PROCPATH="../../storedproc/pgsql/"
+
+echo "loading pl/pgsql stored functions..."
+${PSQL} -f ${PROCPATH}/DigSyl.sql || exit 1
+${PSQL} -f ${PROCPATH}/InsertCust.sql || exit 1
+${PSQL} -f ${PROCPATH}/addToSC.sql || exit 1
+${PSQL} -f ${PROCPATH}/admin_confirm.sql || exit 1
+${PSQL} -f ${PROCPATH}/admin_request.sql || exit 1
+${PSQL} -f ${PROCPATH}/best_sellers.sql || exit 1
+${PSQL} -f ${PROCPATH}/buy_confirm.sql || exit 1
+${PSQL} -f ${PROCPATH}/buy_request.sql || exit 1
+${PSQL} -f ${PROCPATH}/createSC.sql || exit 1
+${PSQL} -f ${PROCPATH}/getCustInfo.sql || exit 1
+${PSQL} -f ${PROCPATH}/getPromoImages.sql || exit 1
+${PSQL} -f ${PROCPATH}/getSCDetail.sql || exit 1
+${PSQL} -f ${PROCPATH}/getSCSubTotal.sql || exit 1
+${PSQL} -f ${PROCPATH}/home.sql || exit 1
+${PSQL} -f ${PROCPATH}/new_products.sql || exit 1
+${PSQL} -f ${PROCPATH}/order_inquiry.sql || exit 1
+${PSQL} -f ${PROCPATH}/order_display.sql || exit 1
+${PSQL} -f ${PROCPATH}/product_detail.sql || exit 1
+${PSQL} -f ${PROCPATH}/refreshSC.sql || exit 1
+${PSQL} -f ${PROCPATH}/search_results_author.sql || exit 1
+${PSQL} -f ${PROCPATH}/search_results_subject.sql || exit 1
+${PSQL} -f ${PROCPATH}/search_results_title.sql || exit 1
+${PSQL} -f ${PROCPATH}/shopping_cart.sql || exit 1
+${PSQL} -f ${PROCPATH}/updateSC.sql || exit 1
