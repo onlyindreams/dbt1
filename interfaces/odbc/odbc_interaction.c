@@ -119,7 +119,7 @@ int odbc_error(char *filename, int line, SQLSMALLINT handle_type,
 }
 
 /* Initialize ODBC environment handle and the database connect string. */
-int _db_init(char *sname, char *uname, char *auth)
+int _db_init(const char *sname, const char *_dbport, const char *_dbname, const char *uname, const char *auth)
 {
 	SQLRETURN rc;
 

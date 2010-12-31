@@ -35,7 +35,7 @@ struct db_context_t
 int _db_connect(struct db_context_t *pgsqlc);
 int _db_disconnect(struct db_context_t *pgsqlc);
 int pgsql_error(PGconn *);
-int _db_init(const char *, const char *, const char *, const char *);
+int _db_init(const char *, const char *, const char *, const char *, const char *);
 PGresult *pgsql_execute(PGconn *, const char *, ...);
 int commit_transaction(struct db_context_t *dbc);
 int rollback_transaction(struct db_context_t *dbc);

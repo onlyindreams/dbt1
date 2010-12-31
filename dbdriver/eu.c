@@ -80,11 +80,10 @@ int mode_access;
 int mode_cache;
 char cache_host[32];
 int cache_port;
-char sname[32];
-char dbname[32];
-char username[32];
-char auth[32];
-int port;
+char app_host[32];
+int app_port;
+
+extern struct db_conn_t db_conn;
 
 /*
  * Local variable
@@ -1153,14 +1152,9 @@ int init_eus(int eus, int interaction_mix, int rampuprate, int duration,
 	think_time_mean = tt_mean * 1000.0;
 
 	if ( mode_access == MODE_DIRECT ) {
-#ifdef ODBC
-		db_init(sname, username, auth);
-#endif /* ODBC */
-#ifdef LIBPQ
-		db_init(sname, dbname, username, auth);
-#endif /* LIBPQ */
+		db_init(db_conn);
 	} else {
-		strcpy(tm_address, sname);
+		strcpy(tm_address, app_host);
 	}
 
 	/*
@@ -1188,7 +1182,7 @@ int init_eus(int eus, int interaction_mix, int rampuprate, int duration,
 		if (mode_access == MODE_DIRECT) {
 			rc = pthread_create(&tid, NULL, &start_eu,NULL);
 		} else {
-			rc = pthread_create(&tid, NULL, &start_eu, &port);
+			rc = pthread_create(&tid, NULL, &start_eu, &app_port);
 		}
 		if (rc != 0) {
 			if (altered == 0) {

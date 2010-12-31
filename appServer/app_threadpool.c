@@ -69,13 +69,7 @@ extern int search_results_cache_port;
  */
 int mode_cache = 1;
 
-#ifdef ODBC
-int init_thread_pool(int PoolThreads, int TxnQSize, char *sname, char *uname,
-	char *auth)
-#endif
-#ifdef LIBPQ
-int init_thread_pool(int PoolThreads, int TxnQSize, char *sname, char *dbname, char *uname, char *auth)
-#endif
+int init_thread_pool(int PoolThreads, int TxnQSize, const struct db_conn_t db_conn)
 {
 	int i;
 	pthread_t ThreadID;
@@ -94,20 +88,10 @@ int init_thread_pool(int PoolThreads, int TxnQSize, char *sname, char *dbname, c
 	}
 
 #ifndef _SIMDB
-#ifdef ODBC
-	/* This should be buried under a generic database initializtion call. */
-	if (db_init(sname, uname, auth) == ERROR)
+	if (db_init(db_conn) == ERROR)
 	{
 		return ERROR;
 	}
-#endif
-#ifdef LIBPQ
-	if (db_init(sname, dbname, uname, auth) == ERROR)
-	{
-		return ERROR;
-	}
-#endif
-
 #endif /* _SIMDB */
 
 	/* Create a pool of threads that connect to the database. */

@@ -8,6 +8,8 @@ fi
 CPUS=`grep -c processor /proc/cpuinfo`
 RESULTS_PATH=$1
 
+runtime_env="LD_LIBRARY_PATH=$PGHOME/lib"
+
 rm /tmp/*.log
 #
 # Use $IFS (Internal File Separator variable) to split a line of input to
@@ -109,7 +111,12 @@ IFS=$OIFS              # Restore originial $IFS.
 # --------------------------------------------------------------
 #see if appCache is running
 cache_running=0
-ssh  $cache_host "ps -ef |grep appCache" > /tmp/cache_pid.log
+if [ "$cache_host" = "localhost" ]; then
+    ps -ef |grep appCache > /tmp/cache_pid.log
+else
+    ssh  $cache_host "ps -ef |grep appCache" > /tmp/cache_pid.log
+fi
+
 while read v1 v2 v3 v4 v5 v6 v7 v8 v9
 do
 	if [ "$v1" = "" ]
@@ -133,11 +140,17 @@ else # start appCache
 	echo 
 	echo Starting appCache
 	
-	ssh -n -f $cache_host \
-	  "cd $cache_dir; \
-	   ./appCache $db_host:$db_instance $db_user $db_password \
-	              $cache_port $cache_dbconnection $cache_items" \
-	> /tmp/cache.log
+	CMD="./appCache --dbhost $db_host --dbport 15432 --dbname $db_instance --dbuser $db_user --dbpass $db_password \
+	              --port $cache_port --dbconn $cache_dbconnection --item_count $cache_items"
+	echo $CMD
+
+	if [ "$cache_host" = "localhost" ]; then
+	    SHELL_EXEC="bash -c";
+	else
+	    SHELL_EXEC="ssh -n -f $cache_host";
+	fi
+
+	$SHELL_EXEC "cd $cache_dir; $runtime_env $CMD" > /tmp/cache.log &
 
 	sleep 2
 	while [ 1 ]
@@ -178,16 +191,24 @@ element_count=${#appServer_host[@]}
 while [ "$index" -lt "$element_count" ]
 do
 	echo Starting appServer "$index"
-	ssh -n -f ${appServer_host[$index]} \
-	  "cd ${appServer_dir[$index]}; \
-	   ./appServer $db_host:$db_instance $db_user $db_password \
-	               ${appServer_port[$index]} \
-	               ${appServer_dbconnection[$index]} \
-	               ${appServer_txn_q_size[$index]} \
-	               ${appServer_txn_a_size[$index]} \
-	               ${dbdriver_items[$index]} $cache_host $cache_port \
-	               --debug" \
-	> /tmp/appServer$index.log
+
+	CMD="./appServer --dbhost $db_host --dbport 15432 --dbname $db_instance --dbuser $db_user --dbpass $db_password \
+	               --server_port ${appServer_port[$index]} \
+	               --dbconn ${appServer_dbconnection[$index]} \
+	               --txn_q_size ${appServer_txn_q_size[$index]} \
+	               --txn_a_size ${appServer_txn_a_size[$index]} \
+	               --item_count ${dbdriver_items[$index]} \
+	               --cache_host $cache_host --cache_port $cache_port \
+	               --debug"
+	echo $CMD
+
+	if [ "${appServer_host[$index]}" = "localhost" ]; then
+	    SHELL_EXEC="bash -c";
+	else
+	    SHELL_EXEC="ssh -n -f ${appServer_host[$index]}";
+	fi
+
+	$SHELL_EXEC "cd ${appServer_dir[$index]}; $runtime_env $CMD" > /tmp/appServer$index.log &
 
 	sleep 2
 	while [ 1 ]
@@ -229,17 +250,24 @@ element_count=${#appServer_host[@]}
 while [ "$index" -lt "$element_count" ]
 do
 	echo Starting dbdriver "$index"
-	ssh -n -f ${dbdriver_host[$index]} \
-	  "cd ${dbdriver_dir[$index]}; \
-	   ./dbdriver --server_name ${appServer_host[$index]} \
-	              --port ${appServer_port[$index]} \
-	              --item_count ${dbdriver_items[$index]} \
-	              --customer_count ${dbdriver_customers[$index]} \
-	              --emulated_users ${dbdriver_eus[$index]} \
+
+	if [ "${dbdriver_host[$index]}" = "localhost" ]; then
+	    SHELL_EXEC="bash -c";
+	else
+	    SHELL_EXEC="ssh -n -f ${dbdriver_host[$index]}";
+	fi
+
+	CMD="./dbdriver --app_host ${appServer_host[$index]} \
+	              --app_port ${appServer_port[$index]} \
+	              --items ${dbdriver_items[$index]} \
+	              --customers ${dbdriver_customers[$index]} \
+	              --eus ${dbdriver_eus[$index]} \
 	              --rampup_rate ${dbdriver_eus_per_min[$index]} \
 	              --think_time ${dbdriver_think_time[$index]} \
 	              --duration ${dbdriver_run_duration[$index]} \
-	              --debug" \
+	              --debug"
+
+	$SHELL_EXEC "cd ${dbdriver_dir[$index]}; $runtime_env $CMD " \
 	> /tmp/driver$index.log
 
 let "index = $index + 1"
@@ -325,7 +353,16 @@ element_count=${#dbdriver_host[@]}
 while [ "$index" -lt "$element_count" ]
 do
 	echo "copying mix.log from ${dbdriver_host[$index]}"
-	scp ${dbdriver_host[$index]}:"${dbdriver_dir[$index]}/mix.log" $RESULTS_PATH/mix.log.${dbdriver_host[$index]}
+
+	if [ "${dbdriver_host[$index]}" = "localhost" ]; then
+	    CP="cp ${dbdriver_dir[$index]}/mix.log $RESULTS_PATH/mix.log.${dbdriver_host[$index]}"
+	else
+	    CP="scp ${dbdriver_host[$index]}:${dbdriver_dir[$index]}/mix.log $RESULTS_PATH/mix.log.${dbdriver_host[$index]}"
+	fi
+
+	echo $CP
+	bash -c "$CP"
+
 	let "index = $index + 1"
 done
 

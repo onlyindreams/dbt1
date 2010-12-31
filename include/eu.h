@@ -86,11 +86,9 @@ extern int mode_access;
 extern int mode_cache;
 extern char cache_host[32];
 extern int cache_port;
-extern char sname[32];
-extern char dbname[32];
-extern char username[32];
-extern char auth[32];
-extern int port;
+extern char app_host[32];
+extern int app_port;
+extern struct db_conn_t db_conn;
 
 int init_eus(int eus, int interaction_mix, int rampuprate, int duration,
 	double tt_mean, int item_scale);

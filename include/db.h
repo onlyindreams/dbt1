@@ -29,13 +29,17 @@
 
 #define STATUS_ROLLBACK 4
 
+struct db_conn_t
+{
+  char dbhost[32]; /* becomes DSN in ODBC. */
+  char dbport[32];
+  char dbname[32];
+  char dbuser[32];
+  char dbpass[32];
+};
+
 int db_connect(struct db_context_t *dbc);
-#ifdef ODBC
-int db_init(char *sname, char *uname, char *auth);
-#endif
-#ifdef LIBPQ
-int db_init(char *shost, char *dbname, char *uname, char *auth);
-#endif
+int db_init(const struct db_conn_t);
 int db_connect(struct db_context_t *dbc);
 int db_disconnect(struct db_context_t *dbc);
 int process_interaction(int interaction, struct db_context_t *dbc,

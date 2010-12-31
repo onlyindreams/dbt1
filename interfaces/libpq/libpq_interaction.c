@@ -36,7 +36,7 @@ int _db_connect(struct db_context_t *dbc)
 
 //	dbc->conn = PQsetdbLogin(servername, dbport, NULL, NULL, dbname,
 //					 username, authentication);
-	sprintf(tmp, "host = %s dbname = %s", servername, dbname);
+	sprintf(tmp, "host = %s dbname = %s port = %s", servername, dbname, dbport);
 	conninfo = tmp;
 	//dbc->conn = PQsetdb(servername, "5432", NULL, NULL, "DBT1");
 	dbc->conn = PQconnectdb(conninfo);
@@ -87,10 +87,11 @@ pgsql_error(PGconn *conn)
 }
 
 int
-_db_init(const char *shost, const char *instance, const char *uname, const char *auth)
+_db_init(const char *shost, const char *port, const char *instance, const char *uname, const char *auth)
 {
 	/* Set the database connect string, username and password. */
 	if (shost != NULL) { strcpy(servername, shost); }
+	if (port != NULL) { strcpy(dbport, port); }
 	if (instance != NULL) { strcpy(dbname, instance); }
 	if (uname != NULL) { strcpy(username, uname); }
 	if (auth != NULL) { strcpy(authentication, auth); }

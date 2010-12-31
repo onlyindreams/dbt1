@@ -47,18 +47,6 @@ char subject[I_SUBJECT_LEN + 1] = "ARTS";
 int mode_access = MODE_APPSERVER;
 int mode_cache = MODE_CACHE_OFF;
 
-#ifdef ODBC
-char sname2[32] = "localhost:DBT1";
-char uname2[32] = "pgsql";
-char auth2[32] = "pgsql";
-#endif
-#ifdef LIBPQ
-char sname2[32] = "localhost";
-char dbname2[32] = "DBT1";
-char uname2[32] = "pgsql";
-char auth2[32] = "pgsql";
-#endif
-
 /* Prototypes */
 int display_data(int interaction, int inout, void *data);
 int display_admin_confirm_data(int inout, struct admin_confirm_t *data);
@@ -93,6 +81,8 @@ int usage(char *name);
 
 int main(int argc, char *argv[])
 {
+	struct db_conn_t db_conn;
+
 	struct eu_context_t euc;
 	char interact[4];
 
@@ -105,6 +95,11 @@ int main(int argc, char *argv[])
 	/* Variables for getopt_long_only(). */
 	int c;
 	int port;
+
+	strcpy(db_conn.dbhost, "localhost");
+	strcpy(db_conn.dbname, "DBT1");
+	strcpy(db_conn.dbuser, "pgsql");
+	strcpy(db_conn.dbpass, "pgsql");
 
 	if (argc < 3)
 	{
@@ -123,7 +118,7 @@ int main(int argc, char *argv[])
 			{ "cache_host", required_argument, 0, 0 },
 			{ "cache_port", required_argument, 0, 0 },
 			{ "help", no_argument, &help, 1 },
-			{ "host", required_argument, 0, 0 },
+			{ "dbhost", required_argument, 0, 0 },
 			{ "i_id", required_argument, 0, 0 },
 			{ "interaction", required_argument, 0, 0 },
 			{ "new_customer", no_argument, &new_customer, 1 },
@@ -163,9 +158,9 @@ int main(int argc, char *argv[])
 					printf("so you want some help?\n");
 					exit(1);
 				}
-				else if (strcmp(long_options[option_index].name, "host") == 0)
+				else if (strcmp(long_options[option_index].name, "dbhost") == 0)
 				{
-					strcpy(sname2, optarg);
+					strcpy(db_conn.dbhost, optarg);
 				}
 				else if (strcmp(long_options[option_index].name, "i_id") == 0)
 				{
@@ -228,7 +223,7 @@ int main(int argc, char *argv[])
 	bzero(&euc, sizeof(euc));
 	if (mode_access == MODE_APPSERVER)
 	{
-		if ((euc.s = _connect(sname2, port)) == -1)
+		if ((euc.s = _connect(db_conn.dbhost, port)) == -1)
 		{
 			LOG_ERROR_MESSAGE("connect failed");
 			return 2;
@@ -236,19 +231,10 @@ int main(int argc, char *argv[])
 	}
 	else
 	{
-#ifdef ODBC
-		if (db_init(sname2, uname2, auth2) != OK)
-#endif
-#ifdef LIBPQ
-		if (db_init(sname2, dbname2, uname2, auth2) != OK)
-#endif
+		if (db_init(db_conn) != OK)
 		{
-#ifdef ODBC
-			printf("sname2 %s, uname2 %s, auth2 %s\n", sname2, uname2, auth2);
-#endif
-#ifdef LIBPQ
-			printf("sname2 %s, dbname2 %s, uname2 %s, auth2 %s\n", sname2, dbname2, uname2, auth2);
-#endif
+			printf("sname2 %s, dbname2 %s, dbport2 %s, uname2 %s, auth2 %s\n",
+			       db_conn.dbhost, db_conn.dbname, db_conn.dbport, db_conn.dbuser, db_conn.dbpass);
 			printf("db environment initialization failed\n");
 			return -1;
 		}
@@ -1259,15 +1245,15 @@ int usage(char *name)
 
 	printf(
 		"to use the application server:\n"
-		"usage: %s --host <servername> --port <port>\n"
+		"usage: %s --dbhost <servername> --port <port>\n"
 		"	--interaction <interaction>\n\n", name);
 	printf(
 		"to connect to the database directly without using cache:\n"
-		"usage: %s --access_direct --host <dbhost>\n"
+		"usage: %s --access_direct --dbhost <dbhost>\n"
 		"	--interaction <interaction>\n\n", name);
 	printf(
 		"to connect to the database directly with using cache:\n"
-		"usage: %s --access_direct --host <dbhost> --access_cache\n"
+		"usage: %s --access_direct --dbhost <dbhost> --access_cache\n"
 		"	--cache_host <cachehost> --cache_port <cache_port>\n"
 		"	--interaction <interaction>\n\n", name);
 	printf("  <interaction>:  ac  - Admin Confirm\n");

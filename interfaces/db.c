@@ -52,19 +52,9 @@ int db_connect(struct db_context_t *dbc)
 	return OK;
 }
 
-#ifdef ODBC
-int db_init(char *sname, char *uname, char *auth)
-#endif
-#ifdef LIBPQ
-int db_init(char *shost, char *dbname, char *uname, char *auth)
-#endif
+int db_init(const struct db_conn_t db_conn)
 {
-#ifdef ODBC	
-	_db_init(sname, uname, auth);
-#endif
-#ifdef LIBPQ
-	_db_init(shost, dbname, uname, auth);
-#endif
+	_db_init(db_conn.dbhost, db_conn.dbport, db_conn.dbname, db_conn.dbuser, db_conn.dbpass);
 	return OK;
 }
 

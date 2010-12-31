@@ -39,7 +39,7 @@ int _db_connect(struct db_context_t *odbcc);
 int _db_disconnect(struct db_context_t *odbcc);
 int odbc_error(char *filename, int line, SQLSMALLINT handle_type,
 	SQLHANDLE handle);
-int _db_init(char *sname, char *uname, char *auth);
+int _db_init(const char *, const char *, const char *, const char *, const char *);
 int commit_transaction(struct db_context_t *dbc);
 int rollback_transaction(struct db_context_t *dbc);
 

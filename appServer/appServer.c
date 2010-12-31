@@ -25,6 +25,7 @@
 #include <getopt.h>
 #include <_socket.h>
 #include <common.h>
+#include <db.h>
 #include <app_interface.h>
 #include <app_txn_array.h>
 #include <app_txn_queue.h>
@@ -71,17 +72,9 @@ pthread_mutex_t mutex_app_server = PTHREAD_MUTEX_INITIALIZER;
 
 int help;
 int port, PoolThreads, TxnQSize, ArraySize;
-#ifdef ODBC
-static char sname[32];
-static char uname[32];
-static char auth[32];
-#endif
-#ifdef LIBPQ
-static char sname[32];
-static char dbname[32];
-static char uname[32];
-static char auth[32];
-#endif
+
+struct db_conn_t db_conn;
+
 int altered = 0;
 int usage(char *name);
 
@@ -98,18 +91,13 @@ int main(int argc, char *argv[])
 	char filename[512];
 #endif /* GET_TIME */
 
-/* set default values */
-#ifdef ODBC
-	strcpy(sname, "localhost:DBT1");
-	strcpy(uname, "dbt");
-	strcpy(auth, "dbt");
-#endif
-#ifdef LIBPQ
-	strcpy(sname, "localhost");
-	strcpy(dbname, "DBT1");
-	strcpy(uname, "pgsql");
-	strcpy(auth, "pgsql");
-#endif
+
+	strcpy(db_conn.dbhost, "localhost");
+	strcpy(db_conn.dbport, "5432");
+	strcpy(db_conn.dbname, "DBT1");
+	strcpy(db_conn.dbuser, "dbt");
+	strcpy(db_conn.dbpass, "dbt");
+
 	help = 0;
 	ArraySize = 100;
 	PoolThreads = 20;
@@ -142,21 +130,22 @@ int main(int argc, char *argv[])
 	while (1)
 	{
 		static struct option long_options[] = {
-			{ "host", required_argument, 0, 0 },
+			{ "dbhost", required_argument, 0, 0 },
+			{ "dbport", required_argument, 0, 0 },
 			{ "dbname", required_argument, 0, 0 },
-			{ "dbnodename", required_argument, 0, 0 },
-			{ "username", required_argument, 0, 0 },
-			{ "password", required_argument, 0, 0 },
+			{ "dbuser", required_argument, 0, 0 },
+			{ "dbpass", required_argument, 0, 0 },
+			{ "dbconn", required_argument, 0, 0 },
 			{ "server_port", required_argument, 0, 0 },
-			{ "db_connection", required_argument, 0, 0 },
 			{ "txn_q_size", required_argument, 0, 0 },
-			{ "txn_array_size", required_argument, 0, 0 },
+			{ "txn_a_size", required_argument, 0, 0 },
 			{ "item_count", required_argument, 0, 0 },
 			{ "access_cache", no_argument, &mode_cache, MODE_CACHE_ON },
 			{ "cache_host", required_argument, 0, 0 },
 			{ "cache_port", required_argument, 0, 0 },
 			{ "output_path", required_argument, 0, 0 },
 			{ "debug", no_argument, 0, 0 },
+			{ "altered", no_argument, &altered, 1 },
 			{ "help", no_argument, &help, 1},
 			{ 0, 0, 0, 0 }
 		};
@@ -175,45 +164,43 @@ int main(int argc, char *argv[])
 				{
 					break;
 				}
-				if (strcmp(long_options[option_index].name, "host") == 0)
-				{
-					strcpy(sname, optarg);
-				}
-				else if (strcmp(long_options[option_index].name, "help") == 0)
+				if (strcmp(long_options[option_index].name, "help") == 0)
 				{
 					break;
 				}
-				else if (strcmp(long_options[option_index].name, "dbnodename") == 0)
+				else if (strcmp(long_options[option_index].name, "dbhost") == 0)
 				{
-					strcpy(sname, optarg);
+					strcpy(db_conn.dbhost, optarg);
 				}
-#ifdef LIBPQ
 				else if (strcmp(long_options[option_index].name, "dbname") == 0)
 				{
-					strcpy(dbname, optarg);
+					strcpy(db_conn.dbname, optarg);
 				}
-#endif /* LIBPQ */
-				else if (strcmp(long_options[option_index].name, "username") == 0)
+				else if (strcmp(long_options[option_index].name, "dbport") == 0)
 				{
-					strcpy(uname, optarg);
+					strcpy(db_conn.dbport, optarg);
 				}
-				else if (strcmp(long_options[option_index].name, "password") == 0)
+				else if (strcmp(long_options[option_index].name, "dbuser") == 0)
 				{
-					strcpy(auth, optarg);
+					strcpy(db_conn.dbuser, optarg);
+				}
+				else if (strcmp(long_options[option_index].name, "dbpass") == 0)
+				{
+					strcpy(db_conn.dbpass, optarg);
+				}
+				else if (strcmp(long_options[option_index].name, "dbconn") == 0)
+				{
+					PoolThreads = atoi(optarg);
 				}
 				else if (strcmp(long_options[option_index].name, "server_port") == 0)
 				{
 					port = atoi(optarg);
 				}
-				else if (strcmp(long_options[option_index].name, "db_connection") == 0)
-				{
-					PoolThreads = atoi(optarg);
-				}
 				else if (strcmp(long_options[option_index].name, "txn_q_size") == 0)
 				{
 					TxnQSize = atoi(optarg);
 				}
-				else if (strcmp(long_options[option_index].name, "txn_array_size") == 0)
+				else if (strcmp(long_options[option_index].name, "txn_a_size") == 0)
 				{
 					ArraySize = atoi(optarg);
 				}
@@ -261,12 +248,7 @@ int main(int argc, char *argv[])
 	}
 
 	/* create the threadpool. */
-#ifdef ODBC
-	if (!init_thread_pool(PoolThreads, TxnQSize, sname, uname, auth))
-#endif
-#ifdef LIBPQ
-	if (!init_thread_pool(PoolThreads, TxnQSize, sname, dbname, uname, auth))
-#endif
+	if (!init_thread_pool(PoolThreads, TxnQSize, db_conn))
 	{
 		LOG_ERROR_MESSAGE("InitThreadPool() failed with %d connection",
 			PoolThreads);
@@ -334,7 +316,7 @@ int main(int argc, char *argv[])
 		{
 			if (altered == 0)
 			{
-				LOG_ERROR_MESSAGE("pthread_create failed, rec=%d", rec);
+				LOG_ERROR_MESSAGE("pthread_create failed: %s", strerror(rec));
 				return -1;
 			}
 			--connectioncount;
@@ -521,34 +503,31 @@ void *DoConnection(void *fd)
 
 int usage(char *name)
 {
-#ifdef ODBC
-	printf("usage: %s --dbnodename <dbnodename> ", name);
-#endif
-#ifdef LIBPQ
-	printf("usage: %s --host <hostname> --dbname <dbname> ", name);
-#endif
-	printf("--username <username> --password <password> --server_port <port>\n");
-	printf("--db_connection <db_connection> --txn_q_size <transaction queue size>\n");
-	printf("--txn_array_size <transaction array size> --item_count <items>\n");
-	printf("--output_path <output_path>\n");
-	printf("if using search_result_cache, add:\n");
-	printf("--access_cache  --cache_host <search_results_cache_host> --cache_port <search_results_cache_port>\n");
-	printf("--debug\n");
+	printf("\nUsage: %s [option]...\n\n", name);
+
+	printf("Options:\n");
+	printf("    --dbhost <hostname>          Hostname for database connection. (default:%s)\n", db_conn.dbhost);
+	printf("                                 Use a datasource name when using ODBC interfaces.\n");
+	printf("    --dbport <port>              Port number for database connection. (default:%s)\n", db_conn.dbport);
+	printf("    --dbname <dbname>            Database name for database connection. (default:%s)\n", db_conn.dbname);
+	printf("    --dbuser <username>          Username for database connection. (default:%s)\n", db_conn.dbuser);
+	printf("    --dbpass <password>          Password for database connection. (default:%s)\n", db_conn.dbpass);
+	printf("    --dbconn <connection>        Number of database connections. (default:%d)\n", PoolThreads);
+	printf("    --server_port <port>         Listening port for waiting dbdriver. (default:%d)\n", port);
+	printf("    --txn_q_size <queue size>    Transaction queue size. (default:%d)\n", TxnQSize);
+	printf("    --txn_a_size <array size>    Transaction array size. (default:%d)\n", ArraySize);
+	printf("    --item_count <items>         Number of item table records. (default:%d)\n", item_count);
+	printf("    --output_path <output_path>  Log output directory. (default:%s)\n", output_path);
+	printf("    --debug\n");
+	printf("    --altered\n");
+	printf("    --help\n");
 	printf("\n");
 
-	printf("The default values if not specified:\n");
-#ifdef ODBC
-	printf("dbnodename: %s, username: %s, password: %s\n", 
-		sname, uname, auth);
-#endif
-#ifdef LIBPQ
-	printf("host: %s, dbname: %s, username: %s, password: %s\n", 
-		sname, dbname, uname, auth);
-#endif
-	printf("port: %d, db_connection: %d, txn_q_size: %d, txn_array_size: %d\n",
-		port, PoolThreads, TxnQSize, ArraySize);
-	printf("item_count: %d, output_path: %s\n", item_count, output_path);
-	printf("access_cache: MODE_CACHE_OFF, cache_host: %s, cache_port: %d\n",
-		search_results_cache_host, search_results_cache_port);
+	printf("Options for the search results cache:\n");
+	printf("    --access_cache               Enable the search results cache. (default:disabled)\n");
+	printf("    --cache_host <hostname>      Hostname for cache connection. (default:%s)\n", search_results_cache_host);
+	printf("    --cache_port <port>          Port number for cache connection. (default:%d)\n", search_results_cache_port);
+	printf("    \n");
+
 	return 1;
 }

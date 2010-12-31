@@ -18,6 +18,7 @@
 #include <time.h>
 
 #include <common.h>
+#include <db.h>
 #include <eu.h>
 
 static int eus;
@@ -25,6 +26,8 @@ static int rampuprate;
 static int duration;
 static double think_time;
 static int help;
+
+struct db_conn_t db_conn;
 
 int usage(char *);
 
@@ -40,20 +43,17 @@ int main(int argc, char *argv[])
 
 	/* setup default value in case the user forgets, but in most
 	   cases the user should set it */
-#ifdef LIBPQ
-	strcpy(sname, "localhost");
-	strcpy(dbname, "DBT1");
-	strcpy(username, "pgsql");
-	strcpy(auth, "pgsql");
-#endif
-#ifdef ODBC
-	strcpy(sname, "localhost:DBT1");
-	strcpy(username, "dbt");
-	strcpy(auth, "dbt");
-#endif
+
+	strcpy(db_conn.dbhost, "localhost");
+	strcpy(db_conn.dbport, "5432");
+	strcpy(db_conn.dbname, "DBT1");
+	strcpy(db_conn.dbuser, "dbt");
+	strcpy(db_conn.dbpass, "dbt");
+
 	strcpy(cache_host, "localhost");
 	cache_port = 9999;
-	port = 9992;
+	strcpy(app_host, "localhost");
+	app_port = 9992;
 	item_count = 1000;
 	customers = 28800;
 	eus = 10;
@@ -68,23 +68,23 @@ int main(int argc, char *argv[])
 	while (1)
 	{
 		static struct option long_options[] = {
-			{ "access_cache", no_argument, &mode_cache, MODE_CACHE_ON },
+			{ "app_host", required_argument, 0, 0 },
+			{ "app_port", required_argument, 0, 0 },
 			{ "access_direct", no_argument, &mode_access, MODE_DIRECT },
 			{ "dbhost", required_argument, 0, 0 },
+			{ "dbport", required_argument, 0, 0 },
 			{ "dbname", required_argument, 0, 0 },
-			{ "dbnodename", required_argument, 0, 0 },
-			{ "username", required_argument, 0, 0 },
-			{ "password", required_argument, 0, 0 },
-			{ "server_name", required_argument, 0, 0 },
-			{ "port", required_argument, 0, 0 },
-			{ "item_count", required_argument, 0, 0 },
-			{ "customer_count", required_argument, 0, 0 },
-			{ "emulated_users", required_argument, 0, 0 },
+			{ "dbuser", required_argument, 0, 0 },
+			{ "dbpass", required_argument, 0, 0 },
+			{ "access_cache", no_argument, &mode_cache, MODE_CACHE_ON },
+			{ "cache_host", required_argument, 0, 0 },
+			{ "cache_port", required_argument, 0, 0 },
+			{ "items", required_argument, 0, 0 },
+			{ "customers", required_argument, 0, 0 },
+			{ "eus", required_argument, 0, 0 },
 			{ "rampup_rate", required_argument, 0, 0 },
 			{ "think_time", required_argument, 0, 0 },
 			{ "duration", required_argument, 0, 0 },
-			{ "cache_host", required_argument, 0, 0 },
-			{ "cache_port", required_argument, 0, 0 },
 			{ "output_path", required_argument, 0, 0 },
 			{ "debug", no_argument, 0, 0 },
 			{ "help", no_argument, &help, 1 },
@@ -104,29 +104,25 @@ int main(int argc, char *argv[])
                         {
                                 break;
                         }
-#ifdef LIBPQ
 			if (strcmp(long_options[option_index].name, "dbhost") == 0)
                         {
-                                strcpy(sname, optarg);
+                                strcpy(db_conn.dbhost, optarg);
+                        }
+			if (strcmp(long_options[option_index].name, "dbport") == 0)
+                        {
+                                strcpy(db_conn.dbport, optarg);
                         }
 			if (strcmp(long_options[option_index].name, "dbname") == 0)
                         {
-                                strcpy(dbname, optarg);
+                                strcpy(db_conn.dbname, optarg);
                         }
-#endif
-#ifdef ODBC
-			if (strcmp(long_options[option_index].name, "dbnodename") == 0)
+			if (strcmp(long_options[option_index].name, "dbuser") == 0)
                         {
-                                strcpy(sname, optarg);
+                                strcpy(db_conn.dbuser, optarg);
                         }
-#endif
-			if (strcmp(long_options[option_index].name, "username") == 0)
+			if (strcmp(long_options[option_index].name, "dbpass") == 0)
                         {
-                                strcpy(username, optarg);
-                        }
-			if (strcmp(long_options[option_index].name, "password") == 0)
-                        {
-                                strcpy(auth, optarg);
+                                strcpy(db_conn.dbpass, optarg);
                         }
 			if (strcmp(long_options[option_index].name, "cache_host") == 0)
                         {
@@ -136,23 +132,23 @@ int main(int argc, char *argv[])
                         {
 				cache_port = atoi(optarg);
                         }
-			if (strcmp(long_options[option_index].name, "server_name") == 0)
+			if (strcmp(long_options[option_index].name, "app_host") == 0)
                         {
-                                strcpy(sname, optarg);
+                                strcpy(app_host, optarg);
                         }
-			if (strcmp(long_options[option_index].name, "port") == 0)
+			if (strcmp(long_options[option_index].name, "app_port") == 0)
                         {
-				port = atoi(optarg);
+				app_port = atoi(optarg);
                         }
-			if (strcmp(long_options[option_index].name, "item_count") == 0)
+			if (strcmp(long_options[option_index].name, "items") == 0)
                         {
 				item_count = atoi(optarg);
                         }
-			if (strcmp(long_options[option_index].name, "customer_count") == 0)
+			if (strcmp(long_options[option_index].name, "customers") == 0)
                         {
 				customers = atoi(optarg);
                         }
-			if (strcmp(long_options[option_index].name, "emulated_users") == 0)
+			if (strcmp(long_options[option_index].name, "eus") == 0)
                         {
 				eus = atoi(optarg);
                         }
@@ -242,51 +238,43 @@ int main(int argc, char *argv[])
 
 int usage(char *name)
 {
-	printf("run without the middle tier and search_results_cache: \n");
-#ifdef LIBPQ
-	printf("usage: %s --access_direct --dbhost <dbhost> --dbname <dbname>\n", name);
-#endif
-#ifdef ODBC
-	printf("usage: %s --access_direct --dbnodehost <dbnodehost>\n", name);
-#endif
-	printf("--username <username> --password <password>\n");
-	printf("--item_count <item_count> --coustomer_count <customer_count>\n");
-	printf("--emulated_users <emulated_users> --rampup_rate <eu/min>\n");
-	printf("--think_time <think_time> --duration <duration>\n");
-	printf("--debug\n");
+	printf("\nUsage: %s [option]...\n", name);
 	printf("\n");
 
+	printf("Options for accessing through the middle tier (appServ):\n");
+	printf("    --app_host <host>     Hostname for appServ connection. (default:%s)\n", app_host);
+	printf("    --app_port <port>     Port number for appServ connection. (default:%d)\n", app_port);
+	printf("\n");
 
-	printf("run without the middle tier but with search_results_cache: \n");
-#ifdef LIBPQ
-	printf("usage: %s --access_direct --dbhost <dbhost> --dbname <dbname>\n", name);
-#endif
-#ifdef ODBC
-	printf("usage: %s --access_direct --dbnodehost <dbnodehost>\n", name);
-#endif
-	printf("--access_cache --cache_host <cache_host> --cache_port <cache_port>\n");
-	printf("--username <username> --password <password>\n");
-	printf("--item_count <item_count> --coustomer_count <customer_count>\n");
-	printf("--emulated_users <emulated_users> --rampup_rate <eu/min>\n");
-	printf("--think_time <think_time> --duration <duration>\n\n");
+	printf("Options for accessing database directly:\n");
+	printf("    --access_direct       Enable to connect database server directly. (default:disabled)\n");
 
-	printf("run with the middle tier: \n");
-	printf("usage: %s --server_name <server_name> --port <port>\n", name);
+	printf("    --dbhost <hostname>   Hostname for database connection. (default:%s)\n", db_conn.dbhost);
+	printf("                          Use a datasource name when using ODBC interfaces.\n");
+	printf("    --dbport <port>       Port number for database connection. (default:%s)\n", db_conn.dbport);
+	printf("    --dbname <dbname>     Database name for database connection. (default:%s)\n", db_conn.dbname);
+	printf("    --dbuser <username>   Username for database connection. (default:%s)\n", db_conn.dbuser);
+	printf("    --dbpass <password>   Password for database connection. (default:%s)\n", db_conn.dbpass);
+	printf("\n");
 
-	printf("The default values if not defined\n");
-#ifdef LIBPQ
-	printf("--dbhost %s --dbname %s\n", sname, dbname);
-#endif
-#ifdef ODBC
-	printf("--dbnodehost %s\n", sname);
-#endif
-	printf("--username %s --password %s\n", username, auth);
-	printf("--cache_host %s --cache_port %d\n", cache_host, cache_port);
-	printf("--server_name %s --port %d\n", sname, port);
-	printf("--item_count %d --coustomer_count %d\n", item_count, customers);
-	printf("--emulated_users %d --rampup_rate %d\n", eus, rampuprate);
-	printf("--think_time %f --duration %d\n", think_time, duration);
-	printf("--output_path dbdriver_dir\n");
+	printf("Options for using the search result cache (appCache):\n");
+	printf("    --access_cache        Enable the search results cache. (default:disabled)\n");
+	printf("    --cache_host <host>   Hostname for cache connection. (default:%s)\n", cache_host);
+	printf("    --cache_port <port>   Port number for cache connection. (default:%d)\n", cache_port);
+	printf("\n");
+
+	printf("Common options:\n");
+	printf("    --items <num>         Number of item table records. (default:%d)\n", item_count);
+	printf("    --customers <num>     Number of customer table records. (default:%d)\n", customers);
+	printf("    --eus <num>           Number of emulated users. (default:%d)\n", eus);
+	printf("    --rampup_rate <num>   Rampup rate in \"EUs/minute\". (default:%d)\n", rampuprate);
+	printf("    --think_time <sec>    A mean think time in seconds. (default:%.1f)\n", think_time);
+	printf("    --duration <sec>      Run duration time in seconds. (default:%d)\n", duration);
+	printf("    --output_path <path>  Log output directory.\n");
+	printf("    --altered\n");
+	printf("    --debug\n");
+	printf("    --help\n");
+	printf("\n");
 
 	return 1;
 }

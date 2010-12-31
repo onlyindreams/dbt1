@@ -37,17 +37,9 @@ void sighandler(int signum);
 pthread_mutex_t mutex_cache_server = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_counter = PTHREAD_MUTEX_INITIALIZER;
 int i_id_max, a_id_max;
-#ifdef ODBC
-	char sname2[32] = "localhost:DBT1";
-	char uname2[32] = "dbt";
-	char auth2[32] = "dbt";
-#endif
-#ifdef LIBPQ
-	char sname2[32] = "localhost";
-	char dbname2[32] = "DBT1";
-	char uname2[32] = "pgsql";
-	char auth2[32] = "pgsql";
-#endif
+
+static struct db_conn_t db_conn;
+
 int db_thread=10;
 int sanity_check = 0;
 int cache_ready = 0;
@@ -99,17 +91,22 @@ int main(int argc, char *argv[])
 		return usage(argv[0]);
 	}
 
+	strcpy(db_conn.dbhost, "localhost");
+	strcpy(db_conn.dbport, "5432");
+	strcpy(db_conn.dbname, "DBT1");
+	strcpy(db_conn.dbuser, "dbt");
+	strcpy(db_conn.dbpass, "dbt");
+
 	while (1)
 	{
 		static struct option long_options[] = {
-			{ "host", required_argument, 0, 0 },
+			{ "dbhost", required_argument, 0, 0 },
+			{ "dbport", required_argument, 0, 0 },
 			{ "dbname", required_argument, 0, 0 },
-			{ "dbnodename", required_argument, 0, 0 },
-			{ "username", required_argument, 0, 0 },
-			{ "password", required_argument, 0, 0 },
-			{ "output_path", required_argument, 0, 0 },
+			{ "dbuser", required_argument, 0, 0 },
+			{ "dbpass", required_argument, 0, 0 },
+			{ "dbconn", required_argument, 0, 0 },
 			{ "port", required_argument, 0, 0 },
-			{ "db_connection", required_argument, 0, 0 },
 			{ "item_count", required_argument, 0, 0 },
 			{ "help", no_argument, &help, 1},
 			{ "sanity_check", no_argument, &sanity_check, 1},
@@ -129,41 +126,35 @@ int main(int argc, char *argv[])
 			{
 				break;
 			}
-			if (strcmp(long_options[option_index].name, "host") == 0)
-			{
-				strcpy(sname2, optarg);
-			}
-			else if (strcmp(long_options[option_index].name, "help") == 0)
+			if (strcmp(long_options[option_index].name, "help") == 0)
 			{
 				break;
 			}
-			else if (strcmp(long_options[option_index].name, "dbnodename") == 0)
+			else if (strcmp(long_options[option_index].name, "dbhost") == 0)
 			{
-				strcpy(sname2, optarg);
+				strcpy(db_conn.dbhost, optarg);
 			}
-#ifdef LIBPQ
-           		else if (strcmp(long_options[option_index].name, "dbname") == 0)
+			else if (strcmp(long_options[option_index].name, "dbport") == 0)
 			{
-				strcpy(dbname2, optarg);
+				strcpy(db_conn.dbport, optarg);
 			}
-#endif /* LIBPQ */
-            		else if (strcmp(long_options[option_index].name, "username") == 0)
+			else if (strcmp(long_options[option_index].name, "dbname") == 0)
 			{
-				strcpy(uname2, optarg);
+				strcpy(db_conn.dbname, optarg);
 			}
-			else if (strcmp(long_options[option_index].name, "password") == 0)
+			else if (strcmp(long_options[option_index].name, "dbuser") == 0)
 			{
-				strcpy(auth2, optarg);
+				strcpy(db_conn.dbuser, optarg);
 			}
-			else if (strcmp(long_options[option_index].name, "output_path") == 0)
+			else if (strcmp(long_options[option_index].name, "dbpass") == 0)
 			{
-				strcpy(output_path, optarg);
+				strcpy(db_conn.dbpass, optarg);
 			}
 			else if (strcmp(long_options[option_index].name, "port") == 0)
 			{
 				port = atoi(optarg);
 			}
-			else if (strcmp(long_options[option_index].name, "db_connection") == 0)
+			else if (strcmp(long_options[option_index].name, "dbconn") == 0)
 			{
 				db_thread = atoi(optarg);
 			}
@@ -254,13 +245,7 @@ void *init_cache(void *data)
 	struct table_range *range;
 	int author_step, title_step;
 
-#ifdef ODBC
-	if (db_init(sname2, uname2, auth2) != OK)
-#endif
-#ifdef LIBPQ
-	if (db_init(sname2, dbname2, uname2, auth2) != OK)
-#endif
-	
+	if (db_init(db_conn) != OK)
 	{
 		printf("db environment initialization failed\n");
 		return NULL;
@@ -710,27 +695,21 @@ int undo_digsyl(char *search_string)
 
 int usage(char *name)
 {
-#ifdef ODBC
-	printf("usage: %s --dbnodename <dbnodename> \n", name);
-#endif
-#ifdef LIBPQ
-	printf("usage: %s --host <hostname> --dbname <dbname> \n", name);
-#endif
-	printf("--username <username> --password <password>\n");
-	printf("--port <port> --db_connection <connections>\n");
-	printf("--item_count <items> --output_path <output_path>\n");
-	printf("if you want sanity_check, add: ");
-	printf("--sanity_check\n\n");
+	printf("\nUsage: %s [option]...\n", name);
+	printf("\n");
+	printf("Options:\n");
+	printf("    --dbhost <hostname>      Hostname for database connection. (default:%s)\n", db_conn.dbhost);
+	printf("                             Use a datasource name when using ODBC interfaces.\n");
+	printf("    --dbport <port>          Port number for database connection. (default:%s)\n", db_conn.dbport);
+	printf("    --dbname <dbname>        Database name for database connection. (default:%s)\n", db_conn.dbname);
+	printf("    --dbuser <username>      Username for database connection. (default:%s)\n", db_conn.dbuser);
+	printf("    --dbpass <password>      Password for database connection. (default:%s)\n", db_conn.dbpass);
+	printf("    --port <port>            Listening port for waiting appServer. (default:%d)\n", port);
+	printf("    --dbconn <connections>   Number of database connections. (default:%d)\n", db_thread);
+	printf("    --item_count <items>     Number of item table records. (default:%d)\n", item_count);
+	printf("    --sanity_check           Enable sanity check. (default:off)\n");
+	printf("    --help\n");
+	printf("\n");
 
-	printf("if not defined, the default values are:\n");
-#ifdef ODBC
-        printf("--dbnodename %s ", sname2);
-#endif
-#ifdef LIBPQ
-        printf("--host %s --dbname %s ", sname2, dbname2);
-#endif
-	printf("--username %s --password %s\n", uname2, auth2);
-	printf("--port %d --db_connection %d\n", port, db_thread);
-	printf("--item_count %d --output_path %s\n", item_count, output_path );
 	return 1;
 }
