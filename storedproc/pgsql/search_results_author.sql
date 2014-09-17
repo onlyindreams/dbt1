@@ -14,8 +14,8 @@ CREATE OR REPLACE FUNCTION search_results_author (
   numeric(10)
 ) RETURNS RECORD AS '
   DECLARE
-    a_lname ALIAS FOR $1;
-    i_id ALIAS FOR $2;
+    _a_lname ALIAS FOR $1;
+    _i_id ALIAS FOR $2;
     i_related1 numeric(10);
     i_related2 numeric(10);
     i_related3 numeric(10);
@@ -237,7 +237,7 @@ CREATE OR REPLACE FUNCTION search_results_author (
          i_related3, i_thumbnail3,
          i_related4, i_thumbnail4,
          i_related5, i_thumbnail5
-    FROM getPromoImages(i_id)
+    FROM getPromoImages(_i_id)
     AS l(I_R1 NUMERIC(10), 
          I_T1 NUMERIC(10),
          I_R2 NUMERIC(10), 
@@ -252,7 +252,7 @@ CREATE OR REPLACE FUNCTION search_results_author (
   PERFORM i_id, i_title, a_fname, a_lname
   FROM item, author
   WHERE i_a_id = a_id 
-    AND a_lname LIKE ''%''||a_lname||''%''
+    AND a_lname LIKE ''%''||_a_lname||''%''
   ORDER BY i_title ASC;
 
   IF NOT FOUND THEN
@@ -265,7 +265,7 @@ CREATE OR REPLACE FUNCTION search_results_author (
   OPEN refcur FOR SELECT i_id, i_title, a_fname, a_lname
   FROM item, author
   WHERE i_a_id = a_id 
-    AND a_lname LIKE ''%''||a_lname||''%''
+    AND a_lname LIKE ''%''||_a_lname||''%''
   ORDER BY i_title ASC;
 
 --

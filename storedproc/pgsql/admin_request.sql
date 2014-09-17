@@ -15,7 +15,7 @@ CREATE OR REPLACE FUNCTION admin_request ( NUMERIC(10) ) RETURNS RECORD AS '
     rec RECORD;
 
   BEGIN
-    SELECT i_srp, i_cost, i_title, i_image, i_thumbnail, a_fname, a_lname
+    SELECT i_srp, i_cost, i_title, i_image::numeric(10), i_thumbnail::numeric(10), a_fname, a_lname
       INTO rec
       FROM item, author
      WHERE i_id = _i_id AND i_a_id = a_id;

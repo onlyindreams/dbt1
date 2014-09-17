@@ -140,7 +140,7 @@ else # start appCache
 	echo 
 	echo Starting appCache
 	
-	CMD="./appCache --dbhost $db_host --dbport 15432 --dbname $db_instance --dbuser $db_user --dbpass $db_password \
+	CMD="./appCache --dbhost $db_host --dbport ${PORT} --dbname $db_instance --dbuser $db_user --dbpass $db_password \
 	              --port $cache_port --dbconn $cache_dbconnection --item_count $cache_items"
 	echo $CMD
 
@@ -192,7 +192,7 @@ while [ "$index" -lt "$element_count" ]
 do
 	echo Starting appServer "$index"
 
-	CMD="./appServer --dbhost $db_host --dbport 15432 --dbname $db_instance --dbuser $db_user --dbpass $db_password \
+	CMD="./appServer --dbhost $db_host --dbport ${PORT} --dbname $db_instance --dbuser $db_user --dbpass $db_password \
 	               --server_port ${appServer_port[$index]} \
 	               --dbconn ${appServer_dbconnection[$index]} \
 	               --txn_q_size ${appServer_txn_q_size[$index]} \
